@@ -1,0 +1,130 @@
+---
+title: "Transcriptional signatures for mutations"
+author:
+  - name: Dharmesh D Bhuva
+    affiliation:
+      - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
+      - School of Mathematics and Statistics, University of Melbourne, Parkville, VIC 3010, Australia
+    email: bhuva.d@wehi.edu.au
+  - name: Joseph Cursons
+    affiliation:
+      - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
+    email: cursons.j@wehi.edu.au
+  - name: Melissa J Davis
+    affiliation:
+      - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
+    email: davis.m@wehi.edu.au
+date: "`r format(Sys.time(), '%d %b %Y')`"
+# output:
+#   BiocStyle::html_document:
+#     toc_float: true
+#     fig_caption: true
+output:
+  html_notebook:
+    toc: true
+bibliography: bibliography.bib
+vignette: |
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+abstract: >
+  Transctriptional signatures for mutations
+---
+
+**R version**: `r R.version.string`
+
+**Bioconductor version**: `r BiocManager::version()`
+
+**Package**: `packageVersion("TCGATranscriptionalMutSig")`
+
+# Introduction {#intro .unnumbered}
+
+# Description of the biological problem {#biol_problem .unnumbered}
+
+# Preliminary analysis {#prelim_analysis .unnumbered}
+
+Data from the TCGA project is made available through the Genomic Data Commons (GDC). 
+
+
+Two ways to download the data:
+
+1. GDC data transfer tool - finer control over the files downloaded but difficult to process the data and merge annotations
+2. TCGAbiolinks - sensible filters for downloading the data and easier to read in data into R
+
+The TCGA AML RNA-seq data set can be downloaded directly from the Genomic Data Commons (GDC) data portal [portal.gdc.cancer.gov](https://portal.gdc.cancer.gov) using the [GDC data transfer tool](https://gdc.cancer.gov/access-data/gdc-data-transfer-tool). The data transfer tool requires the creation of a *MANIFEST* file consisting information on the specific files to download. This file can be created using the GDC portal allowing finer control over the samples and levels of data required.
+
+## Querying the GDC database {#gdc_query .unnumbered}
+
+```{r message=FALSE, warning=FALSE}
+library(TCGAbiolinks)
+
+#get GDC version information
+gdc_info = getGDCInfo()
+gdc_info
+```
+
+Two ways to identify the project of interest: <https://portal.gdc.cancer.gov/projects> or `TCGAbiolinks::getGDCprojects()`
+
+Values for different parameters of the query can be identified by running an unfiltered query for the project `GDCquery('TCGA-LAML')` or from the second package vignette [(Searching GDC database)](https://bioconductor.org/packages/release/bioc/vignettes/TCGAbiolinks/inst/doc/query.html#searching_arguments).
+
+First a query is formed. This is used to filter the database for files we are interested in. The results of the query are the files we want to download and annotations related to the file including information on the analysis workflows.
+
+```{r message=FALSE, warning=FALSE}
+#form a query for the RNAseq data
+query_rna = GDCquery(
+  #getGDCprojects()
+  project = 'TCGA-LAML',
+  #TCGAbiolinks:::getProjectSummary('TCGA-LAML')
+  data.category = 'Transcriptome Profiling',
+  data.type = 'Gene Expression Quantification',
+  workflow.type = 'HTSeq - Counts'
+)
+
+#extract results of the query
+rnaseq_res = getResults(query_rna)
+dim(rnaseq_res)
+colnames(rnaseq_res)
+```
+
+## Downloading the TCGA AML RNA-seq read counts {#download_data .unnumbered}
+Downloads the count-level data into the folder GDCdata (size: 39MB).
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+GDCdownload(query_rna, directory = datapath)
+```
+
+## Reading count-level data into R {#read_data .unnumbered}
+Data is read into a `RangedSummarizedExperiment` object allowing patient annotations, gene annotations and the data to be stored in one object.
+
+This will store the resulting data structure to an RDS file. Feature annotations used to annotate the data are stored in an RDA/RDATA file.
+```{r message=FALSE, warning=FALSE, results='hide'}
+aml_counts = GDCprepare(query_rna)
+saveRDS(aml_counts, file = 'TCGA_AML_counts.rds')
+```
+
+```{r}
+aml_counts
+any(aml_counts$is_ffpe)
+```
+
+All samples are fresh frozen therefore no filtering required.
+
+## Filter out genes with low counts {#read_data .unnumbered}
+Genes with low counts across most samples are discarded from the analysis. This is a standard step in differential expression analysis as inclusion of such genes in the analysis could skew estimates of dispersion. It is also motivated in rank-based analysis, such as with singscore, to avoid rank duplication. Rank duplication reduces the discriminant power of scores as the number of unique ranks is reduced. A commonly used generic filter is to select only those genes that have logCPMs above a certain threshold across a fixed proportion of samples. Here, we retain genes that have a logCPM > 1 across more than 50% of the samples.
+
+```{r}
+library(edgeR)
+
+aml_cpm = cpm(assay(aml_counts))
+prop_expressed = rowMeans(aml_cpm > 1)
+
+```
+
+
+# Packages used {.unnumbered}
+This workflow depends on various packages from version 3.8 of the Bioconductor project, running on R version 3.5.1 or higher. The complete list of the packages used for this workflow are shown below:
+
+```{r}
+sessionInfo()
+```
+
+# References {.unnumbered}
