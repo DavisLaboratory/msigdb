@@ -8,3 +8,8 @@ GDCdata/
 *.txt
 *.html
 *.Rproj
+gencode.v22.annotation.gtf.gz
+workflow_transcriptional_mut_sig_cache/*
+workflow_transcriptional_mut_sig_files/*
+VERHAAK*
+PatientMutations.tsv

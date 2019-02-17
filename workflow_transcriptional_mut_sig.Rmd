@@ -15,13 +15,13 @@ author:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
     email: davis.m@wehi.edu.au
 date: "`r format(Sys.time(), '%d %b %Y')`"
-# output:
-#   BiocStyle::html_document:
-#     toc_float: true
-#     fig_caption: true
 output:
-  html_notebook:
-    toc: true
+  BiocStyle::html_document:
+    toc_float: true
+    fig_caption: true
+# output:
+#   html_notebook:
+#     toc: true
 bibliography: bibliography.bib
 vignette: |
   %\VignetteEngine{knitr::rmarkdown}
@@ -36,11 +36,42 @@ abstract: >
 
 **Package**: `packageVersion("TCGATranscriptionalMutSig")`
 
-# Introduction {#intro .unnumbered}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, cache = TRUE)
+# suppressPackageStartupMessages({library(RnaSeqGeneEdgeRQL)})
+library(ggplot2)
+library(TCGAbiolinks)
+library(SummarizedExperiment)
+library(edgeR)
+library(rtracklayer)
+library(plyr)
+library(GSEABase)
+library(singscore)
+library(org.Hs.eg.db)
 
-# Description of the biological problem {#biol_problem .unnumbered}
+rl = 1.2
+current_theme = theme_minimal() +
+  theme(
+    panel.border = element_rect(colour = 'black', fill = NA),
+    panel.grid.minor = element_blank(),
+    axis.title = element_text(size = rel(rl) * 1.1),
+    axis.text = element_text(size = rel(rl)),
+    plot.title = element_text(size = rel(rl)),
+    strip.background = element_rect(fill = NA, colour = 'black'),
+    strip.text = element_text(size = rel(rl)),
+    legend.text = element_text(size = rel(rl)),
+    legend.title = element_text(size = rel(rl), face = 'italic')
+  )
+```
 
-# Preliminary analysis {#prelim_analysis .unnumbered}
+Introduction {#intro .unnumbered}
+============
+
+Description of the biological problem {#biol_problem .unnumbered}
+=====================================
+
+Downloading and preparing the data {#download_and_prepare .unnumbered}
+==================================
 
 Data from the TCGA project is made available through the Genomic Data Commons (GDC). 
 
@@ -52,9 +83,10 @@ Two ways to download the data:
 
 The TCGA AML RNA-seq data set can be downloaded directly from the Genomic Data Commons (GDC) data portal [portal.gdc.cancer.gov](https://portal.gdc.cancer.gov) using the [GDC data transfer tool](https://gdc.cancer.gov/access-data/gdc-data-transfer-tool). The data transfer tool requires the creation of a *MANIFEST* file consisting information on the specific files to download. This file can be created using the GDC portal allowing finer control over the samples and levels of data required.
 
-## Querying the GDC database {#gdc_query .unnumbered}
+Querying the GDC database {#gdc_query .unnumbered}
+-------------------------
 
-```{r message=FALSE, warning=FALSE}
+```{r gdc_query, message=FALSE, warning=FALSE}
 library(TCGAbiolinks)
 
 #get GDC version information
@@ -68,7 +100,9 @@ Values for different parameters of the query can be identified by running an unf
 
 First a query is formed. This is used to filter the database for files we are interested in. The results of the query are the files we want to download and annotations related to the file including information on the analysis workflows.
 
-```{r message=FALSE, warning=FALSE}
+We want counts rather than FPKMs
+
+```{r gdc_results, message=FALSE, warning=FALSE}
 #form a query for the RNAseq data
 query_rna = GDCquery(
   #getGDCprojects()
@@ -85,46 +119,242 @@ dim(rnaseq_res)
 colnames(rnaseq_res)
 ```
 
-## Downloading the TCGA AML RNA-seq read counts {#download_data .unnumbered}
-Downloads the count-level data into the folder GDCdata (size: 39MB).
+Downloading the TCGA AML RNA-seq read counts {#download_data .unnumbered}
+--------------------------------------------
 
-```{r message=FALSE, warning=FALSE, results='hide'}
+Downloads the count-level data into the folder GDCdata (size: 39MB). TCGAbiolinks organises this data and any other data related to this project into the folder GDCdata.
+
+```{r gdc_download, message=FALSE, warning=FALSE, results='hide'}
+datapath = './GDCdata'
 GDCdownload(query_rna, directory = datapath)
 ```
 
-## Reading count-level data into R {#read_data .unnumbered}
-Data is read into a `RangedSummarizedExperiment` object allowing patient annotations, gene annotations and the data to be stored in one object.
+Reading count-level data into R {#read_data .unnumbered}
+-------------------------------
+
+Data is read into a `RangedSummarizedExperiment` object allowing patient annotations, gene annotations and the data to be stored in one object. This is similar to an ExpressionSet objects. Former better as allows subset operations with genomic ranges of interest - not used in this analysis.
 
 This will store the resulting data structure to an RDS file. Feature annotations used to annotate the data are stored in an RDA/RDATA file.
-```{r message=FALSE, warning=FALSE, results='hide'}
-aml_counts = GDCprepare(query_rna)
-saveRDS(aml_counts, file = 'TCGA_AML_counts.rds')
+
+```{r gdc_prepare, message=FALSE, warning=FALSE, results='hide'}
+aml_se = GDCprepare(query_rna, directory = datapath)
+saveRDS(aml_se, file = 'TCGA_AML_counts.rds')
 ```
 
-```{r}
-aml_counts
-any(aml_counts$is_ffpe)
+The object contains data for 56,925 features and 151 samples. The original data files contain 60,483 features, some of which could not be mapped to GRCh38.p12 (3,767). Feature and sample annotations can be accessed using `rowData(se)` and `colData(se)` respectively and the counts data can be accessed using `assay(se)`. The TCGA data usually contains some formalin-fixed paraffin-embedded (FFPE) samples which should be discarded from the analysis as the protocol introduces biological artefacts. This procedure is only performed on solid tumours and not leukemias therefore no filtering is required for this data set.
+
+```{r show_se}
+aml_se
 ```
 
-All samples are fresh frozen therefore no filtering required.
+Filter out genes with low counts {#filter_data .unnumbered}
+--------------------------------
 
-## Filter out genes with low counts {#read_data .unnumbered}
-Genes with low counts across most samples are discarded from the analysis. This is a standard step in differential expression analysis as inclusion of such genes in the analysis could skew estimates of dispersion. It is also motivated in rank-based analysis, such as with singscore, to avoid rank duplication. Rank duplication reduces the discriminant power of scores as the number of unique ranks is reduced. A commonly used generic filter is to select only those genes that have logCPMs above a certain threshold across a fixed proportion of samples. Here, we retain genes that have a logCPM > 1 across more than 50% of the samples.
+The `edgeR` package contain methods that assist in data normalisation and transformation which are required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment. Creation of a DGEList object is initially unsuccessful due to duplicated row names in the data matrix (176 features). The raw count files for individual samples do not have any duplicated features indicating this is introduced by the `GDCprepare` function. This is further supported by the fact that the counts for a single feature are the same for duplicated entries.
 
-```{r}
+```{r fig.small=TRUE, fig.cap="176 features have duplicate entries in the data. Counts across duplicates are the same so we can discard the repeated entries."}
+library(SummarizedExperiment)
+
+dup_feature = 'ENSG00000277610'
+plot(t(assay(aml_se[rownames(aml_se) %in% dup_feature, ])), main = 'Duplicated entries for features')
+```
+
+```{r remove_dups}
 library(edgeR)
 
-aml_cpm = cpm(assay(aml_counts))
-prop_expressed = rowMeans(aml_cpm > 1)
+aml_se = aml_se[!duplicated(rownames(aml_se)), ]
+aml_dge = DGEList(counts = assay(aml_se), genes = rowData(aml_se))
+```
 
+Genes with low counts across most samples are discarded from the analysis. This is a standard step in differential expression analysis as inclusion of such genes in the analysis could skew estimates of dispersion. It is also motivated in rank-based analysis, such as with singscore, to avoid rank duplication. Rank duplication reduces the discriminant power of scores as the number of unique ranks is reduced. A commonly used generic filter is to select only those genes that have CPMs above a certain threshold across a proportion of samples. Filtering is performed on the CPMs rather than raw counts as the former is invariant to library sizes therefore unbiased. For instance, a CPM of 1 would equate to read counts between 19 and 50 for samples in the AML data where library sizes vary between 18.6 and 49.7 million reads. Here, we retain genes that have a CPM > 1 across more than 50% of the samples. Other methods to filter out genes with low counts exists and may be preferable in specific applications. For instance, @chen16 and @law16 filter genes based on the experimental design whereby the proportion of samples with enough read counts are evaluated per experimental group. As the AML data has a many samples and lacks rare groups, filtering is performed across all samples rather than within groups. Group specific filtering would be recommended if the study of interest would be focused on rare groups.
+
+```{r message=FALSE, warning=FALSE, fig.wide=TRUE, fig.cap="Histogram of logCPM values for the AML data before and after filtering. Filtering results in fewer zeros in the data."}
+prop_expressed = rowMeans(cpm(aml_dge) > 1)
+keep = prop_expressed > 0.5
+
+op = par(no.readonly = TRUE)
+par(mfrow = c(1, 2))
+hist(cpm(aml_dge, log = TRUE), main = 'Unfiltered', xlab = 'logCPM')
+hist(cpm(aml_dge[keep, ], log = TRUE), main = 'Filtered', xlab = 'logCPM')
+par(op)
+```
+
+```{r remove_low_counts}
+#subset the data
+aml_dge = aml_dge[keep, , keep.lib.sizes = FALSE]
+aml_se = aml_se[keep, ]
+```
+
+Normalisation and transformation to FPKM values {#calc_fpkm .unnumbered}
+-----------------------------------------------
+
+Singscore requires gene expression measurements to be adjusted for gene lengths to allow comparison between genes. As such, transformations such as transcripts per million (TPM) and reads/fragments per kilobase per million (RPKM/FPKM) that normalise by gene length may be used. Both TPM and RPKM/FPKM values should give similar results when using singscore provided that the library size is large enough, which it is here. RPKM values should be computed after correcting for compositional biases. The `calcNormFactors` function in edgeR provides three methods to do so with TMM normalisation being the default. @chen16 and @law16 discuss the implications of normalisation prior to down-stream processing.
+
+These transformations require the gene lengths for all genes to be specified. Gene lengths need to be computed based on the alignment and quantification parameters. The TCGA transcriptomic data has been aligned using STAR and quantified using HTSeq (pipeline details available at <https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/>). HTSeq quantified reads mapping to exons for each gene therefore effective gene lengths can be calculated as the sum of all exons spanning the gene. The GENCODE v22 annotation file was used during quantification therefore the same file needs to be used to compute gene lengths.
+
+```{r download_gencode, results='hide'}
+gencode_file = 'gencode.v22.annotation.gtf.gz'
+gencode_link = paste(
+  'ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_22',
+  gencode_file,
+  sep = '/'
+  )
+download.file(gencode_link, gencode_file)
+```
+
+The `rtracklayer` package has functions to help import GTF files. Overlapping exons are merged and the gene length computed as the sum of all non-overlapping exons.
+
+```{r compute_gene_lengths}
+library(rtracklayer)
+library(plyr)
+
+gtf = import.gff(gencode_file, format = 'gtf', genome = 'GRCm38.71', feature.type = 'exon')
+#selected fields of the GTF file
+gtf[, c('gene_id', 'source', 'gene_name', 'gene_type')]
+#split records by GTF to group exons of the same gene
+grl = reduce(split(gtf, elementMetadata(gtf)$gene_id))
+gene_lengths = ldply(grl, function(x) {
+  #sum up the length of individual exons
+	return(c('gene_length' = sum(width(x))))
+}, .id = 'ensembl_gene_id')
+```
+
+Genes are then annotated with their biotype as only protein coding genes are retained for further analysis. The annotation file uses ENSEMBL IDs with versions as record IDs therefore they need to be converted to ENSEMBL IDs. This is simply achieved by concatenating the trailing number.
+
+```{r add_biotype}
+#extract information on gene biotype
+genetype = unique(elementMetadata(gtf)[, c('gene_id', 'gene_type')])
+colnames(genetype)[1] = 'ensembl_gene_id'
+gene_lengths = merge(genetype, gene_lengths)
+#remove ENSEMBL ID version numbers
+gene_lengths$ensembl_gene_id = gsub('\\.[0-9]*', '', gene_lengths$ensembl_gene_id)
+saveRDS(gene_lengths, file = 'gene_lengths_HTSeq_gencodev22.rds')
+gene_lengths
+```
+
+The SummarizedExperiment object allows feature annotations to be stored therefore information on gene length and biotypes should be added to the existing annotations. Similarly, annotations need to be added to the DGEList object with the column name consisiting the word *length*.
+
+```{r add_length_annotation}
+#allocate rownames for ease of indexing
+rownames(gene_lengths) = gene_lengths$ensembl_gene_id
+rowData(aml_se)$gene_length = gene_lengths[rownames(aml_se), 'gene_length']
+rowData(aml_se)$gene_biotype = gene_lengths[rownames(aml_se), 'gene_type']
+#annotate gene lengths for the DGE object
+aml_dge$genes$length = gene_lengths[rownames(aml_dge), 'gene_length']
+```
+
+RPKM/FPKM values can now be calculated with the computed gene lengths after computing the normalisation factors. The SummarizedExperiment object can store multiple levels of the data simultaneously, provided that the number of features and samples remains the same across measurements. As such, FPKM values are appended to the existing object. All three normalisation methods will be performed and their resulting FPKM values stored in the SummarizedExperiment object. This will allow comparison of the signature scores computed from all three processing methods simultaneously.
+
+```{r compute_fpkm}
+aml_dge_tmm = calcNormFactors(aml_dge, method = 'TMM')
+aml_dge_rle = calcNormFactors(aml_dge, method = 'RLE')
+aml_dge_uq = calcNormFactors(aml_dge, method = 'upperquartile')
+#compute FPKM values and append to assays
+assays(aml_se) = c(assays(aml_se),
+                   list('logFPKM_none' = rpkm(aml_dge, log = TRUE)),
+                   list('logFPKM_TMM' = rpkm(aml_dge_tmm, log = TRUE)),
+                   list('logFPKM_RLE' = rpkm(aml_dge_rle, log = TRUE)),
+                   list('logFPKM_UQ' = rpkm(aml_dge_uq, log = TRUE)))
+aml_se
+```
+
+Annotate samples with mutation data {#annotate_mutations .unnumbered}
+-----------------------------------
+
+
+Using transcriptional signatures to predict mutation status {#transcriptional_mut_sig .unnumbered}
+===========================================================
+
+Download signature and load into R {#prepare_signature .unnumbered}
+----------------------------------
+
+http://software.broadinstitute.org/gsea/msigdb/cards/VERHAAK_AML_WITH_NPM1_MUTATED_UP
+
+Create UP DN name pairs for the signature
+
+```{r signature_names}
+#create signature names
+sig_names = paste('VERHAAK_AML_WITH_NPM1_MUTATED', c('UP', 'DN'), sep = '_')
+sig_names
+```
+
+Download signatures from MSigDB locally. `mapply` runs the function on each element of the two argument vectors
+
+```{r download_signatures, results='hide'}
+#generate URLs
+sig_links = paste0(
+  'http://software.broadinstitute.org/gsea/msigdb/download_geneset.jsp?geneSetName=',
+  sig_names,
+  '&fileType=xml'
+  )
+
+#download files
+sig_files = paste0(sig_names, '.xml')
+mapply(download.file, sig_links, sig_files)
+```
+
+Read signatures into GeneSet objects in R which generates a GeneSetCollection.
+
+```{r read_signatures}
+library(GSEABase)
+
+verhaak_sigs = getBroadSets(sig_files)
+verhaak_sigs
+```
+
+The signatures consist of EntrezIDs but our data has ENSEMBL IDs therefore we need to convert the signature to ENSEMBL IDs. Multi-mapping should be an issue?
+
+```{r ensembl_id_signatures}
+library(org.Hs.eg.db)
+
+verhaak_sigs = mapIdentifiers(
+  verhaak_sigs,
+  to = ENSEMBLIdentifier('org.Hs.eg.db'),
+  verbose = TRUE
+  )
 ```
 
 
-# Packages used {.unnumbered}
+Score TCGA AML samples using the Verhaak signature {#score_samples .unnumbered}
+--------------------------------------------------
+
+Compute ranks of each gene sample-wise which are then used to compute scores. We want to do this for each type of normalised data therefore we will be using the `endoapply` function which retains the structure of the data.
+
+```{r compute_scores_verhaak}
+library(singscore)
+
+#apply the rankGenes method to each version of the dataset, excluding counts
+aml_ranked = endoapply(assays(aml_se)[-1], rankGenes)
+
+#apply the scoring function
+verhaak_scores = endoapply(aml_ranked,
+                           simpleScore,
+                           upSet = verhaak_sigs[[1]],
+                           downSet = verhaak_sigs[[2]])
+
+head(verhaak_scores[['logFPKM_none']])
+```
+
+Similarity between scores from different normalisation methods
+
+```{r score_consistency_normalisation}
+verhaak_total_scores = ldply(verhaak_scores, function(x) x$TotalScore)
+```
+
+
+
+Deriving signatures using DE analysis and scoring samples {#de_and_score .unnumbered}
+=========================================================
+
+
+Packages used {.unnumbered}
+=============
+
 This workflow depends on various packages from version 3.8 of the Bioconductor project, running on R version 3.5.1 or higher. The complete list of the packages used for this workflow are shown below:
 
-```{r}
+```{r session_info}
 sessionInfo()
 ```
 
-# References {.unnumbered}
+References {.unnumbered}
+==========
