@@ -3,7 +3,8 @@
 .RData
 .Ruserdata
 GDCdata/
-*.rds
+TCGA_AML_counts.rds
+gene_lengths_HTSeq_gencodev22.rds
 *.rda
 *.txt
 *.html

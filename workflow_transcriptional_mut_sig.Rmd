@@ -19,9 +19,10 @@ output:
   BiocStyle::html_document:
     toc_float: true
     fig_caption: true
-# output:
-#   html_notebook:
-#     toc: true
+    number_sections: true
+  # BiocStyle::pdf_document:
+  #   fig_caption: true
+  #   number_sections: false
 bibliography: bibliography.bib
 vignette: |
   %\VignetteEngine{knitr::rmarkdown}
@@ -45,9 +46,9 @@ library(SummarizedExperiment)
 library(edgeR)
 library(rtracklayer)
 library(plyr)
+library(org.Hs.eg.db)
 library(GSEABase)
 library(singscore)
-library(org.Hs.eg.db)
 
 rl = 1.2
 current_theme = theme_minimal() +
@@ -64,13 +65,13 @@ current_theme = theme_minimal() +
   )
 ```
 
-Introduction {#intro .unnumbered}
+Introduction {#intro}
 ============
 
-Description of the biological problem {#biol_problem .unnumbered}
+Description of the biological problem {#biol_problem}
 =====================================
 
-Downloading and preparing the data {#download_and_prepare .unnumbered}
+Downloading and preparing the data {#download_and_prepare}
 ==================================
 
 Data from the TCGA project is made available through the Genomic Data Commons (GDC). 
@@ -83,7 +84,7 @@ Two ways to download the data:
 
 The TCGA AML RNA-seq data set can be downloaded directly from the Genomic Data Commons (GDC) data portal [portal.gdc.cancer.gov](https://portal.gdc.cancer.gov) using the [GDC data transfer tool](https://gdc.cancer.gov/access-data/gdc-data-transfer-tool). The data transfer tool requires the creation of a *MANIFEST* file consisting information on the specific files to download. This file can be created using the GDC portal allowing finer control over the samples and levels of data required.
 
-Querying the GDC database {#gdc_query .unnumbered}
+Querying the GDC database {#gdc_query}
 -------------------------
 
 ```{r gdc_query, message=FALSE, warning=FALSE}
@@ -119,7 +120,7 @@ dim(rnaseq_res)
 colnames(rnaseq_res)
 ```
 
-Downloading the TCGA AML RNA-seq read counts {#download_data .unnumbered}
+Downloading the TCGA AML RNA-seq read counts {#download_data}
 --------------------------------------------
 
 Downloads the count-level data into the folder GDCdata (size: 39MB). TCGAbiolinks organises this data and any other data related to this project into the folder GDCdata.
@@ -129,7 +130,7 @@ datapath = './GDCdata'
 GDCdownload(query_rna, directory = datapath)
 ```
 
-Reading count-level data into R {#read_data .unnumbered}
+Reading count-level data into R {#read_data}
 -------------------------------
 
 Data is read into a `RangedSummarizedExperiment` object allowing patient annotations, gene annotations and the data to be stored in one object. This is similar to an ExpressionSet objects. Former better as allows subset operations with genomic ranges of interest - not used in this analysis.
@@ -147,7 +148,7 @@ The object contains data for 56,925 features and 151 samples. The original data 
 aml_se
 ```
 
-Filter out genes with low counts {#filter_data .unnumbered}
+Filter out genes with low counts {#filter_data}
 --------------------------------
 
 The `edgeR` package contain methods that assist in data normalisation and transformation which are required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment. Creation of a DGEList object is initially unsuccessful due to duplicated row names in the data matrix (176 features). The raw count files for individual samples do not have any duplicated features indicating this is introduced by the `GDCprepare` function. This is further supported by the fact that the counts for a single feature are the same for duplicated entries.
@@ -185,7 +186,7 @@ aml_dge = aml_dge[keep, , keep.lib.sizes = FALSE]
 aml_se = aml_se[keep, ]
 ```
 
-Normalisation and transformation to FPKM values {#calc_fpkm .unnumbered}
+Normalisation and transformation to FPKM values {#calc_fpkm}
 -----------------------------------------------
 
 Singscore requires gene expression measurements to be adjusted for gene lengths to allow comparison between genes. As such, transformations such as transcripts per million (TPM) and reads/fragments per kilobase per million (RPKM/FPKM) that normalise by gene length may be used. Both TPM and RPKM/FPKM values should give similar results when using singscore provided that the library size is large enough, which it is here. RPKM values should be computed after correcting for compositional biases. The `calcNormFactors` function in edgeR provides three methods to do so with TMM normalisation being the default. @chen16 and @law16 discuss the implications of normalisation prior to down-stream processing.
@@ -209,8 +210,6 @@ library(rtracklayer)
 library(plyr)
 
 gtf = import.gff(gencode_file, format = 'gtf', genome = 'GRCm38.71', feature.type = 'exon')
-#selected fields of the GTF file
-gtf[, c('gene_id', 'source', 'gene_name', 'gene_type')]
 #split records by GTF to group exons of the same gene
 grl = reduce(split(gtf, elementMetadata(gtf)$gene_id))
 gene_lengths = ldply(grl, function(x) {
@@ -258,14 +257,73 @@ assays(aml_se) = c(assays(aml_se),
 aml_se
 ```
 
-Annotate samples with mutation data {#annotate_mutations .unnumbered}
+Annotate samples with mutation data {#annotate_mutations}
 -----------------------------------
 
+Original file at <https://tcga-data.nci.nih.gov/docs/publications/aml_2012/SupplementalTable01.xlsx>
 
-Using transcriptional signatures to predict mutation status {#transcriptional_mut_sig .unnumbered}
+```{r preproc_mutations, eval=FALSE, include=FALSE}
+#preprocessing - read tsv (Joe's version) and convert save as RDS
+mut_info = read.csv('PatientMutations.tsv', sep = '\t', colClasses = c('character', rep('logical', 7)))
+rownames(mut_info) = mut_info$Barcode
+mut_info = mut_info[, -1]
+patients = mut_info[substring(colnames(aml_se), 1, 12), ]
+rownames(patients) = colnames(aml_se)
+saveRDS(patients, file = 'PatientMutations.rds')
+```
+
+
+
+```{r annotate_mutations}
+patient_mutations = readRDS('PatientMutations.rds')
+aml_mutations = colnames(patient_mutations)
+colData(aml_se) = cbind(colData(aml_se), patient_mutations)
+colData(aml_se)[, aml_mutations]
+```
+
+
+Map ENSEMBL IDs to Entrez IDs {#map_gene_ids}
+-----------------------------
+
+Want to convert to Entrez IDs as they are relatively more stable than ENSEMBL IDs. ENSEMBL IDs provide more coverage of the genome which may be useful in applications such as variant calling and similar exploratory analysis. Entrez IDs (RefGene annotations) may be more suited to RNA-seq analysis which requires a stable reference annotation to align against. As such, we choose to map and convert ENSEMBL IDs to ENtrez IDs.
+
+Can use the ENSEMBL Biomart using the biomaRt bioconductor package for the most up to date annotations. Alternatively, the org.Hs.eg.db package provides stable annotations which are useful for reproducible research and is updated every 2 years. Multimapped genes are replaced by NAs then discarded.
+
+```{r map_ensembl_entrez}
+library(org.Hs.eg.db)
+
+rowData(aml_se)$entrezgene = mapIds(
+  org.Hs.eg.db,
+  keys = rownames(aml_se),
+  keytype = 'ENSEMBL',
+  column = 'ENTREZID',
+  multiVals = 'asNA'
+  )
+gene_annot = rowData(aml_se)
+```
+
+Remove multimapped genes. Remove any ENSEMBL ID that maps to multiple Entrez IDs and follow with discarding any Entrez ID that maps to multiple ENSEMBL IDs.
+
+```{r discard_multimapped_genes}
+#select genes with mapped Entrez IDs
+keep = !is.na(gene_annot$entrezgene)
+
+#select genes with unique Entrez IDs
+dup_entrez = gene_annot$entrezgene[duplicated(gene_annot$entrezgene)]
+keep = keep & !gene_annot$entrezgene %in% dup_entrez
+
+#Biotype of genes discarded due to non-unique mapping
+head(sort(table(gene_annot[!keep, 'gene_biotype']), decreasing = TRUE), n = 10)
+
+#subset the data
+aml_se = aml_se[keep, ]
+```
+
+
+Using transcriptional signatures to predict mutation status {#transcriptional_mut_sig}
 ===========================================================
 
-Download signature and load into R {#prepare_signature .unnumbered}
+Download signature and load into R {#prepare_signature}
 ----------------------------------
 
 http://software.broadinstitute.org/gsea/msigdb/cards/VERHAAK_AML_WITH_NPM1_MUTATED_UP
@@ -293,29 +351,22 @@ sig_files = paste0(sig_names, '.xml')
 mapply(download.file, sig_links, sig_files)
 ```
 
-Read signatures into GeneSet objects in R which generates a GeneSetCollection.
+Read signatures into GeneSet objects in R which generates a GeneSetCollection. Represent signature using Entrez IDs.
 
 ```{r read_signatures}
 library(GSEABase)
 
-verhaak_sigs = getBroadSets(sig_files)
+verhaak_sigs = getBroadSets(sig_files, membersId = 'MEMBERS_EZID')
 verhaak_sigs
 ```
 
-The signatures consist of EntrezIDs but our data has ENSEMBL IDs therefore we need to convert the signature to ENSEMBL IDs. Multi-mapping should be an issue?
+The signatures consist of Entrez IDs therefore we use the Entrez ID annotation to name the rows
 
-```{r ensembl_id_signatures}
-library(org.Hs.eg.db)
-
-verhaak_sigs = mapIdentifiers(
-  verhaak_sigs,
-  to = ENSEMBLIdentifier('org.Hs.eg.db'),
-  verbose = TRUE
-  )
+```{r rows_to_entrez}
+rownames(aml_se) = rowData(aml_se)$entrezgene
 ```
 
-
-Score TCGA AML samples using the Verhaak signature {#score_samples .unnumbered}
+Score TCGA AML samples using the Verhaak signature {#score_samples}
 --------------------------------------------------
 
 Compute ranks of each gene sample-wise which are then used to compute scores. We want to do this for each type of normalised data therefore we will be using the `endoapply` function which retains the structure of the data.
@@ -343,7 +394,7 @@ verhaak_total_scores = ldply(verhaak_scores, function(x) x$TotalScore)
 
 
 
-Deriving signatures using DE analysis and scoring samples {#de_and_score .unnumbered}
+Deriving signatures using DE analysis and scoring samples {#de_and_score}
 =========================================================
 
 
@@ -355,6 +406,12 @@ This workflow depends on various packages from version 3.8 of the Bioconductor p
 ```{r session_info}
 sessionInfo()
 ```
+
+Additional analysis {.unnumbered}
+===================
+
+ID mapping using biomaRt {.unnumbered}
+------------------------
 
 References {.unnumbered}
 ==========
