@@ -50,6 +50,7 @@ library(org.Hs.eg.db)
 library(GSEABase)
 library(singscore)
 library(reshape2)
+library(gridExtra)
 
 rl = 1.2
 current_theme = theme_minimal() +
@@ -62,7 +63,9 @@ current_theme = theme_minimal() +
     strip.background = element_rect(fill = NA, colour = 'black'),
     strip.text = element_text(size = rel(rl)),
     legend.text = element_text(size = rel(rl)),
-    legend.title = element_text(size = rel(rl), face = 'italic')
+    legend.title = element_text(size = rel(rl), face = 'italic'),
+    legend.position = 'bottom',
+    legend.direction = 'horizontal'
   )
 ```
 
@@ -386,7 +389,7 @@ Three possible modes of using singscore:
 2. Single signature with unknown direction (e.g. mixture up- and down-regulated genes without specific annotation)
 2. Two signatures with known direction (e.g. a separate signature exists for up- and down-regulated genes)
 
-The third mode is suitable for this application.
+The third mode is suitable for this application. The median absolute deviation is the default choice of a dispersion measure as it is non-parametric.
 
 ```{r compute_scores_verhaak}
 #apply the scoring function
@@ -410,7 +413,7 @@ range_size = apply(verhaak_total_scores, 1, function(x) diff(range(x)))
 
 Further investigation reveals that variation of scores is related to the estimated normalisation factors.
 
-```{r fig.wide=TRUE, fig.cap="Normalisation has minimal effects on scores. Normalisation factors are moderately associated with variation in scores"}
+```{r fig.wide=TRUE, fig.cap="Normalisation has minimal effects on scores. Normalisation factors are moderately associated with variation in scores", fig.height=4}
 library(ggplot2)
 library(reshape2)
 
@@ -441,15 +444,60 @@ verhaak_scores = verhaak_scores[['logFPKM_none']]
 ```
 
 
-Visualise the scores {#visualise_scores_aml}
---------------------
+Diagnostics of the signature relative to the samples {#diagnostics_verhaak}
+----------------------------------------------------
 
-Investigate the contribution of each signature, (up- and down-regulated genes) to the total score. Also look at the relationship between score and the median absolute deviation (MAD). We can project annotations such as mutation status such NPM1.
+Investigate the contribution of each signature, (up- and down-regulated genes) to the total score. Also look at the relationship between score and the median absolute deviation (MAD). We can project annotations such as mutation status.
 
-```{r fig.wide=TRUE, fig.cap="Total scores, scores for up-regulated genes, and scores for down-regulated genes for all samples. Scores are plot agains the median absolute deviation of the ranks of genes in each signature."}
+```{r fig.wide=TRUE, fig.cap="Total scores, scores for up-regulated genes, and scores for down-regulated genes for all samples. Scores are plot agains the median absolute deviation of the ranks of genes in each signature.", fig.height=4}
 
-plotDispersion(verhaak_scores, annot = aml_se$NPM1.Mut)
+#create annotation
+mutated_gene = rep('Other', ncol(aml_se))
+mutated_gene[aml_se$NPM1.Mut] = 'NPM1 Mut'
+mutated_gene[aml_se$KMT2A.Fusion | aml_se$KMT2A.PTD] = 'MLL Fusion/PTD'
+p1 = plotDispersion(verhaak_scores, annot = mutated_gene)
+#overwrite the colour palette and some elements of the theme
+p1 + scale_colour_brewer(palette = 'Dark2') +
+  theme(
+    legend.text = element_text(size = rel(rl)),
+    legend.title = element_text(size = rel(rl), face = 'italic')
+  )
 ```
+
+Here we see that the signature of down-regulated genes has more discriminant power in separating the NPM1 mutated samples and those without. Moreover, the signature is able to discriminate MLL fusions and PTDs from the other samples. NPM1 mutations result in produce higher scores for the down-regulated gene set while MLL fusions and PTDs produce moderate scores. Similar trends are observed with the set of up-regulated genes, however, despite the range of scores increasing, the discriminant power drops moderately. In fact, the signature of up-regulated genes is able to discriminate samples without the genomic changes of interest ('Other') better by producing negative scores for most of these samples. Negative scores for the up-regulated signature indicate that these genes are expressed below median expression, therefore, likely down-regulated. Another observation from these plots is the trend of the MAD. The MAD is generally expected to be higher for scores close to zero. Zero scoresare achieved either by having all genes expressed at median expression level, genes are evenly distributed at both ends of the expression spectrum, or, the more likely scenario whereby the rank of expression of all genes are uniformly distributed. The last two scenarios would result in a high dispersion. To explain these ideas, we select 3 samples and plot the ranks of genes in both signatures. The sample with the highest total score, lowest total score and highest dispersion (MAD) are chosen.
+
+```{r mad_score_plot fig.wide=TRUE, fig.cap="Rank distribution of genes in the Verhaak signature for 3 samples. The barcode plot for ranks of genes in each signature along with the density of the ranks is shown in each plot. Up-regulated genes are represented in green and down-regulated in purple", fig.height=4}
+library(gridExtra)
+
+#select samples with the properties required
+select_samples = c(
+  'Max Total Score' = which.max(verhaak_scores$TotalScore),
+  'Min Total Score' = which.min(verhaak_scores$TotalScore),
+  'Max Dispersion' = which.max(verhaak_scores$TotalDispersion)
+  )
+
+#plotRankDensity applied to each sample
+rank_plots = lapply(names(select_samples), function(x) {
+  #get the sample index
+  aml_sample = select_samples[x]
+  #drop = FALSE is required to ensure the data.frame is intact
+  p1 = plotRankDensity(rankData = aml_ranked[, aml_sample, drop = FALSE],
+                       upSet = verhaak_sigs[[1]],
+                       downSet = verhaak_sigs[[2]])
+  
+  #overwrite title of the plot with the description of the sample
+  p1 = p1 + ggtitle(paste(x,  mutated_gene[aml_sample], sep = '\n')) +
+    scale_colour_brewer(palette = 'Accent') +
+    theme(legend.title = element_blank())
+})
+
+#create a multipanel plot
+grid.arrange(grobs = rank_plots, nrow = 1)
+```
+
+This figure shows that both the up- and down-regulated genesets contribute to the score of the top scoring sample as these genes are at the extremes ends of the rank spectrum. Similarly, the lowest scoring sample has the ranks of genes in each set inverted. As observed in the previous plot, the up-regulated genes improve the discrimination between NPM1 mutated samples and other samples and may be a stronger indicator of wild-type NPM1 samples than the down-regulated genes. Finally, the sample with the maximum dispersion exhibits uniformly distributed down-regulated gene ranks and a bimodal distribution of the up-regulated gene ranks with the modes at the extremes of the spectrum.
+
+Combined, these plots show that both the up- and down-regulated genes play an important role in discriminating between NPM1 mutated (and MLL fusion/PTD samples), and wild-type samples. These diagnostic plots help in determining the importance of genes in signatures with respect to the samples of interest and should be used prior to application of signatures. Many signatures have been developed in specific contexts due to inherent biases in datasets and yet be described in a generalised setting (Sep paper ref?). These diagnostic plots may help in validating their application in specific contexts and possibly assist in characterising the contexts of all existing signatures.
 
 
 
