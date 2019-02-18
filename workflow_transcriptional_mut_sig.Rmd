@@ -49,6 +49,7 @@ library(plyr)
 library(org.Hs.eg.db)
 library(GSEABase)
 library(singscore)
+library(reshape2)
 
 rl = 1.2
 current_theme = theme_minimal() +
@@ -87,7 +88,7 @@ The TCGA AML RNA-seq data set can be downloaded directly from the Genomic Data C
 Querying the GDC database {#gdc_query}
 -------------------------
 
-```{r gdc_query, message=FALSE, warning=FALSE}
+```{r gdc_query}
 library(TCGAbiolinks)
 
 #get GDC version information
@@ -103,7 +104,7 @@ First a query is formed. This is used to filter the database for files we are in
 
 We want counts rather than FPKMs
 
-```{r gdc_results, message=FALSE, warning=FALSE}
+```{r gdc_results}
 #form a query for the RNAseq data
 query_rna = GDCquery(
   #getGDCprojects()
@@ -125,7 +126,7 @@ Downloading the TCGA AML RNA-seq read counts {#download_data}
 
 Downloads the count-level data into the folder GDCdata (size: 39MB). TCGAbiolinks organises this data and any other data related to this project into the folder GDCdata.
 
-```{r gdc_download, message=FALSE, warning=FALSE, results='hide'}
+```{r gdc_download, results='hide'}
 datapath = './GDCdata'
 GDCdownload(query_rna, directory = datapath)
 ```
@@ -137,7 +138,7 @@ Data is read into a `RangedSummarizedExperiment` object allowing patient annotat
 
 This will store the resulting data structure to an RDS file. Feature annotations used to annotate the data are stored in an RDA/RDATA file.
 
-```{r gdc_prepare, message=FALSE, warning=FALSE, results='hide'}
+```{r gdc_prepare, results='hide'}
 aml_se = GDCprepare(query_rna, directory = datapath)
 saveRDS(aml_se, file = 'TCGA_AML_counts.rds')
 ```
@@ -169,7 +170,7 @@ aml_dge = DGEList(counts = assay(aml_se), genes = rowData(aml_se))
 
 Genes with low counts across most samples are discarded from the analysis. This is a standard step in differential expression analysis as inclusion of such genes in the analysis could skew estimates of dispersion. It is also motivated in rank-based analysis, such as with singscore, to avoid rank duplication. Rank duplication reduces the discriminant power of scores as the number of unique ranks is reduced. A commonly used generic filter is to select only those genes that have CPMs above a certain threshold across a proportion of samples. Filtering is performed on the CPMs rather than raw counts as the former is invariant to library sizes therefore unbiased. For instance, a CPM of 1 would equate to read counts between 19 and 50 for samples in the AML data where library sizes vary between 18.6 and 49.7 million reads. Here, we retain genes that have a CPM > 1 across more than 50% of the samples. Other methods to filter out genes with low counts exists and may be preferable in specific applications. For instance, @chen16 and @law16 filter genes based on the experimental design whereby the proportion of samples with enough read counts are evaluated per experimental group. As the AML data has a many samples and lacks rare groups, filtering is performed across all samples rather than within groups. Group specific filtering would be recommended if the study of interest would be focused on rare groups.
 
-```{r message=FALSE, warning=FALSE, fig.wide=TRUE, fig.cap="Histogram of logCPM values for the AML data before and after filtering. Filtering results in fewer zeros in the data."}
+```{r fig.wide=TRUE, fig.cap="Histogram of logCPM values for the AML data before and after filtering. Filtering results in fewer zeros in the data."}
 prop_expressed = rowMeans(cpm(aml_dge) > 1)
 keep = prop_expressed > 0.5
 
@@ -371,13 +372,25 @@ Score TCGA AML samples using the Verhaak signature {#score_samples}
 
 Compute ranks of each gene sample-wise which are then used to compute scores. We want to do this for each type of normalised data therefore we will be using the `endoapply` function which retains the structure of the data.
 
-```{r compute_scores_verhaak}
+```{r compute_ranks_aml}
 library(singscore)
 
 #apply the rankGenes method to each version of the dataset, excluding counts
+#single call: rankGenes(assay(aml_se, 'logFPKM_TMM'))
 aml_ranked = endoapply(assays(aml_se)[-1], rankGenes)
+```
 
+Three possible modes of using singscore:
+
+1. Single signature with known direction (e.g. up-regulated genes)
+2. Single signature with unknown direction (e.g. mixture up- and down-regulated genes without specific annotation)
+2. Two signatures with known direction (e.g. a separate signature exists for up- and down-regulated genes)
+
+The third mode is suitable for this application.
+
+```{r compute_scores_verhaak}
 #apply the scoring function
+#single call: simpleScore(aml_ranked[['logFPKM_TMM']], upSet = verhaak_sigs[[1]], downSet = verhaak_sigs[[2]])
 verhaak_scores = endoapply(aml_ranked,
                            simpleScore,
                            upSet = verhaak_sigs[[1]],
@@ -386,10 +399,56 @@ verhaak_scores = endoapply(aml_ranked,
 head(verhaak_scores[['logFPKM_none']])
 ```
 
-Similarity between scores from different normalisation methods
+Similarity between scores from different normalisation methods. The width of the range of scores from the different normalisation methods is computed for each sample as a measure of variation. Scores are mostly invariant to the choice of normalisation method.
 
 ```{r score_consistency_normalisation}
-verhaak_total_scores = ldply(verhaak_scores, function(x) x$TotalScore)
+verhaak_total_scores = mapply(cbind, lapply(verhaak_scores, function(x)
+  x$TotalScore))
+#compute the difference in range for each sample across each processed dataset
+range_size = apply(verhaak_total_scores, 1, function(x) diff(range(x)))
+```
+
+Further investigation reveals that variation of scores is related to the estimated normalisation factors.
+
+```{r fig.wide=TRUE, fig.cap="Normalisation has minimal effects on scores. Normalisation factors are moderately associated with variation in scores"}
+library(ggplot2)
+library(reshape2)
+
+plotdf = data.frame(
+  'TMM' = aml_dge_tmm$samples$norm.factors,
+  'RLE' = aml_dge_rle$samples$norm.factors,
+  'UQ' = aml_dge_uq$samples$norm.factors,
+  'Variation' = range_size
+  )
+plotdf = melt(
+  plotdf,
+  id.vars = 'Variation',
+  variable.name = 'norm.method',
+  value.name = 'norm.factor'
+  )
+ggplot(plotdf, aes(norm.factor, Variation)) +
+  geom_point(alpha = 0.75) +
+  geom_vline(xintercept = 1, lty = 2, col = 2) +
+  facet_wrap(~ norm.method) +
+  current_theme
+```
+
+Select the processed dataset with no normalisation for further investigation
+
+```{r select_fpkm_nonorm}
+aml_ranked = aml_ranked[['logFPKM_none']]
+verhaak_scores = verhaak_scores[['logFPKM_none']]
+```
+
+
+Visualise the scores {#visualise_scores_aml}
+--------------------
+
+Investigate the contribution of each signature, (up- and down-regulated genes) to the total score. Also look at the relationship between score and the median absolute deviation (MAD). We can project annotations such as mutation status such NPM1.
+
+```{r fig.wide=TRUE, fig.cap="Total scores, scores for up-regulated genes, and scores for down-regulated genes for all samples. Scores are plot agains the median absolute deviation of the ranks of genes in each signature."}
+
+plotDispersion(verhaak_scores, annot = aml_se$NPM1.Mut)
 ```
 
 
