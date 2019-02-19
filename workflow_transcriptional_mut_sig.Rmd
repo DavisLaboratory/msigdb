@@ -389,7 +389,7 @@ Three possible modes of using singscore:
 2. Single signature with unknown direction (e.g. mixture up- and down-regulated genes without specific annotation)
 2. Two signatures with known direction (e.g. a separate signature exists for up- and down-regulated genes)
 
-The third mode is suitable for this application. The median absolute deviation is the default choice of a dispersion measure as it is non-parametric.
+The third mode is suitable for this application. The median absolute deviation is the default choice of a dispersion measure as it is non-parametric. All other signature scoring methods only report the score of a signature (which is usually some estimate of the expectation of expression) and ignore the variance of expression. Both measurements are required to fully characterise a score therefore singscore reports both.
 
 ```{r compute_scores_verhaak}
 #apply the scoring function
@@ -411,7 +411,7 @@ verhaak_total_scores = mapply(cbind, lapply(verhaak_scores, function(x)
 range_size = apply(verhaak_total_scores, 1, function(x) diff(range(x)))
 ```
 
-Further investigation reveals that variation of scores is related to the estimated normalisation factors.
+Further investigation reveals that variation of scores is related to the estimated normalisation factors. Despite the effect of normalisation being small, TMM normalisation and RLE normalisation introduce additional variation in scores as the variation is associated with the normalisation factors.
 
 ```{r fig.wide=TRUE, fig.cap="Normalisation has minimal effects on scores. Normalisation factors are moderately associated with variation in scores", fig.height=4}
 library(ggplot2)
@@ -444,10 +444,10 @@ verhaak_scores = verhaak_scores[['logFPKM_none']]
 ```
 
 
-Diagnostics of the signature relative to the samples {#diagnostics_verhaak}
-----------------------------------------------------
+Diagnostics of the Verhaak signature {#diagnostics_verhaak}
+------------------------------------
 
-Investigate the contribution of each signature, (up- and down-regulated genes) to the total score. Also look at the relationship between score and the median absolute deviation (MAD). We can project annotations such as mutation status.
+The `singscore` package provides a set of visualisation tools that enable diagnostics of the gene signature. For instance, these tools may be used to determine the importance of each signature of a dual signature (up- and down-regulated genes) to the total score, determine the importance of each gene of a signature in discriminating between the classes of interest and to look at the relationship between the final score and the dispersion of ranks. Annotations of interest can be overlayed on each plot. We begin by investigating the relationship between the score and dispersion of ranks of expression for the up-regulated gene signature, down-regulated gene signature and the full signature.
 
 ```{r fig.wide=TRUE, fig.cap="Total scores, scores for up-regulated genes, and scores for down-regulated genes for all samples. Scores are plot agains the median absolute deviation of the ranks of genes in each signature.", fig.height=4}
 
@@ -466,7 +466,7 @@ p1 + scale_colour_brewer(palette = 'Dark2') +
 
 Here we see that the signature of down-regulated genes has more discriminant power in separating the NPM1 mutated samples and those without. Moreover, the signature is able to discriminate MLL fusions and PTDs from the other samples. NPM1 mutations result in produce higher scores for the down-regulated gene set while MLL fusions and PTDs produce moderate scores. Similar trends are observed with the set of up-regulated genes, however, despite the range of scores increasing, the discriminant power drops moderately. In fact, the signature of up-regulated genes is able to discriminate samples without the genomic changes of interest ('Other') better by producing negative scores for most of these samples. Negative scores for the up-regulated signature indicate that these genes are expressed below median expression, therefore, likely down-regulated. Another observation from these plots is the trend of the MAD. The MAD is generally expected to be higher for scores close to zero. Zero scoresare achieved either by having all genes expressed at median expression level, genes are evenly distributed at both ends of the expression spectrum, or, the more likely scenario whereby the rank of expression of all genes are uniformly distributed. The last two scenarios would result in a high dispersion. To explain these ideas, we select 3 samples and plot the ranks of genes in both signatures. The sample with the highest total score, lowest total score and highest dispersion (MAD) are chosen.
 
-```{r mad_score_plot fig.wide=TRUE, fig.cap="Rank distribution of genes in the Verhaak signature for 3 samples. The barcode plot for ranks of genes in each signature along with the density of the ranks is shown in each plot. Up-regulated genes are represented in green and down-regulated in purple", fig.height=4}
+```{r mad_score_plot, fig.wide=TRUE, fig.cap="Rank distribution of genes in the Verhaak signature for 3 samples. The barcode plot for ranks of genes in each signature along with the density of the ranks is shown in each plot. Up-regulated genes are represented in green and down-regulated in purple", fig.height=4}
 library(gridExtra)
 
 #select samples with the properties required
@@ -499,7 +499,51 @@ This figure shows that both the up- and down-regulated genesets contribute to th
 
 Combined, these plots show that both the up- and down-regulated genes play an important role in discriminating between NPM1 mutated (and MLL fusion/PTD samples), and wild-type samples. These diagnostic plots help in determining the importance of genes in signatures with respect to the samples of interest and should be used prior to application of signatures. Many signatures have been developed in specific contexts due to inherent biases in datasets and yet be described in a generalised setting (Sep paper ref?). These diagnostic plots may help in validating their application in specific contexts and possibly assist in characterising the contexts of all existing signatures.
 
+Predicting mutations using the Verhaak signature {#predict_verhaak}
+------------------------------------------------
 
+The Verhaak transcriptomic signature can be used to predict the presence of specific mutations.
+
+Create a `data.frame` to store the data required for modelling
+
+```{r}
+#create a dataframe with the data required: scores and mutations
+scoredf = as.data.frame(colData(aml_se)[, aml_mutations])
+scoredf$Score = verhaak_scores$TotalScore
+```
+
+Boxplot to visualise the predictive capacity of scores for the different mutations
+
+```{r fig.wide=TRUE, fig.height=4.5, fig.cap="Boxplot of scores from the Verhaak signature split by different types of mutations."}
+#restructure the data for ploting
+plotdf = melt(scoredf, id.var = 'Score', variable.name = 'Mutation', value.name = 'Status')
+#convert TRUE-FALSE values to Mut-WT
+plotdf$Status = factor(plotdf$Status, labels = c('WT', 'Mut'))
+p1 = ggplot(plotdf, aes(Mutation, Score, fill = Status)) +
+  geom_boxplot(position = 'dodge', alpha = 0.6) +
+  scale_fill_brewer(palette = 'Set2') +
+  current_theme
+p1
+```
+
+Use independent GLMs to predict mutations based on scores
+
+```{r}
+#fit GLMs to each mutation
+glms = lapply(aml_mutations, function(x) {
+  #generate a formula for the fit
+  form = as.formula(paste0(x, ' ~ Score'))
+  glm1 = glm(form, data = scoredf, family = binomial(link = 'logit'))
+  return(glm1)
+})
+names(glms) = aml_mutations
+
+#extract coefficients
+coefs = lapply(glms, function(x) coef(summary(x)))
+ldply(coefs, function(x) x[2, ], .id = 'Response')
+```
+
+NPM1 mutations are significantly associated with the score. So are DNMT3A and FLT3 mutations, and MLL Fusions. Explain with respect to the coefficient estimates in GLMs.
 
 Deriving signatures using DE analysis and scoring samples {#de_and_score}
 =========================================================
