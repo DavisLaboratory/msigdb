@@ -54,6 +54,7 @@ library(GSEABase)
 library(singscore)
 library(reshape2)
 library(gridExtra)
+library(caret)
 
 #ggplot theme
 rl = 1.2
@@ -159,13 +160,15 @@ aml_se
 Filter out genes with low counts {#filter_data}
 --------------------------------
 
-The `edgeR` package contain methods that assist in data normalisation and transformation which are required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment. Creation of a DGEList object is initially unsuccessful due to duplicated row names in the data matrix (176 features). The raw count files for individual samples do not have any duplicated features indicating this is introduced by the `GDCprepare` function. This is further supported by the fact that the counts for a single feature are the same for duplicated entries.
+The `edgeR` package contain methods that assist in data normalisation and transformation which are required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment. Creation of a DGEList object is initially unsuccessful due to duplicated row names in the data matrix (176 features). The raw count files for individual samples do not have any duplicated features indicating this is introduced by the `GDCprepare` function. This is further supported by the fact that the counts for a single feature are the same for duplicated entries. An example of such a feature is shown below and we have verified duplicated entries of all other features to be the same.
 
-```{r fig.small=TRUE, fig.cap="176 features have duplicate entries in the data. Counts across duplicates are the same so we can discard the repeated entries."}
+```{r dup_entries}
 library(SummarizedExperiment)
 
+#example check on one feature ID
 dup_feature = 'ENSG00000277610'
-plot(t(assay(aml_se[rownames(aml_se) %in% dup_feature, ])), main = 'Duplicated entries for features')
+dup_data = assay(aml_se[rownames(aml_se) %in% dup_feature, ])
+identical(dup_data[1, ], dup_data[2, ])
 ```
 
 As such, it is safe to discard duplicated entries.
@@ -338,6 +341,7 @@ Using transcriptional signatures to predict mutation status {#transcriptional_mu
 Download signature and load into R {#prepare_signature}
 ----------------------------------
 
+Up dn significance in Msigdb
 
 http://software.broadinstitute.org/gsea/msigdb/cards/VERHAAK_AML_WITH_NPM1_MUTATED_UP
 
@@ -474,7 +478,7 @@ p1 + scale_colour_brewer(palette = 'Dark2') +
 
 Here we see that the signature of down-regulated genes has more discriminant power in separating the NPM1 mutated samples and those without. Moreover, the signature is able to discriminate MLL fusions and PTDs from the other samples. NPM1 mutations result in produce higher scores for the down-regulated gene set while MLL fusions and PTDs produce moderate scores. Similar trends are observed with the set of up-regulated genes, however, despite the range of scores increasing, the discriminant power drops moderately. In fact, the signature of up-regulated genes is able to discriminate samples without the genomic changes of interest ('Other') better by producing negative scores for most of these samples. Negative scores for the up-regulated signature indicate that these genes are expressed below median expression, therefore, likely down-regulated. Another observation from these plots is the trend of the MAD. The MAD is generally expected to be higher for scores close to zero. Zero scoresare achieved either by having all genes expressed at median expression level, genes are evenly distributed at both ends of the expression spectrum, or, the more likely scenario whereby the rank of expression of all genes are uniformly distributed. The last two scenarios would result in a high dispersion. To explain these ideas, we select 3 samples and plot the ranks of genes in both signatures. The sample with the highest total score, lowest total score and highest dispersion (MAD) are chosen.
 
-```{r mad_score_plot, fig.wide=TRUE, fig.cap="Rank distribution of genes in the Verhaak signature for 3 samples. The barcode plot for ranks of genes in each signature along with the density of the ranks is shown in each plot. Up-regulated genes are represented in green and down-regulated in purple", fig.height=4}
+```{r fig.wide=TRUE, fig.cap="Rank distribution of genes in the Verhaak signature for 3 samples. The barcode plot for ranks of genes in each signature along with the density of the ranks is shown in each plot. Up-regulated genes are represented in green and down-regulated in purple", fig.height=4}
 library(gridExtra)
 
 #select samples with the properties required
@@ -497,6 +501,7 @@ rank_plots = lapply(names(select_samples), function(x) {
   p1 = p1 + ggtitle(paste(x,  mutated_gene[aml_sample], sep = '\n')) +
     scale_colour_brewer(palette = 'Accent') +
     theme(legend.title = element_blank())
+  return(p1)
 })
 
 #create a multipanel plot
@@ -518,13 +523,19 @@ Create a `data.frame` to store the data required for modelling
 #create a dataframe with the data required: scores and mutations
 scoredf = as.data.frame(colData(aml_se)[, aml_mutations])
 scoredf$Score = verhaak_scores$TotalScore
+scoredf$Dispersion = verhaak_scores$TotalDispersion
 ```
 
 Boxplot to visualise the predictive capacity of scores for the different mutations
 
 ```{r fig.wide=TRUE, fig.height=4.5, fig.cap="Boxplot of scores from the Verhaak signature split by different types of mutations."}
 #restructure the data for ploting
-plotdf = melt(scoredf, id.var = 'Score', variable.name = 'Mutation', value.name = 'Status')
+plotdf = melt(
+  scoredf,
+  id.var = c('Score', 'Dispersion'),
+  variable.name = 'Mutation',
+  value.name = 'Status'
+  )
 #convert TRUE-FALSE values to Mut-WT
 plotdf$Status = factor(plotdf$Status, labels = c('WT', 'Mut'))
 p1 = ggplot(plotdf, aes(Mutation, Score, fill = Status)) +
@@ -536,7 +547,7 @@ p1
 
 Use independent GLMs to predict mutations based on scores
 
-```{r}
+```{r predict_mutation_glm}
 #fit GLMs to each mutation
 glms = lapply(aml_mutations, function(x) {
   #generate a formula for the fit
@@ -548,10 +559,44 @@ names(glms) = aml_mutations
 
 #extract coefficients
 coefs = lapply(glms, function(x) coef(summary(x)))
-ldply(coefs, function(x) x[2, ], .id = 'Response')
+ldply(coefs, function(x) x[2, ], .id = 'Mutation')
 ```
 
 NPM1 mutations are significantly associated with the score. So are DNMT3A and FLT3 mutations, and MLL Fusions. Explain with respect to the coefficient estimates in GLMs.
+
+Evaluate prediction model performance {#prediction_performance}
+-------------------------------------
+
+```{r eval_prediction_performance}
+library(caret)
+
+#assess sensitivity and specificity
+sens_spec = ldply(glms, function(glm1) {
+  #predict mutations for the data used in training and convert to binary format
+  prediction = as.numeric(predict(glm1) > 0)
+  prediction = as.factor(prediction)
+  truth = as.factor(glm1$y)
+  #compute the sensitivity and specificity using the caret package
+  sens = sensitivity(prediction, truth)
+  spec = specificity(prediction, truth)
+  return(c('Sensitivity' = sens, 'Specificity' = spec))
+}, .id = 'Mutation')
+sens_spec
+```
+
+Including the dispersion estimates in the model may improve predictions
+
+```{r predict_with_mads}
+#include dispersion in the model
+glm_npm1 = glm('NPM1.Mut ~ Score + Dispersion',
+               data = scoredf,
+               family = binomial(link = 'logit'))
+#evaluate performance of the new model
+prediction = as.numeric(predict(glm_npm1) > 0)
+prediction = as.factor(prediction)
+truth = as.factor(glm_npm1$y)
+c('Sensitivity' = sensitivity(prediction, truth), 'Specificity' = specificity(prediction, truth))
+```
 
 Deriving signatures using DE analysis and scoring samples {#de_and_score}
 =========================================================
@@ -560,7 +605,7 @@ Deriving signatures using DE analysis and scoring samples {#de_and_score}
 Packages used {.unnumbered}
 =============
 
-This workflow depends on various packages from version 3.8 of the Bioconductor project, running on R version 3.5.1 or higher. The complete list of the packages used for this workflow are shown below:
+This workflow depends on various packages from version `r BiocManager::version()` of the Bioconductor project, running on `r version$version.string` or higher. The complete list of the packages used for this workflow are shown below:
 
 ```{r session_info}
 sessionInfo()
