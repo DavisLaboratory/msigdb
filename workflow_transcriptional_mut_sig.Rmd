@@ -6,13 +6,23 @@ author:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
       - School of Mathematics and Statistics, University of Melbourne, Parkville, VIC 3010, Australia
     email: bhuva.d@wehi.edu.au
+  - name: Momeneh Foroutan
+    affiliation:
+      - Department of Clinical Pathology, The University of Melbourne Centre for Cancer Research, Victorian Comprehensive Cancer Centre, Melbourne, Victoria 3000, Australia
+    email: momeneh.foroutan@unimelb.edu.au
+  - name: Ruqian Lyu
+    affiliation:
+      - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia??
+    email: ??
   - name: Joseph Cursons
     affiliation:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
+	  - Department of Medical Biology, University of Melbourne, Parkville, VIC 3010, Australia
     email: cursons.j@wehi.edu.au
   - name: Melissa J Davis
     affiliation:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
+	  - Department of Medical Biology, University of Melbourne, Parkville, VIC 3010, Australia
     email: davis.m@wehi.edu.au
 date: "`r format(Sys.time(), '%d %b %Y')`"
 output:
@@ -28,7 +38,7 @@ vignette: |
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 abstract: >
-  Transctriptional signatures for mutations
+  Transcriptional signatures for mutations
 ---
 
 **R version**: `r R.version.string`
@@ -82,8 +92,23 @@ knitr::write_bib(c(
 Introduction {#intro}
 ============
 
+Cancers are a heterogeneous set of diseases with a number of clinical and pathological subtypes. In disease such as breast cancer the primary clinical classifications relate to the expression of hormone receptors (estrogen receptor: ER; and progesterone receptor: PR) or the overexpression of Erb-B2 receptor tyrosine kinase (HER2), as these features can be directly targeted with therapeutic agents. For many other cancers, subtype classification has largely relied upon identifying sets of recurrent mutations across large patient cohorts, with large whole genome or whole exome sequencing studies helping to resolve the clinically significant subtypes [10.1056/NEJMoa1301689, 10.1056/NEJMoa1516192].
+
+In recent years there has also been a rapid development and uptake of RNA-sequencing technologies which allow us to examine the transcriptional profile of biological samples [10.1038/nrg.2017.96]. Through large scale efforts such as The Cancer Genome Atlas [cite] transcriptomic data are available for thousands of clinical samples, often together with corresponding genomic or epigenomic (often DNA methylation) data. These transcriptomic data allow a better characterisation of the functional effects from corresponding mutations, and have provided a window to study the heterogeneity which arises within different subtypes of cancer due to epigenetic and transcriptional regulatory programs which can also influence cell behaviour.
+
+Probably need a paragraph on gene set scoring etc**
+
+Here, we demonstrate that the single-sample gene set scoring method singscore [10.1186/s12859-018-2435-4] (	http://bioconductor.org/packages/singscore/) can be used together with a transriptional 'gene signature' for NPM1c mutation. Without any need for parameter fitting or estimation, we show that gene set scoring for this method can identify samples carrying this mutation with very high recall.
+
 Description of the biological problem {#biol_problem}
 =====================================
+
+As with most cancers, acute myeloid leukemia (AML) is a heterogeneous cancer with a number of classified subtypes. Analysis of TCGA AML genomic data identified a number of AML subtypes based upon the presence of absence of specific 'driver mutations' which recapitulated a number of previously identified subsets [10.1056/NEJMoa1301689]. A more recent study which focussed primarily on genomic data has further refined the clinically-significant AML subtypes [10.1056/NEJMoa1516192], highlighting a number of co-occurring mutations. Of note for this work, one of the most common mutations in clinical AML samples is a frameshift mutation within exon 12 of the nucleophosmin (NPM1) gene [cite]. This mutation leads to abberant localisation of NPM1, leading to accumulation within the cytoplasm rather than the nucleolus, and accordingly this mutation is often referred to as the NPM1c mutation [cite]. Furthermore, as shown by Papaemmanuil, this NPM1c mutation tends to co-occur with mutations in DNA methyltransferase 3A (DNMT3A) or internal tandem duplications within the 'Fms Related tyrosine kinase' gene (FLT3-ITD) [10.1056/NEJMoa1516192].
+
+As noted by Verhaak et al [10.1182/blood-2005-05-2168], the NPM1c mutation is associated with dysregulated activity of the homeobox domain (Hox) family of transcription factors which are essential for developmental patterning [cite]. The effects of this mutation in disease progression have been further demonstrated in recent work which showed that loss of NPM1c leads to differentiation of AML cells [10.1016/j.ccell.2018.08.005]. Given this, it is interesting to note that another relatively large subset of AML samples are classified by lysine methyl transferase 2A (KMT2A; previously known as MLL) fusion genes, and these MLL fusion genes also drive dysregulated expression of Hox family genes [10.1182/blood-2004-01-0323].
+
+In this workflow we demonstrate the ability of the singscore method for single sample gene set scoring [10.1186/s12859-018-2435-4] to classify tumour 'driver mutations' from transcriptomic data. We use a previously identified gene signature for the NPM1c mutation [10.1182/blood-2005-05-2168] which is included within the molecular signatures database (mSigDB) [10.1016/j.cels.2015.12.004], and demonstrate that a bi-directional scoring approach can classify TCGA AML samples with the NPM1c mutation with a very high recall. While the precision of this classification is not particularly high, we show that many of the 'false positive' samples carry MLL-fusion mutations, and this classification likely arises through the shared downstream biological effects of Hox family dysregulation.
+
 
 Downloading and preparing the data {#download_and_prepare}
 ==================================
