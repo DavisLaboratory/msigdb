@@ -17,12 +17,12 @@ author:
   - name: Joseph Cursons
     affiliation:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
-	  - Department of Medical Biology, University of Melbourne, Parkville, VIC 3010, Australia
+      - Department of Medical Biology, University of Melbourne, Parkville, VIC 3010, Australia
     email: cursons.j@wehi.edu.au
   - name: Melissa J Davis
     affiliation:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
-	  - Department of Medical Biology, University of Melbourne, Parkville, VIC 3010, Australia
+      - Department of Medical Biology, University of Melbourne, Parkville, VIC 3010, Australia
     email: davis.m@wehi.edu.au
 date: "`r format(Sys.time(), '%d %b %Y')`"
 output:
