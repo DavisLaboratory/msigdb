@@ -26,17 +26,16 @@ author:
     email: davis.m@wehi.edu.au
 date: "`r format(Sys.time(), '%d %b %Y')`"
 output:
+  # BiocWorkflowTools::f1000_article
   BiocStyle::html_document:
     toc_float: true
     fig_caption: true
     number_sections: true
-  # BiocStyle::pdf_document:
-  #   fig_caption: true
-  #   number_sections: false
 bibliography: [bibliography.bib, packages.bib]
 vignette: |
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+keywords: Please list up to eight keywords to help readers interested in your article find it more easily.
 abstract: >
   Transcriptional signatures for mutations
 ---
@@ -136,7 +135,7 @@ gdc_info = getGDCInfo()
 gdc_info
 ```
 
-A query then needs to be run on the GDC to identify the specific files to download. This step is similar to generating a *MANIFEST* file using the GDC portal. The first parameter of the query specifies the project whose data needs to be downloaded. Available projects can be accessed using the `getGDCprojects()` or from <https://portal.gdc.cancer.gov/projects>. The TCGA acute myeloid leukemia data is part of the TCGA-LAML project. Following this, the data category, data type and workflow type need to be specified. The query formed below selects files containing the count level transcriptomic measurements. Values for different parameters of the query can be identified from "searching arguments" section of the "query" package vignette which can be accessed using `vignette('query', package = 'TCGAbiolinks')`. The results of this query will be a dataframe containing filenames and additional annotations related to the files.
+A query then needs to be run on the GDC to identify the specific files to download. This step is similar to generating a *MANIFEST* file using the GDC portal. The first parameter of the query specifies the project whose data needs to be downloaded. Available projects can be accessed using the `getGDCprojects()` or from <https://portal.gdc.cancer.gov/projects>. The TCGA acute myeloid leukemia data is part of the TCGA-LAML project. Following this, the data category, data type and workflow type need to be specified. The query formed below selects files containing the count level transcriptomic measurements. Values for different parameters of the query can be identified from "searching arguments" section of the "query" package vignette which can be accessed using `vignette("query", package = "TCGAbiolinks")`. The results of this query will be a dataframe containing filenames and additional annotations related to the files.
 
 Read count level data are selected instead of the processed FPKM data as one of the downstream pre-processing analysis results in filtering out of genes. A general recommendation is to compute FPKM values after filtering genes out so as to ensure counts are normalised by the correct library sizes.
 
@@ -241,7 +240,7 @@ gencode_link = paste(
   gencode_file,
   sep = '/'
   )
-download.file(gencode_link, gencode_file)
+download.file(gencode_link, gencode_file, method = 'libcurl')
 ```
 
 The `rtracklayer` R package provides functions to help parse GTF files.
@@ -305,7 +304,7 @@ Original file at <https://tcga-data.nci.nih.gov/docs/publications/aml_2012/Suppl
 
 ```{r preproc_mutations, eval=FALSE, include=FALSE}
 #preprocessing - read tsv (Joe's version) and convert save as RDS
-mut_info = read.csv('PatientMutations.tsv', sep = '\t', colClasses = c('character', rep('logical', 7)))
+mut_info = read.csv('PatientMutations.tsv', sep = '\t', colClasses = c('character', rep('logical', 8)))
 rownames(mut_info) = mut_info$Barcode
 mut_info = mut_info[, -1]
 patients = mut_info[substring(colnames(aml_se), 1, 12), ]
@@ -313,15 +312,12 @@ rownames(patients) = colnames(aml_se)
 saveRDS(patients, file = 'AMLPatientMutationsTCGA.rds')
 ```
 
-
-
 ```{r annotate_mutations}
 patient_mutations = readRDS('AMLPatientMutationsTCGA.rds')
 aml_mutations = colnames(patient_mutations)
 colData(aml_se) = cbind(colData(aml_se), patient_mutations)
 colData(aml_se)[, aml_mutations]
 ```
-
 
 Map Ensembl IDs to Entrez IDs {#map_gene_ids}
 -----------------------------
@@ -360,8 +356,8 @@ head(sort(table(gene_annot[!keep, 'gene_biotype']), decreasing = TRUE), n = 10)
 aml_se = aml_se[keep, ]
 ```
 
-Using transcriptional signatures to predict mutation status {#transcriptional_mut_sig}
-===========================================================
+Transcriptional signatures to predict mutation status {#transcriptional_mut_sig}
+=====================================================
 
 Download signature and load into R {#prepare_signature}
 ----------------------------------
@@ -374,23 +370,23 @@ Create UP DN name pairs for the signature
 
 ```{r signature_names}
 #create signature names
-sig_names = paste('VERHAAK_AML_WITH_NPM1_MUTATED', c('UP', 'DN'), sep = '_')
-sig_names
+verhaak_names = paste('VERHAAK_AML_WITH_NPM1_MUTATED', c('UP', 'DN'), sep = '_')
+verhaak_names
 ```
 
 Download signatures from MSigDB locally. `mapply` runs the function on each element of the two argument vectors
 
 ```{r download_signatures, results='hide'}
 #generate URLs
-sig_links = paste0(
+verhaak_links = paste0(
   'http://software.broadinstitute.org/gsea/msigdb/download_geneset.jsp?geneSetName=',
-  sig_names,
+  verhaak_names,
   '&fileType=xml'
   )
 
 #download files
-sig_files = paste0(sig_names, '.xml')
-mapply(download.file, sig_links, sig_files)
+verhaak_files = paste0(verhaak_names, '.xml')
+mapply(download.file, verhaak_links, verhaak_files, method = 'libcurl')
 ```
 
 Read signatures into GeneSet objects in R which generates a GeneSetCollection. Represent signature using Entrez IDs.
@@ -398,7 +394,7 @@ Read signatures into GeneSet objects in R which generates a GeneSetCollection. R
 ```{r read_signatures}
 library(GSEABase)
 
-verhaak_sigs = getBroadSets(sig_files, membersId = 'MEMBERS_EZID')
+verhaak_sigs = getBroadSets(verhaak_files, membersId = 'MEMBERS_EZID')
 verhaak_sigs
 ```
 
@@ -620,11 +616,63 @@ glm_npm1 = glm('NPM1.Mut ~ Score + Dispersion',
 prediction = as.numeric(predict(glm_npm1) > 0)
 prediction = as.factor(prediction)
 truth = as.factor(glm_npm1$y)
-c('Sensitivity' = sensitivity(prediction, truth), 'Specificity' = specificity(prediction, truth))
+c(
+  'Sensitivity' = sensitivity(prediction, truth),
+  'Specificity' = specificity(prediction, truth)
+  )
 ```
 
-Deriving signatures using DE analysis and scoring samples {#de_and_score}
-=========================================================
+Regulatory signatures to predict protein phosporylation {#pheno_phospho_sig}
+=======================================================
+
+Score samples using the E2F1 over-expression signature {#score_e2f1}
+------------------------------------------------------
+
+Transcriptomic gene signatures representing the trascriptional changes resulting from over-expression of the E2F1 transcription factor are downloaded and processed as described in the previous section.
+
+```{r process_e2f1_sigs}
+#create signature names
+e2f1_names = paste('RB_DN.V1', c('UP', 'DN'), sep = '_')
+#generate URLs
+e2f1_links = paste0(
+  'http://software.broadinstitute.org/gsea/msigdb/download_geneset.jsp?geneSetName=',
+  e2f1_names,
+  '&fileType=xml'
+  )
+
+#download files
+e2f1_files = paste0(e2f1_names, '.xml')
+mapply(download.file, e2f1_links, e2f1_files, method = 'libcurl')
+e2f1_sigs = getBroadSets(e2f1_files, membersId = 'MEMBERS_EZID')
+```
+
+AML samples are then scored using the new signature. Ranks computed in \@ref(score_samples) can be reused to compute scores with the new signature.
+
+```{r score_e2f1}
+e2f1_scores = simpleScore(aml_ranked,
+                          upSet = e2f1_sigs[[1]],
+                          downSet = e2f1_sigs[[2]])
+```
+
+E2F1_UP vs. Verhaak signature landscape {#sig_landscape}
+---------------------------------------
+
+```{r fig.small = TRUE, fig.cap="Signature landscape. ", fig.height=4}
+p1 = plotScoreLandscape(
+  verhaak_scores,
+  e2f1_scores,
+  scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', 'E2F1_UP')
+  )
+#we modify the number of bins in the landscape to ensure they are not too sparse
+p1$layers[[1]]$stat_params$bins = round(sqrt(ncol(aml_se)))
+
+#project NPM1 mutations onto the landscape
+p2 = projectScoreLandscape(p1,
+                           verhaak_scores,
+                           e2f1_scores,
+                           subSamples = aml_se$PML.RARA)
+p2
+```
 
 
 Packages used {.unnumbered}
