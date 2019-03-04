@@ -359,6 +359,8 @@ aml_se = aml_se[keep, ]
 Transcriptional signatures to predict mutation status {#transcriptional_mut_sig}
 =====================================================
 
+The signature by @verhaak05 is now used to predict the mutation status of the NPM1c mutation. This is done by quantifying the concordance of genes in the signature with their expression in each sample. As such, high expression of up-regulated genes and low expression of down-regulated genes would result in higher scores. This single value can then be used to predict the mutation status of individual samples. The signatures of interest are downloaded from the MSigDB and read into `GeneSet` objects from the `GSEABase` R package. We then use the `singscore` R/Bioconductor package to quantify each sample for the Verhaak signature. Some of the visualisation and diagnostic tools within the `singscore` package are used to interpret the signatures and scores. Finally, we use a simple logistic regression model on the scores to predict the mutation status.
+
 Download signature and load into R {#prepare_signature}
 ----------------------------------
 
