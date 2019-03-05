@@ -359,16 +359,14 @@ aml_se = aml_se[keep, ]
 Transcriptional signatures to predict mutation status {#transcriptional_mut_sig}
 =====================================================
 
-The signature by @verhaak05 is now used to predict the mutation status of the NPM1c mutation. This is done by quantifying the concordance of genes in the signature with their expression in each sample. As such, high expression of up-regulated genes and low expression of down-regulated genes would result in higher scores. This single value can then be used to predict the mutation status of individual samples. The signatures of interest are downloaded from the MSigDB and read into `GeneSet` objects from the `GSEABase` R package. We then use the `singscore` R/Bioconductor package to quantify each sample for the Verhaak signature. Some of the visualisation and diagnostic tools within the `singscore` package are used to interpret the signatures and scores. Finally, we use a simple logistic regression model on the scores to predict the mutation status.
+The signature by @verhaak05 is now used to predict the mutation status of the NPM1c mutation. This is done by quantifying the concordance of genes in the signature with their expression in each sample. As such, high expression of up-regulated genes and low expression of down-regulated genes would result in higher scores. This single value can then be used to predict the mutation status of individual samples.
+
+The signatures of interest are first downloaded from the MSigDB and read into `GeneSet` objects from the `GSEABase` R package. We then use the `singscore` R/Bioconductor package to quantify each sample for the Verhaak signature. Some of the visualisation and diagnostic tools within the `singscore` package are used to interpret the signatures and scores. Finally, we use a simple logistic regression model on the scores to predict the mutation status.
 
 Download signature and load into R {#prepare_signature}
 ----------------------------------
 
-Up dn significance in Msigdb
-
-http://software.broadinstitute.org/gsea/msigdb/cards/VERHAAK_AML_WITH_NPM1_MUTATED_UP
-
-Create UP DN name pairs for the signature
+The @verhaak05 signature is composed of an up-regulated and a down-regulated gene set. Many signatures are developed in such a manner to improve discrimination of samples. MSigDB stores such signatures using names with suffixes "_UP" and "_DN" representing the independent components of the signature. Here, we form the download links for the signature with the base name "VERHAAK_AML_WITH_NPM1_MUTATED".
 
 ```{r signature_names}
 #create signature names
@@ -376,7 +374,7 @@ verhaak_names = paste('VERHAAK_AML_WITH_NPM1_MUTATED', c('UP', 'DN'), sep = '_')
 verhaak_names
 ```
 
-Download signatures from MSigDB locally. `mapply` runs the function on each element of the two argument vectors
+The signatures are then downloaded using the links, resulting in an XML file for each component of the signature. The `mapply` function is used to run the download function on all pairs of link-output arguments.
 
 ```{r download_signatures, results='hide'}
 #generate URLs
@@ -391,7 +389,7 @@ verhaak_files = paste0(verhaak_names, '.xml')
 mapply(download.file, verhaak_links, verhaak_files, method = 'libcurl')
 ```
 
-Read signatures into GeneSet objects in R which generates a GeneSetCollection. Represent signature using Entrez IDs.
+Functions in the `GSEABase` package help in reading, parsing and processing the signatures. Signatures from an MSigDB XML file can be read using the `getBroadSets` function which results in a `GeneSet` object. Gene symbols, Entrez IDs and affymetrix chip IDs from the original experiment (HG-U133A in this case) are stored in the XML file. Entrez IDs are read from the file as these can be mapped directly to our data. Conversions to other identifiers can be achieved using `mapIdentifiers` package from `GSEABase` and an annotation package that contains the mappings. The advantage of using this function instead of the `mapIds` function from the `AnnotationDb` package is that the former retains the `GeneSet` object after conversion of IDs.
 
 ```{r read_signatures}
 library(GSEABase)
@@ -400,7 +398,7 @@ verhaak_sigs = getBroadSets(verhaak_files, membersId = 'MEMBERS_EZID')
 verhaak_sigs
 ```
 
-The signatures consist of Entrez IDs therefore we use the Entrez ID annotation to name the rows
+To ease indexing of the data when scoring using the signatures, rownames of the `SummarisedExperiment` object are changed to Entrez IDs which are already part of the row annotations.
 
 ```{r rows_to_entrez}
 rownames(aml_se) = rowData(aml_se)$entrezgene
