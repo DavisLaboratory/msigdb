@@ -2,7 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-GDCdata/
+GDCdata/*
 TCGA_AML_counts.rds
 gene_lengths_HTSeq_gencodev22.rds
 
@@ -19,4 +19,5 @@ gene_lengths_HTSeq_gencodev22.rds
 gencode.v22.annotation.gtf.gz
 workflow_transcriptional_mut_sig_cache/*
 workflow_transcriptional_mut_sig_files/*
+PSets/*
 PatientMutations.tsv

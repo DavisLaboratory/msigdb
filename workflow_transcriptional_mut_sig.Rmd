@@ -64,6 +64,7 @@ library(singscore)
 library(reshape2)
 library(gridExtra)
 library(caret)
+library(PharmacoGx)
 
 #ggplot theme
 rl = 1.2
@@ -240,7 +241,7 @@ gencode_link = paste(
   gencode_file,
   sep = '/'
   )
-download.file(gencode_link, gencode_file, method = 'libcurl')
+download.file(gencode_link, gencode_file, method = 'libcurl') #(size: 39MB)
 ```
 
 The `rtracklayer` R package provides functions to help parse GTF files.
@@ -484,10 +485,12 @@ grid.arrange(grobs = rank_plots, nrow = 1)
 
 This figure shows that both the up- and down-regulated genesets contribute to the score of the top scoring sample as these genes are at the extremes ends of the rank spectrum. Similarly, the lowest scoring sample has the ranks of genes in each set inverted. As observed in the previous plot, the up-regulated genes improve the discrimination between NPM1 mutated samples and other samples and may be a stronger indicator of wild-type NPM1 samples than the down-regulated genes. Finally, the sample with the maximum dispersion exhibits uniformly distributed down-regulated gene ranks and a bimodal distribution of the up-regulated gene ranks with the modes at the extremes of the spectrum.
 
-Combined, these plots show that both the up- and down-regulated genes play an important role in discriminating between NPM1 mutated (and MLL fusion/PTD samples), and wild-type samples. These diagnostic plots help in determining the importance of genes in signatures with respect to the samples of interest and should be used prior to application of signatures. Many signatures have been developed in specific contexts due to inherent biases in datasets and yet be described in a generalised setting (Sep paper ref?). These diagnostic plots may help in validating their application in specific contexts and possibly assist in characterising the contexts of all existing signatures.
+Combined, these plots show that both the up- and down-regulated genes play an important role in discriminating between NPM1 mutated (and MLL fusion/PTD samples), and wild-type samples. These diagnostic plots help in determining the importance of genes in signatures with respect to the samples of interest and should be used prior to application of signatures. Many signatures have been developed in specific contexts due to inherent biases in datasets and yet been described in a generalised setting (Sep paper ref?). These diagnostic plots may help in validating their application in specific contexts and possibly assist in characterising the contexts of all existing signatures.
 
 Predicting mutations using the Verhaak signature {#predict_verhaak}
 ------------------------------------------------
+
+Results in non-parametric model, scores are non-parametric, invariant to most transformations. Not the case if the genes in the signature are used directly in the model.
 
 The Verhaak transcriptomic signature can be used to predict the presence of specific mutations.
 
@@ -579,6 +582,18 @@ c(
 
 Regulatory signatures to predict protein phosporylation {#pheno_phospho_sig}
 =======================================================
+
+Download and process the CCLE data {#download_ccle}
+----------------------------------
+
+Use CCLE cell line data from the PharmacoGx package. Package represents data in PharmacoSets (PSets). PSets store molecular measurements such as gene expression (RNA-seq), mutation profiles and copy number variation along with drug sensitivy measurements. We are only interested in the expression measurements
+
+```{r download_ccle_pset}
+library(PharmacoGx)
+
+ccle_pset = downloadPSet("CCLE") #(size: 246MB)
+```
+
 
 Score samples using the E2F1 over-expression signature {#score_e2f1}
 ------------------------------------------------------
