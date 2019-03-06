@@ -225,12 +225,12 @@ aml_dge = aml_dge[keep, , keep.lib.sizes = FALSE]
 aml_se = aml_se[keep, ]
 ```
 
-Normalisation and transformation to FPKM values {#calc_fpkm}
+Transformation to FPKM values and normalisation {#calc_fpkm}
 -----------------------------------------------
 
-Singscore requires gene expression measurements to be comparable between genes which would require correction for gene length biases. Transformations such as transcripts per million (TPM) and reads/fragments per kilobase per million (RPKM/FPKM) that normalise by gene length may be used. Both TPM and RPKM/FPKM values should produce similar results when applying singscore provided that the library size is large enough, which it is here. RPKM values are generally computed after correcting for compositional biases. The `calcNormFactors` function in edgeR provides three methods to do so, TMM normalisation being the default. @chen16 and @law16 discuss the implications of normalisation prior to down-stream processing.
+Singscore requires gene expression measurements to be comparable between genes, therefore, correction for gene length biases needs to be performed. Transformations such as transcripts per million (TPM) and reads/fragments per kilobase per million (RPKM/FPKM), that normalise by gene length, may be used. Both, TPM and RPKM/FPKM values should produce similar results when applying singscore provided that the library size is large enough, which it is here. RPKM values are generally computed after correcting for compositional biases. The `calcNormFactors` function in edgeR provides three methods to do so, TMM normalisation being the default. @chen16 and @law16 discuss the implications of normalisation prior to down-stream processing. Normlisation is generally performed for cross-sample analysis where samples need to be comparable. Singscores are invariant to data normalisation as the analysis is contained within the sample of interest. The idea extends to any transformation that preserves the relative ranks of genes within a sample such as a log transformation. Here, we normalise the samples using TMM normalisation solely for visualisation purposes.
 
-These transformations require the gene lengths for all genes to be specified. Gene lengths need to be computed based on the alignment and quantification parameters. The TCGA transcriptomic data has been aligned using STAR and quantified using HTSeq (details of the pipeline available at <https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/>). HTSeq quantifies reads mapping to the exons of each gene, therefore, effective gene lengths can be calculated as the sum of all exons spanning the gene. The GENCODE v22 annotation file was used for quantification therefore the same file needs to be used to compute gene lengths.
+Data transformations to TPM or RPKM/FPKM require the gene lengths for all genes to be calculated. Gene lengths need to be computed based on the alignment and quantification parameters. The TCGA transcriptomic data has been aligned using STAR and quantified using HTSeq (details of the pipeline available at <https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/>). HTSeq quantifies reads mapping to the exons of each gene, therefore, effective gene lengths can be calculated as the sum of all exons spanning the gene. The GENCODE v22 annotation file was used for quantification therefore the same file needs to be used to compute gene lengths.
 
 ```{r download_gencode, results='hide'}
 #download v22 of the GENCODE annotation
@@ -265,19 +265,21 @@ Genes are also annotated with their biotype for further analysis. The annotation
 genetype = unique(elementMetadata(gtf)[, c('gene_id', 'gene_type')])
 colnames(genetype)[1] = 'ensembl_gene_id'
 gene_lengths = merge(genetype, gene_lengths)
+
 #remove ENSEMBL ID version numbers
 gene_lengths$ensembl_gene_id = gsub('\\.[0-9]*', '', gene_lengths$ensembl_gene_id)
 saveRDS(gene_lengths, file = 'gene_lengths_HTSeq_gencodev22.rds')
 gene_lengths
 ```
 
-The SummarizedExperiment object allows feature annotations to be stored, therefore, information on gene length and biotypes should be added to the existing annotations. Similarly, annotations need to be added to the DGEList object with the column name consisiting the word *length*.
+The SummarizedExperiment object allows feature annotations to be stored, therefore, information on gene length and biotypes should be added to the existing annotations. Similarly, annotations need to be added to the DGEList object with the column name consisiting the word "length".
 
 ```{r add_length_annotation}
 #allocate rownames for ease of indexing
 rownames(gene_lengths) = gene_lengths$ensembl_gene_id
 rowData(aml_se)$gene_length = gene_lengths[rownames(aml_se), 'gene_length']
 rowData(aml_se)$gene_biotype = gene_lengths[rownames(aml_se), 'gene_type']
+
 #annotate gene lengths for the DGE object
 aml_dge$genes$length = gene_lengths[rownames(aml_dge), 'gene_length']
 ```
@@ -286,14 +288,9 @@ RPKM/FPKM values can now be calculated with the computed gene lengths after comp
 
 ```{r compute_fpkm}
 aml_dge_tmm = calcNormFactors(aml_dge, method = 'TMM')
-aml_dge_rle = calcNormFactors(aml_dge, method = 'RLE')
-aml_dge_uq = calcNormFactors(aml_dge, method = 'upperquartile')
+
 #compute FPKM values and append to assays
-assays(aml_se) = c(assays(aml_se),
-                   list('logFPKM_none' = rpkm(aml_dge, log = TRUE)),
-                   list('logFPKM_TMM' = rpkm(aml_dge_tmm, log = TRUE)),
-                   list('logFPKM_RLE' = rpkm(aml_dge_rle, log = TRUE)),
-                   list('logFPKM_UQ' = rpkm(aml_dge_uq, log = TRUE)))
+assay(aml_se, 'logFPKM_TMM') = rpkm(aml_dge_tmm, log = TRUE)
 aml_se
 ```
 
@@ -413,8 +410,7 @@ Compute ranks of each gene sample-wise which are then used to compute scores. We
 library(singscore)
 
 #apply the rankGenes method to each version of the dataset, excluding counts
-#single call: rankGenes(assay(aml_se, 'logFPKM_TMM'))
-aml_ranked = endoapply(assays(aml_se)[-1], rankGenes)
+aml_ranked = rankGenes(assay(aml_se, 'logFPKM_TMM'))
 ```
 
 Three possible modes of using singscore:
@@ -425,56 +421,13 @@ Three possible modes of using singscore:
 
 The third mode is suitable for this application. The median absolute deviation is the default choice of a dispersion measure as it is non-parametric. All other signature scoring methods only report the score of a signature (which is usually some estimate of the expectation of expression) and ignore the variance of expression. Both measurements are required to fully characterise a score therefore singscore reports both.
 
-```{r compute_scores_verhaak}
+```{r compute_scores_verhaak, warning=TRUE}
 #apply the scoring function
-#single call: simpleScore(aml_ranked[['logFPKM_TMM']], upSet = verhaak_sigs[[1]], downSet = verhaak_sigs[[2]])
-verhaak_scores = endoapply(aml_ranked,
-                           simpleScore,
-                           upSet = verhaak_sigs[[1]],
-                           downSet = verhaak_sigs[[2]])
+verhaak_scores = simpleScore(aml_ranked,
+                             upSet = verhaak_sigs[[1]],
+                             downSet = verhaak_sigs[[2]])
 
-head(verhaak_scores[['logFPKM_none']])
-```
-
-Similarity between scores from different normalisation methods. The width of the range of scores from the different normalisation methods is computed for each sample as a measure of variation. Scores are mostly invariant to the choice of normalisation method.
-
-```{r score_consistency_normalisation}
-verhaak_total_scores = mapply(cbind, lapply(verhaak_scores, function(x)
-  x$TotalScore))
-#compute the difference in range for each sample across each processed dataset
-range_size = apply(verhaak_total_scores, 1, function(x) diff(range(x)))
-```
-
-Further investigation reveals that variation of scores is related to the estimated normalisation factors. Despite the effect of normalisation being small, TMM normalisation and RLE normalisation introduce additional variation in scores shown by the association between the variation and normalisation factors.
-
-```{r fig.wide=TRUE, fig.cap="Normalisation has minimal effects on scores. Normalisation factors are moderately associated with variation in scores", fig.height=4}
-library(ggplot2)
-library(reshape2)
-
-plotdf = data.frame(
-  'TMM' = aml_dge_tmm$samples$norm.factors,
-  'RLE' = aml_dge_rle$samples$norm.factors,
-  'UQ' = aml_dge_uq$samples$norm.factors,
-  'Variation' = range_size
-  )
-plotdf = melt(
-  plotdf,
-  id.vars = 'Variation',
-  variable.name = 'norm.method',
-  value.name = 'norm.factor'
-  )
-ggplot(plotdf, aes(norm.factor, Variation)) +
-  geom_point(alpha = 0.75) +
-  geom_vline(xintercept = 1, lty = 2, col = 2) +
-  facet_wrap(~ norm.method) +
-  current_theme
-```
-
-The non-normalised data is selected for further investigation due to the impact of normalisation being negligible.
-
-```{r select_fpkm_nonorm}
-aml_ranked = aml_ranked[['logFPKM_none']]
-verhaak_scores = verhaak_scores[['logFPKM_none']]
+head(verhaak_scores)
 ```
 
 Diagnostics of the Verhaak signature {#diagnostics_verhaak}
@@ -483,12 +436,12 @@ Diagnostics of the Verhaak signature {#diagnostics_verhaak}
 The `singscore` package provides a set of visualisation tools that enable diagnostics of the gene signature. For instance, these tools may be used to determine the importance of each signature of a dual signature (up- and down-regulated genes) to the total score, determine the importance of each gene of a signature in discriminating between the classes of interest and to look at the relationship between the final score and the dispersion of ranks. Annotations of interest can be overlayed on each plot. We begin by investigating the relationship between the score and dispersion of ranks of expression for the up-regulated gene signature, down-regulated gene signature and the full signature.
 
 ```{r fig.wide=TRUE, fig.cap="Total scores, scores for up-regulated genes, and scores for down-regulated genes for all samples. Scores are plot agains the median absolute deviation of the ranks of genes in each signature.", fig.height=4}
-
 #create annotation
 mutated_gene = rep('Other', ncol(aml_se))
 mutated_gene[aml_se$NPM1.Mut] = 'NPM1 Mut'
 mutated_gene[aml_se$KMT2A.Fusion | aml_se$KMT2A.PTD] = 'MLL Fusion/PTD'
 p1 = plotDispersion(verhaak_scores, annot = mutated_gene)
+
 #overwrite the colour palette and some elements of the theme
 p1 + scale_colour_brewer(palette = 'Dark2') +
   theme(
@@ -597,6 +550,7 @@ sens_spec = ldply(glms, function(glm1) {
   prediction = as.numeric(predict(glm1) > 0)
   prediction = as.factor(prediction)
   truth = as.factor(glm1$y)
+  
   #compute the sensitivity and specificity using the caret package
   sens = sensitivity(prediction, truth)
   spec = specificity(prediction, truth)
@@ -612,6 +566,7 @@ Including the dispersion estimates in the model may improve predictions
 glm_npm1 = glm('NPM1.Mut ~ Score + Dispersion',
                data = scoredf,
                family = binomial(link = 'logit'))
+
 #evaluate performance of the new model
 prediction = as.numeric(predict(glm_npm1) > 0)
 prediction = as.factor(prediction)
