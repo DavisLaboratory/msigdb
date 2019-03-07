@@ -64,7 +64,6 @@ library(singscore)
 library(reshape2)
 library(gridExtra)
 library(caret)
-library(PharmacoGx)
 
 #ggplot theme
 rl = 1.2
@@ -427,7 +426,6 @@ The third mode is suitable for this application. The median absolute deviation i
 verhaak_scores = simpleScore(aml_ranked,
                              upSet = verhaak_sigs[[1]],
                              downSet = verhaak_sigs[[2]])
-
 head(verhaak_scores)
 ```
 
@@ -442,13 +440,7 @@ mutated_gene = rep('Other', ncol(aml_se))
 mutated_gene[aml_se$NPM1.Mut] = 'NPM1 Mut'
 mutated_gene[aml_se$KMT2A.Fusion | aml_se$KMT2A.PTD] = 'MLL Fusion/PTD'
 p1 = plotDispersion(verhaak_scores, annot = mutated_gene)
-
-#overwrite the colour palette and some elements of the theme
-p1 + scale_colour_brewer(palette = 'Dark2') +
-  theme(
-    legend.text = element_text(size = rel(rl)),
-    legend.title = element_text(size = rel(rl), face = 'italic')
-  )
+p1
 ```
 
 Here we see that the signature of down-regulated genes has more discriminant power in separating the NPM1 mutated samples and those without. Moreover, the signature is able to discriminate MLL fusions and PTDs from the other samples. NPM1 mutations result in produce higher scores for the down-regulated gene set while MLL fusions and PTDs produce moderate scores. Similar trends are observed with the set of up-regulated genes, however, despite the range of scores increasing, the discriminant power drops moderately. In fact, the signature of up-regulated genes is able to discriminate samples without the genomic changes of interest ('Other') better by producing negative scores for most of these samples. Negative scores for the up-regulated signature indicate that these genes are expressed below median expression, therefore, likely down-regulated. Another observation from these plots is the trend of the MAD. The MAD is generally expected to be higher for scores close to zero. Zero scoresare achieved either by having all genes expressed at median expression level, genes are evenly distributed at both ends of the expression spectrum, or, the more likely scenario whereby the rank of expression of all genes are uniformly distributed. The last two scenarios would result in a high dispersion. To explain these ideas, we select 3 samples and plot the ranks of genes in both signatures. The sample with the highest total score, lowest total score and highest dispersion (MAD) are chosen.
@@ -474,7 +466,6 @@ rank_plots = lapply(names(select_samples), function(x) {
   
   #overwrite title of the plot with the description of the sample
   p1 = p1 + ggtitle(paste(x,  mutated_gene[aml_sample], sep = '\n')) +
-    scale_colour_brewer(palette = 'Accent') +
     theme(legend.title = element_blank())
   return(p1)
 })
@@ -586,8 +577,6 @@ Multiple signatures and landscapes {#signature_landscape}
 Score samples using an MLL fusion signature {#score_rossmll}
 -------------------------------------------
 
-Transcriptomic gene signatures representing the trascriptional changes resulting from over-expression of the E2F1 transcription factor are downloaded and processed as described in the previous section.
-
 ```{r process_rossmll_sigs}
 #create signature names
 rossmll_names = 'ROSS_AML_WITH_MLL_FUSIONS'
@@ -620,7 +609,6 @@ p1 = plotScoreLandscape(
   scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', 'ROSS_AML_WITH_MLL_FUSIONS')
   )
 #we modify the number of bins in the landscape to ensure they are not too sparse
-p1$layers[[1]]$stat_params$bins = round(sqrt(ncol(aml_se)))
 p1
 ```
 
@@ -668,8 +656,6 @@ p1 = plotScoreLandscape(
   newsig_scores,
   scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', newsig_name)
 )
-#we modify the number of bins in the landscape to ensure they are not too sparse
-p1$layers[[1]]$stat_params$bins = round(sqrt(ncol(aml_se)))
 
 #project NPM1 mutations onto the landscape
 mutated_gene = rep('Other', ncol(aml_se))
