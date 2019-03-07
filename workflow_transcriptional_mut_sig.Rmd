@@ -580,70 +580,112 @@ c(
   )
 ```
 
-Regulatory signatures to predict protein phosporylation {#pheno_phospho_sig}
-=======================================================
+Multiple signatures and landscapes {#signature_landscape}
+==================================
 
-Download and process the CCLE data {#download_ccle}
-----------------------------------
-
-Use CCLE cell line data from the PharmacoGx package. Package represents data in PharmacoSets (PSets). PSets store molecular measurements such as gene expression (RNA-seq), mutation profiles and copy number variation along with drug sensitivy measurements. We are only interested in the expression measurements
-
-```{r download_ccle_pset}
-library(PharmacoGx)
-
-ccle_pset = downloadPSet("CCLE") #(size: 246MB)
-```
-
-
-Score samples using the E2F1 over-expression signature {#score_e2f1}
-------------------------------------------------------
+Score samples using an MLL fusion signature {#score_rossmll}
+-------------------------------------------
 
 Transcriptomic gene signatures representing the trascriptional changes resulting from over-expression of the E2F1 transcription factor are downloaded and processed as described in the previous section.
 
-```{r process_e2f1_sigs}
+```{r process_rossmll_sigs}
 #create signature names
-e2f1_names = paste('RB_DN.V1', c('UP', 'DN'), sep = '_')
+rossmll_names = 'ROSS_AML_WITH_MLL_FUSIONS'
 #generate URLs
-e2f1_links = paste0(
+rossmll_links = paste0(
   'http://software.broadinstitute.org/gsea/msigdb/download_geneset.jsp?geneSetName=',
-  e2f1_names,
+  rossmll_names,
   '&fileType=xml'
   )
 
 #download files
-e2f1_files = paste0(e2f1_names, '.xml')
-mapply(download.file, e2f1_links, e2f1_files, method = 'libcurl')
-e2f1_sigs = getBroadSets(e2f1_files, membersId = 'MEMBERS_EZID')
+rossmll_files = paste0(rossmll_names, '.xml')
+mapply(download.file, rossmll_links, rossmll_files, method = 'libcurl')
+rossmll_sigs = getBroadSets(rossmll_files, membersId = 'MEMBERS_EZID')
 ```
 
 AML samples are then scored using the new signature. Ranks computed in \@ref(score_samples) can be reused to compute scores with the new signature.
 
-```{r score_e2f1}
-e2f1_scores = simpleScore(aml_ranked,
-                          upSet = e2f1_sigs[[1]],
-                          downSet = e2f1_sigs[[2]])
+```{r score_rossmll}
+rossmll_scores = simpleScore(aml_ranked, rossmll_sigs[[1]])
 ```
 
-E2F1_UP vs. Verhaak signature landscape {#sig_landscape}
----------------------------------------
+Ross MLL fusion signature vs. Verhaak signature landscape {#sig_landscape_mll}
+---------------------------------------------------------
 
-```{r fig.small = TRUE, fig.cap="Signature landscape. ", fig.height=4}
+```{r fig.cap="Signature landscape.", fig.height=7}
 p1 = plotScoreLandscape(
   verhaak_scores,
-  e2f1_scores,
-  scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', 'E2F1_UP')
+  rossmll_scores,
+  scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', 'ROSS_AML_WITH_MLL_FUSIONS')
   )
+#we modify the number of bins in the landscape to ensure they are not too sparse
+p1$layers[[1]]$stat_params$bins = round(sqrt(ncol(aml_se)))
+p1
+```
+
+```{r new_annotations}
+#new annotation - modify previously used annotations
+mutated_gene[aml_se$KMT2A.Fusion] = 'MLL Fusion'
+mutated_gene[aml_se$KMT2A.PTD] = 'MLL PTD'
+mutated_gene[aml_se$PML.RARA] = 'PML-RARA'
+```
+
+```{r fig.cap="Signature landscape with projections.", fig.height=7}
+select_aml = !mutated_gene %in% 'Other'
+#project above mutations onto the landscape
+p2 = projectScoreLandscape(p1,
+                           verhaak_scores,
+                           rossmll_scores,
+                           subSamples = select_aml,
+                           annot = mutated_gene[select_aml])
+p2
+```
+
+Ross PML-RARA fusion signature vs. Verhaak signature landscape {#sig_landscape_pmlrara}
+--------------------------------------------------------------
+
+```{r echo=FALSE, fig.cap="Signature landscape with projections.", fig.height=7}
+newsig_name = 'ROSS_AML_WITH_PML_RARA_FUSION'
+#generate URL
+newsig_link = paste0(
+  'http://software.broadinstitute.org/gsea/msigdb/download_geneset.jsp?geneSetName=',
+  newsig_name,
+  '&fileType=xml'
+)
+
+#download files
+newsig_file = paste0(newsig_name, '.xml')
+download.file(newsig_link, newsig_file, method = 'libcurl')
+newsig_sig = getBroadSets(newsig_file, membersId = 'MEMBERS_EZID')
+
+#score
+newsig_scores = simpleScore(aml_ranked, newsig_sig[[1]])
+
+#plot and project
+p1 = plotScoreLandscape(
+  verhaak_scores,
+  newsig_scores,
+  scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', newsig_name)
+)
 #we modify the number of bins in the landscape to ensure they are not too sparse
 p1$layers[[1]]$stat_params$bins = round(sqrt(ncol(aml_se)))
 
 #project NPM1 mutations onto the landscape
+mutated_gene = rep('Other', ncol(aml_se))
+mutated_gene[aml_se$NPM1.Mut] = 'NPM1 Mut'
+mutated_gene[aml_se$KMT2A.Fusion] = 'MLL Fusion'
+mutated_gene[aml_se$KMT2A.PTD] = 'MLL PTD'
+mutated_gene[aml_se$PML.RARA] = 'PML-RARA'
+select_aml = !mutated_gene %in% 'Other'
+
 p2 = projectScoreLandscape(p1,
-                           verhaak_scores,
-                           e2f1_scores,
-                           subSamples = aml_se$PML.RARA)
+                           verhaak_scores[, 1:2],
+                           newsig_scores,
+                           subSamples = select_aml,
+                           annot = as.factor(mutated_gene[select_aml]))
 p2
 ```
-
 
 Packages used {.unnumbered}
 =============
