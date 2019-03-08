@@ -63,7 +63,7 @@ library(GSEABase)
 library(singscore)
 library(reshape2)
 library(gridExtra)
-library(caret)
+library(dcanr)
 
 #ggplot theme
 rl = 1.2
@@ -205,9 +205,9 @@ aml_se = aml_se[!duplicated(rownames(aml_se)), ]
 aml_dge = DGEList(counts = assay(aml_se), genes = rowData(aml_se))
 ```
 
-Genes with low counts across most samples are discarded from the analysis. This is a standard step in differential expression analysis as inclusion of such genes in the analysis could skew estimates of dispersion. It is also motivated in rank-based analysis, such as with singscore, to avoid rank duplication. Rank duplication reduces the discriminant power of scores as the number of unique ranks is reduced. A commonly used filter is to select only those genes that have CPMs above a certain threshold across a proportion of samples. Filtering is performed on the CPMs rather than raw counts as the former is invariant to library sizes, therefore, unbiased. For instance, a CPM of 1 would equate to read counts between 19 and 50 for samples in the AML data where library sizes vary between 18.6 and 49.7 million reads. Here, we retain genes that have a CPM > 1 across more than 50% of the samples. Other methods to filter out genes with low counts exists and may be preferable in specific applications. @chen16 and @law16 filter genes based on the experimental design whereby the proportion of samples with enough read counts are evaluated per experimental group. As the AML data have many samples and lack rare groups, filtering is performed across all samples rather than within groups. Group specific filtering would be recommended if the study of interest would be focused on rare groups.
+Genes with low counts across most samples are discarded from the analysis. This is a standard step in differential expression analysis as inclusion of such genes in the analysis could skew estimates of dispersion. It is also motivated in rank-based analysis, such as with singscore, to avoid rank duplication. Rank duplication reduces the discriminant power of scores as the number of unique ranks is reduced. A commonly used filter is to select only those genes that have CPMs above a certain threshold across a proportion of samples. Filtering is performed on the CPMs rather than raw counts as the former is invariant to library sizes, therefore, unbiased. For instance, a CPM of 1 would equate to read counts between 19 and 50 for samples in the AML data where library sizes vary between 18.6 and 49.7 million reads. Here, we retain genes that have a CPM > 1 across more than 50% of the samples. Other methods to filter out genes with low counts exists and may be preferable in specific applications. @chen16 and @law16 filter genes based on the experimental design whereby the proportion of samples with enough read counts are evaluated per experimental group. As the AML data have many samples and lack rare groups, filtering is performed across all samples rather than within groups. Group specific filtering would be recommended if the study of interest would be focused on rare groups. The distribution of logCPMs improves significantly after filtering out genes with low counts as seen in Figure \@ref(fig:plot-hist-filtering).
 
-```{r fig.wide=TRUE, fig.cap="Histogram of logCPM values for the AML data before and after filtering. Filtering results in fewer zeros in the data."}
+```{r plot-hist-filtering, fig.wide=TRUE, fig.cap="Histogram of logCPM values for the AML data before and after filtering. Filtering results in fewer zeros in the data. Most of the genes with logCPM less than 0 (red line) across the majority of samples get discarded."}
 prop_expressed = rowMeans(cpm(aml_dge) > 1)
 keep = prop_expressed > 0.5
 
@@ -438,7 +438,7 @@ Diagnostics of the Verhaak signature {#diagnostics-verhaak}
 
 The `singscore` package provides a set of visualisation tools that enable diagnostics of the gene signature. For instance, these tools may be used to determine the importance of each signature of a dual signature (up- and down-regulated genes) to the total score, determine the importance of each gene of a signature in discriminating between the classes of interest and to look at the relationship between the final score and the dispersion of ranks. Annotations of interest can be overlayed on each plot. We begin by investigating the relationship between the score and dispersion of ranks of expression for the up-regulated gene signature, down-regulated gene signature and the full signature.
 
-```{r fig.wide=TRUE, fig.cap="Total scores, scores for up-regulated genes, and scores for down-regulated genes for all samples. Scores are plot agains the median absolute deviation of the ranks of genes in each signature.", fig.height=4}
+```{r plot-dispersion, fig.wide=TRUE, fig.height=4, fig.cap="Total scores, scores for up-regulated genes, and scores for down-regulated genes for all samples. Scores are plot agains the median absolute deviation of the ranks of genes in each signature."}
 #create annotation
 mutated_gene = rep('Other', ncol(aml_se))
 mutated_gene[aml_se$NPM1.Mut] = 'NPM1 Mut'
@@ -447,9 +447,9 @@ p1 = plotDispersion(verhaak_scores, annot = mutated_gene)
 p1
 ```
 
-Here we see that the signature of down-regulated genes has more discriminant power in separating the NPM1 mutated samples and those without. Moreover, the signature is able to discriminate MLL fusions and PTDs from the other samples. NPM1 mutations result in produce higher scores for the down-regulated gene set while MLL fusions and PTDs produce moderate scores. Similar trends are observed with the set of up-regulated genes, however, despite the range of scores increasing, the discriminant power drops moderately. In fact, the signature of up-regulated genes is able to discriminate samples without the genomic changes of interest ('Other') better by producing negative scores for most of these samples. Negative scores for the up-regulated signature indicate that these genes are expressed below median expression, therefore, likely down-regulated. Another observation from these plots is based on the trend of the dispersion (MAD). The dispersion is generally expected to be higher for scores close to zero. Zero scoresare achieved either by having all genes expressed at median expression level, genes are evenly distributed at both ends of the expression spectrum, or, the more likely scenario whereby the rank of expression of all genes are uniformly distributed. The last two scenarios would result in a high dispersion. To explain these ideas, we select 3 samples and plot the ranks of genes in both signatures. The sample with the highest total score, lowest total score and highest dispersion are chosen.
+Figure \@ref(fig:plot-dispersion) shows that the set of down-regulated genes has more discriminant power in separating NPM1c mutated samples from those those without. Moreover, the signature is able to discriminate MLL(KMT2A) fusions and PTDs from the other samples. NPM1c mutations produce higher scores for the down-regulated gene set while MLL fusions and PTDs produce moderate scores. Similar trends are observed with the set of up-regulated genes, however, despite the range of scores increasing, the discriminant power drops moderately. In fact, the signature of up-regulated genes is able to discriminate samples without the genomic changes of interest ('Other') better by producing negative scores for most of these samples. Negative scores for the up-regulated signature indicate that these genes are expressed below median expression, therefore, likely down-regulated. Another observation from these plots is based on the trend of the dispersion (MAD). The dispersion is generally expected to be higher for scores close to zero. Zero scores are achieved in three possible scenarios: when genes are expressed at median expression level; when genes are evenly distributed at both ends of the expression spectrum; or, the more likely scenario whereby the rank of expression of all genes are uniformly distributed. The last two scenarios would result in a high dispersion. To explain these ideas, we select 3 samples and plot the ranks of genes in both signatures. The sample with the highest total score, lowest total score and highest dispersion are chosen.
 
-```{r fig.wide=TRUE, fig.cap="Rank distribution of genes in the Verhaak signature for 3 samples. The barcode plot for ranks of genes in each signature along with the density of the ranks is shown in each plot. Up-regulated genes are represented in green and down-regulated in purple", fig.height=4}
+```{r plot-rank-density, fig.wide=TRUE, fig.height=4, fig.cap="Rank distribution of genes in the Verhaak signature for 3 samples. The barcode plot for ranks of genes in each signature along with the density of the ranks is shown in each plot. Up-regulated genes are represented in green and down-regulated in purple"}
 library(gridExtra)
 
 #select samples with the properties required
@@ -466,7 +466,8 @@ rank_plots = lapply(names(select_samples), function(x) {
   #drop = FALSE is required to ensure the data.frame is intact
   p1 = plotRankDensity(rankData = aml_ranked[, aml_sample, drop = FALSE],
                        upSet = verhaak_sigs[[1]],
-                       downSet = verhaak_sigs[[2]])
+                       downSet = verhaak_sigs[[2]],
+                       textSize = 1)
   
   #overwrite title of the plot with the description of the sample
   p1 = p1 + ggtitle(paste(x,  mutated_gene[aml_sample], sep = '\n')) +
@@ -478,29 +479,27 @@ rank_plots = lapply(names(select_samples), function(x) {
 grid.arrange(grobs = rank_plots, nrow = 1)
 ```
 
-This figure shows that both the up- and down-regulated genesets contribute to the score of the top scoring sample as these genes are at the extremes ends of the rank spectrum. Similarly, the lowest scoring sample has the ranks of genes in each set inverted. As observed in the previous plot, the up-regulated genes improve the discrimination between NPM1 mutated samples and other samples and may be a stronger indicator of wild-type NPM1 samples than the down-regulated genes. Finally, the sample with the maximum dispersion exhibits uniformly distributed down-regulated gene ranks and a bimodal distribution of the up-regulated gene ranks with the modes at the extremes of the spectrum.
+Figure \@ref(fig:plot-rank-density) shows that both the up- and down-regulated genesets contribute to the score of the top scoring sample as these genes are at the extremes ends of the rank spectrum. Similarly, the lowest scoring sample has the ranks of genes in each set inverted. As observed in the previous plot, the up-regulated genes improve the discrimination between NPM1 mutated samples and other samples and may be a stronger indicator of wild-type NPM1 samples than the down-regulated genes. Finally, the sample with the maximum dispersion exhibits uniformly distributed down-regulated gene ranks and a bimodal distribution of the up-regulated gene ranks with the modes at the extremes of the spectrum.
 
 Combined, these plots show that both the up- and down-regulated genes play an important role in discriminating between NPM1 mutated (and MLL fusion/PTD samples), and wild-type samples. These diagnostic plots help in determining the importance of genes in signatures with respect to the samples of interest and should be used prior to application of signatures. Many signatures have been developed in specific contexts due to inherent biases in datasets and yet been described in a generalised setting **cite**. These diagnostic plots may help in validating their application in specific contexts and possibly assist in characterising the contexts of all existing signatures.
 
 Predicting mutations using the Verhaak signature {#predict-verhaak}
 ------------------------------------------------
 
-Results in non-parametric model, scores are non-parametric, invariant to most transformations. Not the case if the genes in the signature are used directly in the model.
+Mutation status can be predicted from singscores using a logistic regression model with a "logit" link function. The benefits of this model over one where each gene in the signature is used as a term in the model is the simplicity of the model. The @verhaak05 signature consists of 429 genes which would result in a regression model with 429 predictors. As the number of samples is smaller than the predictors, some feature selection method would be required which may result in the loss of information. Moreover, more signatures would require more such models thereby limiting automated application on a larger scale (for example across all signatures on the MSigDB). Additionally, models trained using singscore would inherit its non-parametric properties to some extent. For instance, such models would be invariant to all data transformations that retain within sample ranks of genes. The main limitation of such models would be the loss of accuracy due to summarisation of the data (information on 429 genes is summarised into a two-dimensional score).
 
-The Verhaak transcriptomic signature can be used to predict the presence of specific mutations.
+In any case, our aim here is not to discuss the various models that can be used to predict mutation status, but to exhibit the discriminant power of singscore and transcriptomic signatures. As such, the data used to train the model is used to evaluate the basic performance properties. We begin by combining the scores with mutation annotations.
 
-Create a `data.frame` to store the data required for modelling
-
-```{r}
+```{r create_plotdf_boxplot}
 #create a dataframe with the data required: scores and mutations
 scoredf = as.data.frame(colData(aml_se)[, aml_mutations])
 scoredf$Score = verhaak_scores$TotalScore
 scoredf$Dispersion = verhaak_scores$TotalDispersion
 ```
 
-Boxplot to visualise the predictive capacity of scores for the different mutations
+Before training a model, we can visualise how well scores resulting from the @verhaak05 signature separate the mutants from wild-types for some genes of interest. Figure \@(fig:plot-boxplot-mutscores) shows that NPM1c signature scores can discriminate between NPM1c wild-type and mutants. Similar observations are made for genomic changes such as the MLL (KMT2A) fusions, FLT3 mutations and the PML-RARA fusion.
 
-```{r fig.wide=TRUE, fig.height=4.5, fig.cap="Boxplot of scores from the Verhaak signature split by different types of mutations."}
+```{r plot-boxplot-mutscores, fig.wide=TRUE, fig.height=5, fig.cap="Boxplot of scores from the NPM1c signature split by different types of mutations."}
 #restructure the data for ploting
 plotdf = melt(
   scoredf,
@@ -513,11 +512,12 @@ plotdf$Status = factor(plotdf$Status, labels = c('WT', 'Mut'))
 p1 = ggplot(plotdf, aes(Mutation, Score, fill = Status)) +
   geom_boxplot(position = 'dodge', alpha = 0.6) +
   scale_fill_brewer(palette = 'Set2') +
-  current_theme
+  current_theme +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5))
 p1
 ```
 
-Use independent GLMs to predict mutations based on scores
+To quantify the above observations, we fit logistic regression models with each gene as the response variable and the score as the predictor. Coefficient estimantes, standard errors, z-statistic, and $p$-values of each model are listed below.
 
 ```{r predict_mutation_glm}
 #fit GLMs to each mutation
@@ -534,30 +534,34 @@ coefs = lapply(glms, function(x) coef(summary(x)))
 ldply(coefs, function(x) x[2, ], .id = 'Mutation')
 ```
 
-NPM1 mutations are significantly associated with the score. So are DNMT3A and FLT3 mutations, and MLL Fusions. Explain with respect to the coefficient estimates in GLMs.
+NPM1 mutations are significantly associated with the score. DNMT3A mutations, FLT3 mutations, PML-RARA, and MLL Fusions are also associated with the score, though with a lower significance.
+
+> PML-RARA coefficient is -ve so PML-RARA have low NPM1c score, any significance?
 
 Evaluate prediction model performance {#prediction-performance}
 -------------------------------------
 
+The above statistics give insight on the models trained but not on their performance. Precision and recall provide insight on a models predictive performance. The `dcanr` package provides functions to compute these metrics along with other measures of performance.
+
 ```{r eval_prediction_performance}
-library(caret)
+library(dcanr)
 
 #assess sensitivity and specificity
-sens_spec = ldply(glms, function(glm1) {
+prec_rec = ldply(glms, function(glm1) {
   #predict mutations for the data used in training and convert to binary format
   prediction = as.numeric(predict(glm1) > 0)
-  prediction = as.factor(prediction)
-  truth = as.factor(glm1$y)
-  
-  #compute the sensitivity and specificity using the caret package
-  sens = sensitivity(prediction, truth)
-  spec = specificity(prediction, truth)
-  return(c('Sensitivity' = sens, 'Specificity' = spec))
+  observed = glm1$y
+  prec = performanceMeasure(prediction, observed, 'precision')
+  recall = performanceMeasure(prediction, observed, 'recall')
+  f1 = performanceMeasure(prediction, observed)
+  return(c('Precision' = prec, 'Recall' = recall, 'F1' = f1))
 }, .id = 'Mutation')
-sens_spec
+prec_rec
 ```
 
-Including the dispersion estimates in the model may improve predictions
+Precision for predictions of all genes other than NPM1 and DNMT3A is undefined because all samples are predicted to be wild-types. Consequently, their recall is zero. Precision, recall and the F1 score of the NPM1 mutation model are high as expected. As mentioned in Section \@ref(score-samples), singscores are two-dimensional scores , therefore, performance may be further improved by including the dispersion of ranks. This is observed in Figure \@ref(fig:plot-dispersion).
+
+As observed from the model below, using the two-dimensional singscore significantly improves the predictive performance.
 
 ```{r predict_with_mads}
 #include dispersion in the model
@@ -567,11 +571,11 @@ glm_npm1 = glm('NPM1.Mut ~ Score + Dispersion',
 
 #evaluate performance of the new model
 prediction = as.numeric(predict(glm_npm1) > 0)
-prediction = as.factor(prediction)
-truth = as.factor(glm_npm1$y)
+observed = glm_npm1$y
 c(
-  'Sensitivity' = sensitivity(prediction, truth),
-  'Specificity' = specificity(prediction, truth)
+  'Precision' = performanceMeasure(prediction, observed, 'precision'),
+  'Recall' = performanceMeasure(prediction, observed, 'recall'),
+  'F1' = performanceMeasure(prediction, observed)
   )
 ```
 
@@ -606,11 +610,12 @@ rossmll_scores = simpleScore(aml_ranked, rossmll_sigs[[1]])
 Ross MLL fusion signature vs. Verhaak signature landscape {#sig-landscape-mll}
 ---------------------------------------------------------
 
-```{r fig.cap="Signature landscape.", fig.height=7}
+```{r plot-signature-landscape, fig.height=7, fig.width=7, fig.cap="Signature landscape."}
 p1 = plotScoreLandscape(
   verhaak_scores,
   rossmll_scores,
-  scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', 'ROSS_AML_WITH_MLL_FUSIONS')
+  scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', 'ROSS_AML_WITH_MLL_FUSIONS'),
+  textSize = 1.4
   )
 #we modify the number of bins in the landscape to ensure they are not too sparse
 p1
@@ -623,7 +628,7 @@ mutated_gene[aml_se$KMT2A.PTD] = 'MLL PTD'
 mutated_gene[aml_se$PML.RARA] = 'PML-RARA'
 ```
 
-```{r fig.cap="Signature landscape with projections.", fig.height=7}
+```{r plot-project-mll, fig.height=7.5, fig.width=7, fig.cap="Signature landscape with projections."}
 select_aml = !mutated_gene %in% 'Other'
 #project above mutations onto the landscape
 p2 = projectScoreLandscape(p1,
@@ -637,7 +642,7 @@ p2
 Ross PML-RARA fusion signature vs. Verhaak signature landscape {#sig-landscape-pmlrara}
 --------------------------------------------------------------
 
-```{r echo=FALSE, fig.cap="Signature landscape with projections.", fig.height=7}
+```{r plot-project-pmlrara, fig.height=7.5, fig.width=7, echo=FALSE, fig.cap="Signature landscape with projections."}
 newsig_name = 'ROSS_AML_WITH_PML_RARA_FUSION'
 #generate URL
 newsig_link = paste0(
@@ -658,7 +663,8 @@ newsig_scores = simpleScore(aml_ranked, newsig_sig[[1]])
 p1 = plotScoreLandscape(
   verhaak_scores,
   newsig_scores,
-  scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', newsig_name)
+  scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', newsig_name),
+  textSize = 1.4
 )
 
 #project NPM1 mutations onto the landscape
