@@ -436,9 +436,9 @@ head(verhaak_scores)
 Diagnostics of the Verhaak signature {#diagnostics-verhaak}
 ------------------------------------
 
-The `singscore` package provides a set of visualisation tools that enable diagnostics of the gene signature. For instance, these tools may be used to determine the importance of each signature of a dual signature (up- and down-regulated genes) to the total score, determine the importance of each gene of a signature in discriminating between the classes of interest and to look at the relationship between the final score and the dispersion of ranks. Annotations of interest can be overlayed on each plot. We begin by investigating the relationship between the score and dispersion of ranks of expression for the up-regulated gene signature, down-regulated gene signature and the full signature.
+The `singscore` package provides a set of visualisation tools that enable diagnostics of the gene signature. For instance, these tools may be used to determine the importance of each signature of a dual signature (up- and down-regulated genes) to the total score, determine the importance of each gene of a signature in discriminating between the classes of interest and to look at the relationship between the final score and the dispersion of ranks. Annotations of interest can be overlayed on each plot. Singscore supports both continous and categorical annotations, which can either be passed on as a vector or as a column name for a column in the score data frame. We begin by investigating the relationship between the score and dispersion of ranks of expression for the up-regulated gene signature, down-regulated gene signature and the full signature.
 
-```{r plot-dispersion, fig.wide=TRUE, fig.height=4, fig.cap="Total scores, scores for up-regulated genes, and scores for down-regulated genes for all samples. Scores are plot agains the median absolute deviation of the ranks of genes in each signature."}
+```{r plot-dispersion, fig.wide=TRUE, fig.height=4, fig.cap="Scores from the up- and down-regulated gene sets, both combined and independently, are able to separate NPM1c mutations and MLL fusions/PTDs from wild-types. Combined scores, scores for up-regulated genes, and scores for down-regulated genes for all samples. Scores are plot against the median absolute deviation (MAD) of the ranks of genes in each signature. The plots also reveal that scores close to 0 result in higher MADs."}
 #create annotation
 mutated_gene = rep('Other', ncol(aml_se))
 mutated_gene[aml_se$NPM1.Mut] = 'NPM1 Mut'
@@ -449,7 +449,7 @@ p1
 
 Figure \@ref(fig:plot-dispersion) shows that the set of down-regulated genes has more discriminant power in separating NPM1c mutated samples from those those without. Moreover, the signature is able to discriminate MLL(KMT2A) fusions and PTDs from the other samples. NPM1c mutations produce higher scores for the down-regulated gene set while MLL fusions and PTDs produce moderate scores. Similar trends are observed with the set of up-regulated genes, however, despite the range of scores increasing, the discriminant power drops moderately. In fact, the signature of up-regulated genes is able to discriminate samples without the genomic changes of interest ('Other') better by producing negative scores for most of these samples. Negative scores for the up-regulated signature indicate that these genes are expressed below median expression, therefore, likely down-regulated. Another observation from these plots is based on the trend of the dispersion (MAD). The dispersion is generally expected to be higher for scores close to zero. Zero scores are achieved in three possible scenarios: when genes are expressed at median expression level; when genes are evenly distributed at both ends of the expression spectrum; or, the more likely scenario whereby the rank of expression of all genes are uniformly distributed. The last two scenarios would result in a high dispersion. To explain these ideas, we select 3 samples and plot the ranks of genes in both signatures. The sample with the highest total score, lowest total score and highest dispersion are chosen.
 
-```{r plot-rank-density, fig.wide=TRUE, fig.height=4, fig.cap="Rank distribution of genes in the Verhaak signature for 3 samples. The barcode plot for ranks of genes in each signature along with the density of the ranks is shown in each plot. Up-regulated genes are represented in green and down-regulated in purple"}
+```{r plot-rank-density, fig.wide=TRUE, fig.height=4, fig.cap="Rank distribution of genes reveals that up-regulated genes have up-regulated in high scoring samples and down-regulated in low-scoring samples with a similar observation for the down-regulated genes. Samples with the highest score, lowest score and highest dispersion (MAD) are show from left to right. The barcode plot for ranks of genes in each signature along with the density of the ranks is shown in each plot. Up-regulated genes are represented in green and down-regulated in purple. Gaussian distributions are observed at the extremes for the lowest and highest scores. High dispersion results in scores close to 0 because all genes are either evenly distributed (down-regulated gene set) or bi-modally distributed at the extrema (up-regulated gene set)"}
 library(gridExtra)
 
 #select samples with the properties required
@@ -470,6 +470,7 @@ rank_plots = lapply(names(select_samples), function(x) {
                        textSize = 1)
   
   #overwrite title of the plot with the description of the sample
+  #this is possible because singscore uses ggplot2
   p1 = p1 + ggtitle(paste(x,  mutated_gene[aml_sample], sep = '\n')) +
     theme(legend.title = element_blank())
   return(p1)
@@ -499,7 +500,7 @@ scoredf$Dispersion = verhaak_scores$TotalDispersion
 
 Before training a model, we can visualise how well scores resulting from the @verhaak05 signature separate the mutants from wild-types for some genes of interest. Figure \@(fig:plot-boxplot-mutscores) shows that NPM1c signature scores can discriminate between NPM1c wild-type and mutants. Similar observations are made for genomic changes such as the MLL (KMT2A) fusions, FLT3 mutations and the PML-RARA fusion.
 
-```{r plot-boxplot-mutscores, fig.wide=TRUE, fig.height=5, fig.cap="Boxplot of scores from the NPM1c signature split by different types of mutations."}
+```{r plot-boxplot-mutscores, fig.wide=TRUE, fig.height=5, fig.cap="NPM1c signature scores are able to separate mutants from wilt-types. Boxplot of scores from the NPM1c signature split by different types of mutations."}
 #restructure the data for ploting
 plotdf = melt(
   scoredf,
@@ -587,40 +588,44 @@ Often, we are interested in the relationship between two dependent or independen
 Ross MLL fusion signature vs. Verhaak signature landscape {#sig-landscape-mll}
 ---------------------------------------------------------
 
-
+We now use the @ross04 MLL-fusion signatures to score the TCGA AML samples. Unlike the NPM1c signature, this signature is composed of genes that discriminate MLL-fusions and PTDs from wild-type. We download and parse the signature as demonstrated in \@ref(prepare-signature).
 
 ```{r process_rossmll_sigs}
 #create signature names
-rossmll_names = 'ROSS_AML_WITH_MLL_FUSIONS'
+rossmll_name = 'ROSS_AML_WITH_MLL_FUSIONS'
 #generate URLs
-rossmll_links = paste0(
+rossmll_link = paste0(
   'http://software.broadinstitute.org/gsea/msigdb/download_geneset.jsp?geneSetName=',
-  rossmll_names,
+  rossmll_name,
   '&fileType=xml'
   )
 
 #download files
-rossmll_files = paste0(rossmll_names, '.xml')
-mapply(download.file, rossmll_links, rossmll_files, method = 'libcurl')
-rossmll_sigs = getBroadSets(rossmll_files, membersId = 'MEMBERS_EZID')
+rossmll_file = paste0(rossmll_name, '.xml')
+download.file(rossmll_link, rossmll_file, method = 'libcurl')
+rossmll_sig = getBroadSets(rossmll_file, membersId = 'MEMBERS_EZID')
+rossmll_sig
 ```
 
-AML samples are then scored using the new signature. Ranks computed in Section \@ref(score-samples) can be reused to compute scores with the new signature.
+The gene set is a composition of both up- and down-regulated genes as genes were selected based on their ability to discriminate mutants from wild-types. We use the third mode of singscore as described in Section \@ref(score-samples) which does not require the direction of genes in the gene set to be known. The `knownDirection` parameter of the `simpleScore` function is set to `FALSE` to induce this mode. Ranks computed in Section \@ref(score-samples) can be reused to compute scores with the new signature.
 
 ```{r score_rossmll}
-rossmll_scores = simpleScore(aml_ranked, rossmll_sigs[[1]])
+rossmll_scores = simpleScore(aml_ranked, rossmll_sig[[1]], knownDirection = FALSE)
 ```
 
-```{r plot-signature-landscape, fig.height=7, fig.width=7, fig.cap="Signature landscape."}
-p1 = plotScoreLandscape(
+The `plotScoreLandscape` function plots a hexbin plot to visualise the two-dimensional distribution of scores. Scores computed using the @verhaak05 signature and the @ross04 MLL-fusions/PTD signature are passed as arguments. Both scores should have been computed on the same samples with the order of samples retained. Names of the scores should be passed as arguments to the `scorenames` argument. The `textSize` argument can be used to specify the size of all text relative to the plot size. This may prove useful when plots are being generated for scientific posters, publications and presentations, all of which require different sizes of images. As with all ploting functions in the `singscore` package, this function can be used to generate an interactive plot by setting the `isInteractive` argument to `TRUE`.
+
+```{r plot-signature-landscape, fig.height=7, fig.width=7, fig.cap="Signature landscape between the MLL fusion and NPM1c signatures. A positive association is revealed between the two signatures in AML."}
+p_mll_npm1c = plotScoreLandscape(
   verhaak_scores,
   rossmll_scores,
   scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', 'ROSS_AML_WITH_MLL_FUSIONS'),
   textSize = 1.4
   )
-#we modify the number of bins in the landscape to ensure they are not too sparse
-p1
+p_mll_npm1c
 ```
+
+Figure \@ref(fig:plot-signature-landscape) shows a strong positive association between scores from the two signatures (Spearman's $\rho$ = `r round(cor(verhaak_scores$TotalScore, rossmll_scores$TotalScore, method = 'spearman'), digits = 3)`) despite only 16 genes being shared across the two signatures. In such an analysis, we may be interested in projecting new data points onto the landscape as done by @cursons18. Alternatively, we may want to overlay some existing data points to investigate sample stratification using scores. Here, we overlay MLL fusions, MLL PTDs, PML-RARA fusions and NPM1c mutations onto the landscape. First, we build the annotation vector.
 
 ```{r new_annotations}
 #new annotation - modify previously used annotations
@@ -629,21 +634,27 @@ mutated_gene[aml_se$KMT2A.PTD] = 'MLL PTD'
 mutated_gene[aml_se$PML.RARA] = 'PML-RARA'
 ```
 
-```{r plot-project-mll, fig.height=7.5, fig.width=7, fig.cap="Signature landscape with projections."}
+Points are projected onto an existing landscape using the `projectScoreLandscape` function. This functions uses the `p_mll_npm1c` plot generated using the `plotScoreLandscape` and overlays new data points onto it. Scores for the new data must be computed with the same signatures that were used to compute the landscape. As we are using existing data, scores computed in earlier sections are re-used. The `subSamples` can be used to select a subset of samples to project. Here, we select samples with the mutations we are interested in annotating.
+
+```{r plot-project-mll, fig.height=7.5, fig.width=7, fig.cap="The landscape reveals a distinction between the MLL fusions and PTDs as previously reported. Different mutations occupy different regions of the landscape, possessing different types of molecular traits."}
 select_aml = !mutated_gene %in% 'Other'
 #project above mutations onto the landscape
-p2 = projectScoreLandscape(p1,
+p1 = projectScoreLandscape(p_mll_npm1c,
                            verhaak_scores,
                            rossmll_scores,
                            subSamples = select_aml,
                            annot = mutated_gene[select_aml])
-p2
+p1
 ```
+
+Figure \@ref(fig:plot-project-mll) shows that the MLL fusions and MLL PTDs exhibit variation across different axes. MLL PTDs have a lower score than MLL fusions for the the MLL fusion signature as expected. These sets of samples do not cluster along the two axes as shown by @ross04. Overlaying samples with annotations onto the plot assists in interpreting different regions of the landscape.
 
 Ross PML-RARA fusion signature vs. Verhaak signature landscape {#sig-landscape-pmlrara}
 --------------------------------------------------------------
 
-```{r plot-project-pmlrara, fig.height=7.5, fig.width=7, echo=FALSE, fig.cap="Signature landscape with projections."}
+It is evident from the previous analysis that PML-RARA samples differ from all other samples. We repeat the analysis with the PML-RARA signature from @ross04 to verify this distinction. The signature is available on the MSigDB and is named "ROSS_AML_WITH_PML_RARA_FUSION". We download and parse the signature, score all samples against it, plot a landscape with scores from the @verhaak05 signature, and finally, project samples onto the plot (see Section \@ref(sig-landscape-mll)). The signature was constructed in a similar manner to the MLL fusions signature, therefore, samples are scored using the same settings.
+
+```{r plot-project-pmlrara, fig.height=7.5, fig.width=7, echo=FALSE, fig.cap="The PML-RARA signature is independent from the NPM1c signature in AML. The L-shaped landscape suggests the molecular mechanisms underlying these mutations are mutually exclusive."}
 newsig_name = 'ROSS_AML_WITH_PML_RARA_FUSION'
 #generate URL
 newsig_link = paste0(
@@ -658,7 +669,7 @@ download.file(newsig_link, newsig_file, method = 'libcurl')
 newsig_sig = getBroadSets(newsig_file, membersId = 'MEMBERS_EZID')
 
 #score
-newsig_scores = simpleScore(aml_ranked, newsig_sig[[1]])
+newsig_scores = simpleScore(aml_ranked, newsig_sig[[1]], knownDirection = FALSE)
 
 #plot and project
 p1 = plotScoreLandscape(
@@ -684,6 +695,24 @@ p2 = projectScoreLandscape(p1,
 p2
 ```
 
+Figure \@ref(fig:plot-project-pmlrara) shows a completely different landscape from what was observed with the MLL fusion signature. The PML-RARA signature forms a clear separation between the PML-RARA and NPM1c signatures. PML-RARA samples are the only ones with a high score for this signature. Moveover, no association is observed between the two signatures. In fact, the L-shaped landscape may suggest mutual exclusivity between the underlying biological mechanisms of these two mutations.
+
+Summary
+=======
+
+This section is required if the paper does not include novel data or analyses.  It allows authors to briefly summarize the key points from the article.
+
+Software availability
+=====================
+
+This section will be generated by the Editorial Office before publication. Authors are asked to provide some initial information to assist the Editorial Office, as detailed below.
+
+1. URL link to where the software can be downloaded from or used by a non-coder (AUTHOR TO PROVIDE; optional)
+2. URL link to the author's version control system repository containing the source code (AUTHOR TO PROVIDE; required)
+3. Link to source code as at time of publication (*F1000Research* TO GENERATE)
+4. Link to archived source code as at time of publication (*F1000Research* TO GENERATE)
+5. Software license (AUTHOR TO PROVIDE; required)
+
 Packages used {.unnumbered}
 =============
 
@@ -693,8 +722,25 @@ This workflow depends on various packages from version `r BiocManager::version()
 sessionInfo()
 ```
 
-Additional analysis {.unnumbered}
+Author information
+==================
+
+In order to give appropriate credit to each author of an article, the individual contributions of each author to the manuscript should be detailed in this section. We recommend using author initials and then stating briefly how they contributed.
+
+Competing interests
 ===================
+
+All financial, personal, or professional competing interests for any of the authors that could be construed to unduly influence the content of the article must be disclosed and will be displayed alongside the article. If there are no relevant competing interests to declare, please add the following: 'No competing interests were disclosed'.
+
+Grant information
+=================
+
+Please state who funded the work discussed in this article, whether it is your employer, a grant funder etc. Please do not list funding that you have that is not relevant to this specific piece of research. For each funder, please state the funder's name, the grant number where applicable, and the individual to whom the grant was assigned. If your work was not funded by any grants, please include the line: 'The author(s) declared that no grants were involved in supporting this work.'
+
+Acknowledgments
+===============
+
+This section should acknowledge anyone who contributed to the research or the article but who does not qualify as an author based on the criteria provided earlier (e.g. someone or an organization that provided writing assistance). Please state how they contributed; authors should obtain permission to acknowledge from all those mentioned in the Acknowledgments section.
 
 References {.unnumbered}
 ==========
