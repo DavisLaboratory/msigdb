@@ -15,6 +15,7 @@ gene_lengths_HTSeq_gencodev22.rds
 *.bbl
 *.blg
 *.pdf
+*.log
 
 gencode.v22.annotation.gtf.gz
 workflow_transcriptional_mut_sig_cache/*

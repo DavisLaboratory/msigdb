@@ -304,7 +304,7 @@ Original file at <https://tcga-data.nci.nih.gov/docs/publications/aml_2012/Suppl
 
 ```{r preproc_mutations, eval=FALSE, include=FALSE}
 #preprocessing - read tsv (Joe's version) and convert save as RDS
-mut_info = read.csv('PatientMutations.tsv', sep = '\t', colClasses = c('character', rep('logical', 8)))
+mut_info = read.csv('PatientMutations.tsv', sep = '\t', colClasses = c('character', rep('logical', 4)))
 rownames(mut_info) = mut_info$Barcode
 mut_info = mut_info[, -1]
 patients = mut_info[substring(colnames(aml_se), 1, 12), ]
@@ -443,7 +443,7 @@ The `singscore` package provides a set of visualisation tools that enable diagno
 ```{r plot-dispersion, fig.wide=TRUE, fig.height=4, fig.cap="Scores from the up- and down-regulated gene sets, both combined and independently, are able to separate NPM1c mutations and MLL fusions/PTDs from wild-types. Combined scores, scores for up-regulated genes, and scores for down-regulated genes for all samples. Scores are plot against the median absolute deviation (MAD) of the ranks of genes in each signature. The plots also reveal that scores close to 0 result in higher MADs."}
 #create annotation
 mutated_gene = rep('Other', ncol(aml_se))
-mutated_gene[aml_se$NPM1.Mut] = 'NPM1 Mut'
+mutated_gene[aml_se$NPM1c.Mut] = 'NPM1c Mut'
 mutated_gene[aml_se$KMT2A.Fusion | aml_se$KMT2A.PTD] = 'MLL Fusion/PTD'
 p1 = plotDispersion(verhaak_scores, annot = mutated_gene)
 p1
@@ -568,13 +568,13 @@ As observed from the model below, using the two-dimensional singscore significan
 
 ```{r predict_with_mads}
 #include dispersion in the model
-glm_npm1 = glm('NPM1.Mut ~ Score + Dispersion',
+glm_npm1c = glm('NPM1c.Mut ~ Score + Dispersion',
                data = scoredf,
                family = binomial(link = 'logit'))
 
 #evaluate performance of the new model
-prediction = as.numeric(predict(glm_npm1) > 0)
-observed = glm_npm1$y
+prediction = as.numeric(predict(glm_npm1c) > 0)
+observed = glm_npm1c$y
 c(
   'Precision' = performanceMeasure(prediction, observed, 'precision'),
   'Recall' = performanceMeasure(prediction, observed, 'recall'),
@@ -683,7 +683,7 @@ p1 = plotScoreLandscape(
 
 #project NPM1 mutations onto the landscape
 mutated_gene = rep('Other', ncol(aml_se))
-mutated_gene[aml_se$NPM1.Mut] = 'NPM1 Mut'
+mutated_gene[aml_se$NPM1c.Mut] = 'NPM1c Mut'
 mutated_gene[aml_se$KMT2A.Fusion] = 'MLL Fusion'
 mutated_gene[aml_se$KMT2A.PTD] = 'MLL PTD'
 mutated_gene[aml_se$PML.RARA] = 'PML-RARA'
