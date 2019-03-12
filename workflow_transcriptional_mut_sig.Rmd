@@ -108,7 +108,7 @@ As with most cancers, acute myeloid leukemia (AML) is a heterogeneous cancer wit
 
 Of note for this work, one of the most common mutations in clinical AML samples is a frameshift mutation within exon 12 of the nucleophosmin (*NPM1*) gene [@papaemmanuil16]. This mutation leads to abberant localisation of NPM1, leading to accumulation within the cytoplasm rather than the nucleolus, and accordingly this mutation is often referred to as the NPM1c mutation [@brunetti18]. As noted by @verhaak05, the NPM1c mutation is associated with dysregulated activity of the homeobox domain (Hox) family of transcription factors which are essential for developmental patterning. The effects of this mutation in disease progression have been further demonstrated in recent work which showed that loss of NPM1c leads to differentiation of AML cells [@brunetti18]. 
 
-Further recurrent genetic lesions in AML relevant for this work include lysine methyl transferase 2A (KMT2A; previously known as MLL) fusion genes, partial tandem duplications within KMT2A (KMT2A-PTD), and fusion genes between promyelocytic leukemia and retinoic acid receptor alpha (PML-RARA). Given the role of NPM1c in dysregulating the Hox gene family, it is interesting to note that AML samples with MLL fusion genes also show dysregulated expression of Hox family genes [@hess04, @ross04]; however, samples with MLL-PTD appear to show a relatively distinct phenotype from MLL-fusion samples [@ross04]. While there is good evidence demonstrating the role of NPM1c mutations and other genetic lesions in blocking AML cell differentiation, the PML-RARA fusion subset is diagnostic for a specific subset of AML known as acute promyelocytic leukemia (APL). Indeed this clinically-distinct subtype of AML is associated with a specific morphology under the French-American-British (FAB) classification of AML, FAB-M3, with cells showing a distinct morphology associated with differentiation block at the promyelocyte stage [doi: 10.1016/0092-8674(91)90113-D].
+Further recurrent genetic lesions in AML relevant for this work include lysine methyl transferase 2A (KMT2A; previously known as MLL) fusion genes, partial tandem duplications within KMT2A (KMT2A-PTD), and fusion genes between promyelocytic leukemia and retinoic acid receptor alpha (PML-RARA). Given the role of NPM1c in dysregulating the Hox gene family, it is interesting to note that AML samples with MLL fusion genes also show dysregulated expression of Hox family genes [@hess04, @ross04]; however, samples with MLL-PTD appear to show a relatively distinct phenotype from MLL-fusion samples [@ross04]. While there is good evidence demonstrating the role of NPM1c mutations and other genetic lesions in blocking AML cell differentiation, the PML-RARA fusion subset is diagnostic for a specific subset of AML known as acute promyelocytic leukemia (APL). Indeed this clinically-distinct subtype of AML is associated with a specific morphology under the French-American-British (FAB) classification of AML, FAB-M3, with cells showing a distinct morphology associated with differentiation block at the promyelocyte stage [@dethe91].
 
 In this workflow we demonstrate the ability of the singscore method for single sample gene set scoring [@foroutan18] to classify tumour 'driver mutations' from transcriptomic data. We use a previously identified gene signatures for the NPM1c mutation [@verhaak05], as well as signatures for PML-RARA gene fusions and MLL-fusions that were derived using pediatric AML samples but shown to work well for classifying adult AML samples with similar lesions [@ross04]. Using these signatures which are included within the molecular signatures database (MSigDB) [@liberzon15], we demonstrate that a bi-directional scoring approach can classify TCGA AML samples with corresponding mutations with a good precision and recall. A particularly useful feature of gene set scoring is the ability to project samples onto 2D or higher-order landscapes defined by corresponding phenotypic signatures. Accordingly, by comparing scores for both the NPM1c and KMT2A-/MLL-fusion signatures, we show that this classification likely arises through the shared downstream biological effects of Hox family dysregulation. We also compare the NPM1c mutation signature to the PML-RARA signature and show a clear separation of these subtypes reflecting their divergent phenotypes and the mutually-exclusive nature of these mutations.
 
@@ -302,13 +302,13 @@ Annotate samples with mutation data {#annotate-mutations}
 
 Original file at <https://tcga-data.nci.nih.gov/docs/publications/aml_2012/SupplementalTable01.xlsx>
 
-For this analysis we have used the curated mutation list from the original TCGA AML publication [DOI: 10.1056/NEJMoa1301689] (above) rather than variant calls from the standard TCGA pipeline (available through the [National Cancer Institute Genomic Data Commons](https://gdc.cancer.gov/)) and readers should note that there are some discrepancies between these. For genetic lesions of interest (NPM1c, KMT2A-MLL, KMT2A-PTD and PML-RARA), patients were identified by the following criteria:
+For this analysis we have used the curated mutation list from the original TCGA AML publication [@cancer13] (above) rather than variant calls from the standard TCGA pipeline (available through the [National Cancer Institute Genomic Data Commons](https://gdc.cancer.gov/)) and readers should note that there are some discrepancies between these. For genetic lesions of interest (NPM1c, KMT2A-MLL, KMT2A-PTD and PML-RARA), patients were identified by the following criteria:
+
 * **Patient ID**: The 'TCGA Patient ID' column was extracted directly
 * **NPM1c**: TRUE if the 'NPM1' column contains the strings 'p.W287fs' or 'p.W288fs'
 * **KMT2A-fusion**: TRUE if the 'MLL-partner' column contains the string 'MLL-' or '-MLL' (note that the official gene symbol for *MLL* is now *KMT2A*)
 * **KMT2A-PTD**: TRUE if the 'MLL-PTD' column contains the string 'exons'
 * **PML-RARA**: TRUE if the 'PML-RARA' column contains the string 'PML-RARA'
-
 
 ```{r preproc_mutations, eval=FALSE, include=FALSE}
 #preprocessing - read tsv (Joe's version) and convert save as RDS
@@ -508,9 +508,9 @@ scoredf$Score = verhaak_scores$TotalScore
 scoredf$Dispersion = verhaak_scores$TotalDispersion
 ```
 
-Before training a model, we can visualise how well scores resulting from the @verhaak05 signature separate the mutants from wild-types for some genes of interest. Figure \@(fig:plot-boxplot-mutscores) shows that NPM1c signature scores can discriminate between NPM1c wild-type and mutants. Similar observations are made for genomic changes such as the MLL (KMT2A) fusions, FLT3 mutations and the PML-RARA fusion.
+Before training a model, we can visualise how well scores resulting from the @verhaak05 signature separate the mutants from wild-types for some genes of interest. Figure \@ref(fig:plot-boxplot-mutscores) shows that NPM1c signature scores can discriminate between NPM1 wild-type and mutants. Similar observations are made for MLL (KMT2A) fusions and PML-RARA fusions.
 
-```{r plot-boxplot-mutscores, fig.wide=TRUE, fig.height=5, fig.cap="NPM1c signature scores are able to separate mutants from wilt-types. Boxplot of scores from the NPM1c signature split by different types of mutations."}
+```{r plot-boxplot-mutscores, fig.height=5, fig.cap="NPM1c signature scores are able to separate mutants from wild-types. Boxplot of scores from the NPM1c signature split by different types of mutations."}
 #restructure the data for ploting
 plotdf = melt(
   scoredf,
@@ -568,7 +568,7 @@ prec_rec = ldply(glms, function(glm1) {
 prec_rec
 ```
 
-Precision for predictions of all genes other than NPM1 and DNMT3A is undefined because all samples are predicted to be wild-types. Consequently, their recall is zero. Precision, recall and the F1 score of the NPM1 mutation model are high as expected. As mentioned in Section \@ref(score-samples), singscores are two-dimensional scores , therefore, performance may be further improved by including the dispersion of ranks. This is observed in Figure \@ref(fig:plot-dispersion).
+Precision for predictions of all genomic changes other than NPM1c is undefined because all samples are predicted to be wild-types. Consequently, their recall is zero. Precision, recall and the F1 score of the NPM1 mutation model are high as expected. As mentioned in Section \@ref(score-samples), singscores are two-dimensional scores , therefore, performance may be further improved by including the dispersion of ranks. This is observed in Figure \@ref(fig:plot-dispersion).
 
 As observed from the model below, using the two-dimensional singscore significantly improves the predictive performance.
 
@@ -703,8 +703,7 @@ p2 = projectScoreLandscape(p1,
 p2
 ```
 
-Figure \@ref(fig:plot-project-pmlrara) shows a completely different landscape from what was observed with the MLL fusion signature. The PML-RARA signature forms a clear separation between the PML-RARA and NPM1c samples such that PML-RARA samples are the only ones with a high score for this signature. Moveover, no association is observed between the two signatures. As discussed above (Description of the biological problem) the PML-RARA fusion is diagnostic of a specific subtype of AML known as acute prolmyelocytic leukemia, with a highly-distinct cell phenotype reflecting a block on differentiation at the promyelocyte stage [doi: 10.1016/0092-8674(91)90113-D]. The distinct features of this subtype are correspondingly reflected in the L-shaped landscape for these two signatures and the different mechanisms by which these lesions drive leukemogenesis. 
-
+Figure \@ref(fig:plot-project-pmlrara) shows a completely different landscape from what was observed with the MLL fusion signature. The PML-RARA signature forms a clear separation between the PML-RARA and NPM1c samples such that PML-RARA samples are the only ones with a high score for this signature. Moveover, no association is observed between the two signatures. As discussed above (Description of the biological problem) the PML-RARA fusion is diagnostic of a specific subtype of AML known as acute prolmyelocytic leukemia, with a highly-distinct cell phenotype reflecting a block on differentiation at the promyelocyte stage [@dethe91]. The distinct features of this subtype are correspondingly reflected in the L-shaped landscape for these two signatures and the different mechanisms by which these lesions drive leukemogenesis. 
 
 Summary
 =======
