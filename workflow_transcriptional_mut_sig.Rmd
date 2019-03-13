@@ -1,5 +1,5 @@
 ---
-title: "Transcriptional signatures for mutations"
+title: "Using singscore to predict mutations in AML from transcriptomic signatures"
 author:
   - name: Dharmesh D Bhuva
     affiliation:
@@ -13,7 +13,7 @@ author:
   - name: Ruqian Lyu
     affiliation:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia??
-    email: ??
+    email: lyu.r@wehi.edu.au??
   - name: Joseph Cursons
     affiliation:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
@@ -24,11 +24,8 @@ author:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
       - Department of Medical Biology, University of Melbourne, Parkville, VIC 3010, Australia
     email: davis.m@wehi.edu.au
-date: "`r format(Sys.time(), '%d %b %Y')`"
+date: "`r format(Sys.time(), '%b %Y')`"
 output:
-  BiocWorkflowTools::f1000_article:
-    fig_caption: true
-    number_sections: true
   BiocStyle::html_document:
     toc_float: true
     fig_caption: true
@@ -46,14 +43,14 @@ abstract: >
 
 **Bioconductor version**: `r BiocManager::version()`
 
-**Package**: `packageVersion("TCGATranscriptionalMutSig")`
+**Package**: `packageVersion("SingscoreAMLMutations")`
 
 ```{r setup, include=FALSE}
 #set knitr chunk options
-knitr::opts_chunk$set(warning = FALSE, message = FALSE, cache = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 
 #load packages to avoid startup messages later in the code
-# suppressPackageStartupMessages({library(RnaSeqGeneEdgeRQL)})
+suppressPackageStartupMessages({library(SingscoreAMLMutations)})
 library(ggplot2)
 library(TCGAbiolinks)
 library(SummarizedExperiment)
@@ -86,7 +83,7 @@ current_theme = theme_minimal() +
 
 #automatically create a bib database for R packages
 knitr::write_bib(c(
-  .packages(), 'knitr', 'rmarkdown'
+  .packages(), 'knitr', 'rmarkdown', 'BiocStyle'
 ), 'packages.bib')
 ```
 
