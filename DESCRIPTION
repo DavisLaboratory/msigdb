@@ -1,0 +1,76 @@
+Package: SingscoreAMLMutations
+Title: Using singscore to predict mutations in AML from transcriptomic signatures
+Version: 0.99.0
+Authors@R: 
+    c(
+      person(
+        "Dharmesh",
+        "Bhuva",
+        "D.",
+        email = "bhuva.d@wehi.edu.au",
+        role = c("aut", "cre"),
+        comment = c(ORCID = '0000-0002-6398-9157')
+      ),
+      person(
+        "Joseph",
+        "Cursons",
+        email = "cursons.j@wehi.edu.au",
+        role = c("aut"),
+        comment = c(ORCID = '0000-0002-5053-4540')
+      ),
+      person(
+        "Momeneh",
+        "Foroutan",
+        email = "foroutan.m@wehi.edu.au",
+        role = c("aut"),
+        comment = c(ORCID = '')
+      ),
+      person(
+        "Ruqian",
+        "Lyu",
+        email = "lyu.r@wehi.edu.au",
+        role = c("aut"),
+        comment = c(ORCID = '')
+      ),
+      person(
+        "Xie",
+        "Yi",
+        email = "xie.y@wehi.edu.au",
+        role = c("aut"),
+        comment = c(ORCID = '')
+      ),
+      person(
+        "Melissa",
+        "Davis",
+        "J.",
+        email = "lyu.r@wehi.edu.au",
+        role = c("aut"),
+        comment = c(ORCID = '')
+      )
+    )
+Description: What the package does (one paragraph).
+License: Artistic-2.0
+Encoding: UTF-8
+LazyData: true
+Workflow: True
+biocViews: GeneExpressionWorkflow, GenomicVariantsWorkflow, ImmunoOncologyWorkflow, Workflow
+VignetteBuilder: knitr
+Depends: 
+    dcanr,
+    edgeR,
+    ggplot2,
+    gridExtra,
+    GSEABase,
+    org.Hs.eg.db,
+    plyr,
+    reshape2,
+    rtracklayer,
+    singscore,
+    SummarizedExperiment,
+    TCGAbiolinks
+Suggests: 
+    knitr,
+    rmarkdown,
+    BiocStyle,
+    BiocWorkflowTools
+RoxygenNote: 6.1.1

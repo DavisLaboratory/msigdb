@@ -39,11 +39,13 @@ abstract: >
   Transcriptional signatures for mutations
 ---
 
+<p>
 **R version**: `r R.version.string`
-
-**Bioconductor version**: `r BiocManager::version()`
-
-**Package**: `packageVersion("SingscoreAMLMutations")`
+<br />
+**Bioconductor version**: `r BiocInstaller::biocVersion()`
+<br />
+**Package version**: `r packageVersion("SingscoreAMLMutations")`
+</p>
 
 ```{r setup, include=FALSE}
 #set knitr chunk options
