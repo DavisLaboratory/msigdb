@@ -10,6 +10,10 @@ author:
     affiliation:
       - Department of Clinical Pathology, The University of Melbourne Centre for Cancer Research, Victorian Comprehensive Cancer Centre, Melbourne, Victoria 3000, Australia
     email: momeneh.foroutan@unimelb.edu.au
+  - name: Yi Xie
+    affiliation:
+      - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
+    email: xie.y@wehi.edu.au
   - name: Ruqian Lyu
     affiliation:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia??
