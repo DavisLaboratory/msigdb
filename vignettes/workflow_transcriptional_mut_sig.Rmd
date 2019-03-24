@@ -35,7 +35,8 @@ output:
     fig_caption: true
     number_sections: true
 bibliography: [bibliography.bib, packages.bib]
-vignette: |
+vignette: >
+  %\VignetteIndexEntry{Using singscore to predict mutations in AML from transcriptomic signatures}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 keywords: Please list up to eight keywords to help readers interested in your article find it more easily.
@@ -324,7 +325,8 @@ saveRDS(patients, file = 'AMLPatientMutationsTCGA.rds')
 ```
 
 ```{r annotate_mutations}
-patient_mutations = readRDS('AMLPatientMutationsTCGA.rds')
+data(AMLPatientMutationsTCGA)
+patient_mutations = AMLPatientMutationsTCGA
 aml_mutations = colnames(patient_mutations)
 colData(aml_se) = cbind(colData(aml_se), patient_mutations)
 colData(aml_se)[, aml_mutations]

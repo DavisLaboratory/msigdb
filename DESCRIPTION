@@ -72,5 +72,7 @@ Suggests:
     knitr,
     rmarkdown,
     BiocStyle,
-    BiocWorkflowTools
+    BiocWorkflowTools,
+    spelling
 RoxygenNote: 6.1.1
+Language: en-US
