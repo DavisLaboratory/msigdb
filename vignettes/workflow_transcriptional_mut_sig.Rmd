@@ -49,7 +49,7 @@ abstract: >
 <p>
 **R version**: `r R.version.string`
 <br />
-**Bioconductor version**: `r BiocInstaller::biocVersion()`
+**Bioconductor version**: `r BiocManager::version()`
 <br />
 **Package version**: `r packageVersion("SingscoreAMLMutations")`
 </p>
@@ -715,7 +715,7 @@ Figure \@ref(fig:plot-project-pmlrara) shows a completely different landscape fr
 Summary
 =======
 
-The singscore package provides an easy interface to apply gene set scoring methods within the R/Bioconductor environment, **allowing relatively easy access to large clinically-relevant data sets such as The Cancer Genome Atlas**, together with appropriate annotation functions for interpreting biological data. Diagnostic and plotting functions included with singscore allow the user to investigate gene sets of interest to determine their power for distinguishing differences between samples. Different gene signatures can then be combined to explore how different cellular phenotypes are associated across a large cohort of cancer samples. As demonstrated, when appropriate gene set signatures are used, metrics calculated by singscore can be used for sample classification and this may be useful for further interrogation of large transcriptomic data sets where no genomic data are available
+The singscore package provides an easy interface to apply gene set scoring methods within the R/Bioconductor environment. The TCGABiolinks package allows relatively easy access to large clinically-relevant data sets such as The Cancer Genome Atlas, together with appropriate annotation functions for interpreting biological data. Diagnostic and plotting functions included with singscore allow the user to investigate gene sets of interest to determine their power for distinguishing differences between samples. Different gene signatures can then be combined to explore how different cellular phenotypes are associated across a large cohort of cancer samples. As demonstrated, when appropriate gene set signatures are used, metrics calculated by singscore can be used for sample classification and this may be useful for further interrogation of large transcriptomic data sets where no genomic data are available
 
 Packages used {.unnumbered}
 =============
