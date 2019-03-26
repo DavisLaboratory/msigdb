@@ -12,11 +12,11 @@ Authors@R:
         comment = c(ORCID = '0000-0002-6398-9157')
       ),
       person(
-        "Joseph",
-        "Cursons",
-        email = "cursons.j@wehi.edu.au",
+        "Xie",
+        "Yi",
+        email = "xie.y@wehi.edu.au",
         role = c("aut"),
-        comment = c(ORCID = '0000-0002-5053-4540')
+        comment = c(ORCID = '')
       ),
       person(
         "Momeneh",
@@ -33,11 +33,11 @@ Authors@R:
         comment = c(ORCID = '')
       ),
       person(
-        "Xie",
-        "Yi",
-        email = "xie.y@wehi.edu.au",
+        "Joseph",
+        "Cursons",
+        email = "cursons.j@wehi.edu.au",
         role = c("aut"),
-        comment = c(ORCID = '')
+        comment = c(ORCID = '0000-0002-5053-4540')
       ),
       person(
         "Melissa",
