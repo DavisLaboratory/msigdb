@@ -6,18 +6,18 @@ author:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
       - School of Mathematics and Statistics, University of Melbourne, Parkville, VIC 3010, Australia
     email: bhuva.d@wehi.edu.au
-  - name: Momeneh Foroutan
-    affiliation:
-      - Department of Clinical Pathology, The University of Melbourne Centre for Cancer Research, Victorian Comprehensive Cancer Centre, Melbourne, Victoria 3000, Australia
-    email: momeneh.foroutan@unimelb.edu.au
   - name: Yi Xie
     affiliation:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
     email: xie.y@wehi.edu.au
+  - name: Momeneh Foroutan
+    affiliation:
+      - Department of Clinical Pathology, The University of Melbourne Centre for Cancer Research, Victorian Comprehensive Cancer Centre, Melbourne, Victoria 3000, Australia
+    email: momeneh.foroutan@unimelb.edu.au
   - name: Ruqian Lyu
     affiliation:
-      - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia??
-    email: lyu.r@wehi.edu.au??
+      - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
+    email: lyu.r@wehi.edu.au
   - name: Joseph Cursons
     affiliation:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
@@ -34,6 +34,8 @@ output:
     toc_float: true
     fig_caption: true
     number_sections: true
+nocite: | 
+  @R-ggplot2, @R-plyr, @R-reshape2, @R-gridExtra, @R-BiocStyle, @R-knitr, @R-BiocWorkflowTools, @R-rmarkdown
 bibliography: [bibliography.bib, packages.bib]
 vignette: >
   %\VignetteIndexEntry{Using singscore to predict mutations in AML from transcriptomic signatures}
@@ -119,7 +121,7 @@ In this workflow we demonstrate the ability of the singscore method for single s
 Downloading and preparing the data {#download-and-prepare}
 ==================================
 
-Data from the cancer genome atlas (TCGA) project is made available through the Genomic Data Commons (GDC). Open access data from the project can be accessed in multiple pre-processed formats. Transcriptomic data can be downloaded either at the count level or as FPKM transformed abundance, before or after upper quantile normalisation. Other pre-processed version can be found from sources such as the [www.cbioportal.org](http://www.cbioportal.org/) and [firebrowse.org](http://firebrowse.org). The GDC data used STAR to perform a two-pass alignment followed by quantification using HTSeq. Data from the GDC can be downloaded using the [GDC data transfer tool](https://gdc.cancer.gov/access-data/gdc-data-transfer-tool) which allows users to select the specific files of interest using the GDC portal. These files then have to be read, merged, annotated and processed into a data structure that simplifies downstream analysis. Alternatively, all the above mentioned steps, including the download, can be performed using the R package `TCGAbiolinks` [@colaprico15]. The package supports data download using the GDC API and the GDC client. We will use the TCGAbiolinks package to download, annotate and process the data into a SummarizedExperiment R object.
+Data from the cancer genome atlas (TCGA) project is made available through the Genomic Data Commons (GDC). Open access data from the project can be accessed in multiple pre-processed formats. Transcriptomic data can be downloaded either at the count level or as FPKM transformed abundance, before or after upper quantile normalisation. Other pre-processed version can be found from sources such as the [www.cbioportal.org](http://www.cbioportal.org/) and [firebrowse.org](http://firebrowse.org). The GDC data used STAR to perform a two-pass alignment followed by quantification using HTSeq. Data from the GDC can be downloaded using the [GDC data transfer tool](https://gdc.cancer.gov/access-data/gdc-data-transfer-tool) which allows users to select the specific files of interest using the GDC portal. These files then have to be read, merged, annotated and processed into a data structure that simplifies downstream analysis. Alternatively, all the above mentioned steps, including the download, can be performed using the R package `TCGAbiolinks` [@colaprico15, @R-TCGAbiolinks]. The package supports data download using the GDC API and the GDC client. We will use the TCGAbiolinks package to download, annotate and process the data into a SummarizedExperiment R object.
 
 The following steps need to be performed to prepare the data:
 
@@ -176,7 +178,7 @@ GDCdownload(query_rna, directory = datapath) #(size: 39MB)
 Reading count-level data into R {#read-data}
 -------------------------------
 
-The `GDCprepare` function reads and processes the downloaded data into a `RangedSummarizedExperiment` object which allows patient annotations, gene annotations and count data to be stored in one object. Patient annotations are downloaded upon calling this function and subsequently mapped and attached to the resulting object. A RangedSummarizedExperiment object is similar to an ExpressionSet object but provides added functionality such as indexing with genomic coordinates and storing multiple data matrices with the same structure. Feature annotations used to annotate the data are stored in an RDA/RDATA file.
+The `GDCprepare` function reads and processes the downloaded data into a `RangedSummarizedExperiment` object from the `SummarizedExperiment` package [@R-SummarizedExperiment] which allows patient annotations, gene annotations and count data to be stored in one object. Patient annotations are downloaded upon calling this function and subsequently mapped and attached to the resulting object. A RangedSummarizedExperiment object is similar to an ExpressionSet object but provides added functionality such as indexing with genomic coordinates and storing multiple data matrices with the same structure. Feature annotations used to annotate the data are stored in an RDA/RDATA file.
 
 ```{r gdc_prepare, results='hide'}
 aml_se = GDCprepare(query_rna, directory = datapath)
@@ -191,7 +193,7 @@ aml_se
 Filter out genes with low counts {#filter-data}
 --------------------------------
 
-The `edgeR` package contains methods that assist in the data normalisation and transformation required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment. Creation of a DGEList object is initially unsuccessful due to duplicated row names in the data matrix (176 features). The raw count files for individual samples do not have any duplicated features indicating this is introduced by the `GDCprepare` function. This is further supported by the fact that the counts for a single feature are the same for duplicated entries. An example of such a feature is shown below and we have verified duplicated entries of all other features to be the same.
+The `edgeR` package [@R-edgeR] contains methods that assist in the data normalisation and transformation required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment. Creation of a DGEList object is initially unsuccessful due to duplicated row names in the data matrix (176 features). The raw count files for individual samples do not have any duplicated features indicating this is introduced by the `GDCprepare` function. This is further supported by the fact that the counts for a single feature are the same for duplicated entries. An example of such a feature is shown below and we have verified duplicated entries of all other features to be the same.
 
 ```{r dup_entries}
 library(SummarizedExperiment)
@@ -250,7 +252,7 @@ gencode_link = paste(
 download.file(gencode_link, gencode_file, method = 'libcurl') #(size: 39MB)
 ```
 
-The `rtracklayer` R package provides functions to help parse GTF files.
+The `rtracklayer` R package [@R-rtracklayer] provides functions to help parse GTF files.
 
 ```{r compute_gene_lengths}
 library(rtracklayer)
@@ -337,7 +339,7 @@ Map Ensembl IDs to Entrez IDs {#map-gene-ids}
 
 Ensembl annotations (Ensembl IDs) have higher coverage of the genome which may be useful in applications such as variant calling and similar exploratory analysis [@zhao15]. However, RefSeq annotations (Entrez IDs) may be better suited to RNA-seq analyses which require a stable reference annotation for comparison [@wu13]. As such, we choose to map Ensembl IDs to Entrez IDs and discard any unmapped features.
 
-Mapping can be performed using the Ensembl Biomart service which can be queried using the biomaRt bioconductor package. This would provide the most up to date annotations. Alternatively, mapping could be performed with the bi-annually updated `org.Hs.eg.db` annotation R package which provides a stable set of annotations, thereby enhancing reproducibility. Mapping is performed with the `mapIds` function in the `AnnotationDbi` R package.
+Mapping can be performed using the Ensembl Biomart service which can be queried using the biomaRt bioconductor package. This would provide the most up to date annotations. Alternatively, mapping could be performed with the bi-annually updated `org.Hs.eg.db` annotation R package [@R-org.Hs.eg.db] which provides a stable set of annotations, thereby enhancing reproducibility. Mapping is performed with the `mapIds` function in the `AnnotationDbi` R package [@R-AnnotationDbi].
 
 ```{r map_ensembl_entrez}
 library(org.Hs.eg.db)
@@ -374,7 +376,7 @@ Transcriptional signatures to predict mutation status {#transcriptional-mut-sig}
 
 The signature by @verhaak05 is now used to predict the mutation status of the NPM1c mutation. This is done by quantifying the concordance of genes in the signature with their expression in each sample. As such, high expression of up-regulated genes and low expression of down-regulated genes would result in higher scores. This single value can then be used to predict the mutation status of individual samples if these data were unavailable.
 
-The signatures of interest are first downloaded from the MSigDB and read into `GeneSet` objects from the `GSEABase` R package. We then use the `singscore` R/Bioconductor package to quantify each sample for the Verhaak signature. Some of the visualisation and diagnostic tools within the `singscore` package are used to interpret the signatures and scores. Finally, we use a simple logistic regression model on the scores to predict the mutation status.
+The signatures of interest are first downloaded from the MSigDB and read into `GeneSet` objects from the `GSEABase` R package [@R-GSEABase]. We then use the `singscore` R/Bioconductor package to quantify each sample for the Verhaak signature. Some of the visualisation and diagnostic tools within the `singscore` package are used to interpret the signatures and scores. Finally, we use a simple logistic regression model on the scores to predict the mutation status.
 
 Download signature and load into R {#prepare-signature}
 ----------------------------------
@@ -402,7 +404,7 @@ verhaak_files = paste0(verhaak_names, '.xml')
 mapply(download.file, verhaak_links, verhaak_files, method = 'libcurl')
 ```
 
-Functions in the `GSEABase` package help with reading, parsing and processing the signatures. Signatures from an MSigDB XML file can be read using the `getBroadSets` function which results in a `GeneSet` object. Gene symbols, Entrez IDs and affymetrix chip IDs from the original experiment (HG-U133A in this case) are stored in the XML file. Entrez IDs are read from the file as these can be mapped directly to our data. Conversions to other identifiers can be achieved using the `mapIdentifiers` function from `GSEABase` and an annotation package that contains the mappings. The advantage of using this function instead of the `mapIds` function from the `AnnotationDb` package is that the former retains the `GeneSet` object after conversion of IDs.
+Functions in the `GSEABase` package help with reading, parsing and processing the signatures. Signatures from an MSigDB XML file can be read using the `getBroadSets` function which results in a `GeneSet` object. Gene symbols, Entrez IDs and affymetrix chip IDs from the original experiment (HG-U133A in this case) are stored in the XML file. Entrez IDs are read from the file as these can be mapped directly to our data. Conversions to other identifiers can be achieved using the `mapIdentifiers` function from `GSEABase` and an annotation package that contains the mappings. The advantage of using this function instead of the `mapIds` function from the `AnnotationDbi` package is that the former retains the `GeneSet` object after conversion of IDs.
 
 ```{r read_signatures}
 library(GSEABase)
@@ -555,7 +557,7 @@ NPM1c mutations are significantly associated with the score. Samples carrying a 
 Evaluate prediction model performance {#prediction-performance}
 -------------------------------------
 
-The above statistics give insight on the models trained but not on their performance. Precision and recall provide insight on a models predictive performance. The `dcanr` package provides functions to compute these metrics along with other measures of performance.
+The above statistics give insight on the models trained but not on their performance. Precision and recall provide insight on a models predictive performance. The `dcanr` package [@R-dcanr] provides functions to compute these metrics along with other measures of performance.
 
 ```{r eval_prediction_performance}
 library(dcanr)
@@ -723,32 +725,6 @@ This workflow depends on various packages from version `r BiocManager::version()
 ```{r session_info}
 sessionInfo()
 ```
-
-Software availability {.unnumbered}
-=====================
-
-This section will be generated by the Editorial Office before publication. Authors are asked to provide some initial information to assist the Editorial Office, as detailed below.
-
-1. URL link to where the software can be downloaded from or used by a non-coder (AUTHOR TO PROVIDE; optional)
-2. URL link to the author's version control system repository containing the source code (AUTHOR TO PROVIDE; required)
-3. Link to source code as at time of publication (*F1000Research* TO GENERATE)
-4. Link to archived source code as at time of publication (*F1000Research* TO GENERATE)
-5. Software license (AUTHOR TO PROVIDE; required)
-
-Author information {.unnumbered}
-==================
-
-In order to give appropriate credit to each author of an article, the individual contributions of each author to the manuscript should be detailed in this section. We recommend using author initials and then stating briefly how they contributed.
-
-Competing interests {.unnumbered}
-===================
-
-No competing interests were disclosed.
-
-Grant information {.unnumbered}
-=================
-
-Please state who funded the work discussed in this article, whether it is your employer, a grant funder etc. Please do not list funding that you have that is not relevant to this specific piece of research. For each funder, please state the funder's name, the grant number where applicable, and the individual to whom the grant was assigned. If your work was not funded by any grants, please include the line: 'The author(s) declared that no grants were involved in supporting this work.'
 
 Acknowledgments {.unnumbered}
 ===============
