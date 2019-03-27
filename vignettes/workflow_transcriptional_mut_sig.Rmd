@@ -6,14 +6,14 @@ author:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
       - School of Mathematics and Statistics, University of Melbourne, Parkville, VIC 3010, Australia
     email: bhuva.d@wehi.edu.au
-  - name: Yi Xie
-    affiliation:
-      - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
-    email: xie.y@wehi.edu.au
   - name: Momeneh Foroutan
     affiliation:
       - Department of Clinical Pathology, The University of Melbourne Centre for Cancer Research, Victorian Comprehensive Cancer Centre, Melbourne, Victoria 3000, Australia
     email: momeneh.foroutan@unimelb.edu.au
+  - name: Yi Xie
+    affiliation:
+      - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
+    email: xie.y@wehi.edu.au
   - name: Ruqian Lyu
     affiliation:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
@@ -41,7 +41,7 @@ vignette: >
   %\VignetteIndexEntry{Using singscore to predict mutations in AML from transcriptomic signatures}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-keywords: Please list up to eight keywords to help readers interested in your article find it more easily.
+keywords: single sample, gene set scoring, signature scoring, AML mutations, NPM1c mutation, mutation prediction, TCGA
 abstract: >
   Advances in technologies for measuring the entire transcriptome of biological samples (e.g. RNA-seq) have revolutionised our ability to understand transcriptional regulatory programs which underpin diseases such as cancer. We recently published singscore - a single sample, rank-based gene set scoring method which quantifies how concordant the transcriptional profile of individual samples are relative to specific gene sets of interest. Here we demonstrate the application of singscore to investigate transcriptional profiles associated with specific mutations or genetic lesions in acute myeloid leukemia. Using matched genomic and transcriptomic data available through the TCGA we show that scoring of appropriate signatures can distinguish samples with corresponding mutations, reflecting the ability of these mutations to drive aberrant transcriptional programs involved in leukemogenesis. We believe the singscore method is particularly useful for studying heterogeneity within a specific subsets of cancers, and as demonstrated, we show the ability of singscore to identify where alternative mutations appear to drive similar transcriptional programs.
 ---
