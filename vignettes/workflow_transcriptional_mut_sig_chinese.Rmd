@@ -116,30 +116,27 @@ The Cancer Genome Atlas（TCGA）提供了上千的病人转录组数据，通�
 
 AML中的复发性遗传损伤还包括赖氨酸甲基转移酶2A（*KMT2A*，以前被称为*MLL*）融合基因，*KMT2A*基因（*KMT2A* -PTD）内的部分串联重复，以及早幼粒细胞白血病蛋白（*PML*）和视黄酸受体α（*RARA*）之间的融合基因（*PML-RARA*）。鉴于NPM1c突变对Hox基因家族的失调作用，具有MLL融合基因的AML样本显示出Hox家族基因的表达失调成为了一个值得探究的问题 [@hess04, @ross04]。然而，具有*MLL*-PTD的样本似乎显示出与MLL-融合样本相对不同的表型 [@ross04]。尽管有充分的证据证明NPM1c突变和其它遗传损伤在阻碍AML细胞分化中的作用，但具有*PML-RARA*融合的样本被诊断为一种叫做急性早幼粒细胞白血病（acute promyelocytic leukemia，APL)的AML亚型。这种临床AML亚型与French-American-British (FAB)分类系统中的FAB-M3相关。由于早幼粒细胞阶段的分化阻滞，该亚型的细胞显示出特有的形态 [@dethe91]。
 
-
-In this workflow we demonstrate the ability of the singscore method for single sample gene set scoring [@foroutan18] to classify tumour 'driver mutations' from transcriptomic data. We use a previously identified gene signature for the NPM1c mutation [@verhaak05], as well as signatures for *PML-RARA* gene fusions and MLL-fusions that were derived using pediatric AML samples but shown to work well for classifying adult AML samples with similar lesions [@ross04]. Using these signatures which are included within the molecular signatures database (MSigDB) [@liberzon15], we demonstrate that a bi-directional scoring approach can classify TCGA AML samples with corresponding mutations with a good precision and recall. A particularly useful feature of gene set scoring is the ability to project samples onto 2D or higher-order landscapes defined by corresponding phenotypic signatures. Accordingly, by comparing scores for both the NPM1c and *KMT2A*-/*MLL*-fusion signatures, we show that this classification likely arises through the shared downstream biological effects of Hox family dysregulation. We also compare the NPM1c mutation signature to the *PML-RARA* signature and show a clear separation of these subtypes reflecting their divergent phenotypes and the mutually-exclusive nature of these mutations.
-
 在这个工作流程中，我们证明了singscore方法 [@outoutan18]从转录组数据中区分不同肿瘤“驱动突变（driver mutations）”的能力。我们使用了已定义的NPM1c突变的gene signature[@verhaak05]，以及*PML-RARA*基因融合和MLL融合的gene signatures。后两个gene signatures来自于儿科AML样本，但是已被证明适用于成人AML样本的分类 [@ross04]。这些gene signatures已存在于MSigDB数据库（molecular signatures database） [@liberzon15]中，通过使用这些gene signatures，我们证明了singscore的打分方法可以根据不同的突变将TCGA AML样本分类，且结果具有良好的精确度（precision）和召回率（recall）。该方法的优点之一在于它是能够根据表型特征（phenotypic signatures）将样本映射到二维或者更高维度的空间中。通过比较NPM1c和*KMT2A*-/*MLL*- 融合signatures的得分，我们展示了这种分类可能是由于Hox家族失调产生的共同的下游效应而导致的。我们还将NPM1c突变signature与*PML-RARA* signature进行比较，这两个亚型的明显分离反映了它们显著不同的表型和相互排斥的突变。
 
-Downloading and preparing the data {#download-and-prepare}
+数据下载与处理 {#download-and-prepare}
 ==================================
 
-Data from the cancer genome atlas (TCGA) project is made available through the Genomic Data Commons (GDC). Open access data from the project can be accessed in multiple pre-processed formats. Transcriptomic data can be downloaded either at the count level or as FPKM transformed abundance, before or after upper quantile normalisation. Other pre-processed version can be found from sources such as the [www.cbioportal.org](http://www.cbioportal.org/) and [firebrowse.org](http://firebrowse.org). The GDC data used STAR to perform a two-pass alignment followed by quantification using HTSeq. Data from the GDC can be downloaded using the [GDC data transfer tool](https://gdc.cancer.gov/access-data/gdc-data-transfer-tool) which allows users to select the specific files of interest using the GDC portal. These files then have to be read, merged, annotated and processed into a data structure that simplifies downstream analysis. Alternatively, all the above mentioned steps, including the download, can be performed using the R package `TCGAbiolinks` [@colaprico15, @R-TCGAbiolinks]. The package supports data download using the GDC API and the GDC client. We will use the TCGAbiolinks package to download, annotate and process the data into a SummarizedExperiment R object.
+我们可以通过Genomic Data Commons（GDC）获得多种不同预处理的TCGA数据。转录组数据有count值和FPKM值，有用上四分位数标准化（upper quantile normalisation）前后的值。经过其它方式预处理后的数据可以在 [www.cbioportal.org](http://www.cbioportal.org/) 和 [firebrowse.org](http://firebrowse.org) 找到。GDC的数据使用了STAR的“two-pass”模式进行序列比对，使用了HTSeq进行定量。用户在使用 [GDC data transfer tool](https://gdc.cancer.gov/access-data/gdc-data-transfer-tool) 下载GDC中的数据时，可以通过GDC portal选择自己感兴趣的特定文件进行下载。下载之后需要读取并整合这些文件之后才可以进行下游分析。以上这些步骤（包括下载）可以通过R包`TCGAbiolinks` [@colaprico15, @R-TCGAbiolinks]完成。这个包支持使用GDC API和GDC client进行数据下载，我们会使用该包完成下载、注释并将数据整合成SummarizedExperiment R对象。
 
-The following steps need to be performed to prepare the data:
+在开始分析之前需要完成一下几步数据处理：
+1. 创建查询列表以下载特定的文件；
+2. 执行查询以下载数据；
+3. 将下载好的数据读入R中；
+4. 过滤掉表达量低的基因；
+5. 校正compositional bias并对基因长度进行标准化 [@foroutan18]
 
-1. Create a query to select the files to download
-2. Execute the query and download the data
-3. Read the data into R
-4. Filter out genes with low expression
-5. Normalise the data for compositional bias and transform to account for gene-length biases as outlined in the singscore manuscript [@foroutan18]
-
-Querying the GDC database {#gdc-query}
+查询GDC数据库 {#gdc-query}
 -------------------------
 
-The first step in any analysis should be to determine and report the data version and the service used to download the data. The `getGDCInfo()` function returns the release date of all data on the GDC along with a version.
+任何数据分析的第一步是先确定好数据的版本和下载数据的方式。`getGDCInfo()`功能可以返回GDC数据库中数据的版本号和发布时间。
 
 ```{r gdc_query}
+library(SingscoreAMLMutations)
 library(TCGAbiolinks)
 
 #get GDC version information
@@ -147,9 +144,10 @@ gdc_info = getGDCInfo()
 gdc_info
 ```
 
-A query then needs to be run, using the GDC to identify the specific files for download. This step is similar to generating a *MANIFEST* file using the GDC portal. The first parameter of the query specifies the project - available projects can be accessed using `getGDCprojects()` or from <https://portal.gdc.cancer.gov/projects>. The TCGA acute myeloid leukemia data is part of the TCGA-LAML project. Following this, the data category, data type and workflow type need to be specified. The query formed below selects files containing the count level transcriptomic measurements. Values for different parameters of the query can be identified from "searching arguments" section of the "query" vignette: `vignette("query", package = "TCGAbiolinks")`. The result of this query will be a dataframe containing filenames and additional annotations related to the files.
+接下来我们需要创建一个查询命令，从GDC找到并下载特定的文件。这一步和使用GDC portal创建*MANIFEST*文件很类似。查询命令的第一个参数（project）指定了项目的名称（使用`getGDCprojects()`功能或者进入<https://portal.gdc.cancer.gov/projects>可以获得所有项目名称），TCGA急性髓细胞样白血病（acute myeloid leukemia，AML）数据属于TCGA-LAML项目。接下来还需要指定数据分类（data.category）、数据类型（data.type）和工作流程类型（workflow.type）。下面这个查询命令指定了count-level的转录组数据。输入各参数的值可以从“query”vignette文档的"searching arguments"部分找到（使用`vignette("query", package = "TCGAbiolinks")`命令）。查询命令最终会返回一个包含了文件名和相关注释的数据框。
 
 Read count level data are selected instead of the processed FPKM data as one of the downstream pre-processing analysis results in filtering out of genes. A general recommendation is to compute FPKM values after filtering genes out so as to ensure counts are normalised by the corresponding library sizes. In cases where count-level data is not available, filtering can be performed directly on FPKM values, provided that the library size is large enough.
+
 
 ```{r gdc_results}
 #form a query for the RNAseq data
@@ -174,7 +172,7 @@ Downloading the TCGA AML RNA-seq read counts {#download-data}
 The `GDCdownload` function then executes the query on the GDC database and begins downloading the data using the GDC API. The download method should be changed to "client", if the size of the data is expected to be large, e.g for RNA-seq read data or methylation data. It is good practice to specify the directory for data storage - we store all the data in the "GDCdata" directory relative to the current path. The function downloads the data and organises it into the folder based on parameters specified in the query. This allows multiple different levels and types of data to be stored in the same directory structure. Files with counts are stored at *./GDCdata/TCGA-LAML/harmonized/Transcriptome_Profiling/Gene_Expression_Quantification/*.
 
 ```{r gdc_download, results='hide'}
-datapath = './GDCdata'
+datapath = 'GDCdata'
 GDCdownload(query_rna, directory = datapath) #(size: 39MB)
 ```
 
