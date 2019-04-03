@@ -169,10 +169,10 @@ colnames(rnaseq_res)
 Downloading the TCGA AML RNA-seq read counts {#download-data}
 --------------------------------------------
 
-The `GDCdownload` function then executes the query on the GDC database and begins downloading the data using the GDC API. The download method should be changed to "client", if the size of the data is expected to be large, e.g for RNA-seq read data or methylation data. It is good practice to specify the directory for data storage - we store all the data in the "GDCdata" directory relative to the current path. The function downloads the data and organises it into the folder based on parameters specified in the query. This allows multiple different levels and types of data to be stored in the same directory structure. Files with counts are stored at *./GDCdata/TCGA-LAML/harmonized/Transcriptome_Profiling/Gene_Expression_Quantification/*.
+The `GDCdownload` function then executes the query on the GDC database and begins downloading the data using the GDC API. The download method should be changed to "client", if the size of the data is expected to be large, e.g for RNA-seq read data or methylation data. It is good practice to specify the directory for data storage - we store all the data in the "GDCdata" directory in the temporary directory. Users should store their data in a permanent storage to retain the data. The function downloads the data and organises it into the folder based on parameters specified in the query. This allows multiple different levels and types of data to be stored in the same directory structure. Files with counts are stored at *TEMPDIR/GDCdata/TCGA-LAML/harmonized/Transcriptome_Profiling/Gene_Expression_Quantification/*.
 
 ```{r gdc_download, results='hide'}
-datapath = file.path('.', 'GDCdata')
+datapath = file.path(tempdir(), 'GDCdata')
 GDCdownload(query_rna, directory = datapath) #(size: 39MB)
 ```
 
