@@ -133,7 +133,7 @@ AML中的复发性遗传损伤还包括赖氨酸甲基转移酶2A（*KMT2A*，�
 查询GDC数据库 {#gdc-query}
 -------------------------
 
-任何数据分析的第一步是先确定好数据的版本和下载数据的方式。`getGDCInfo()`功能可以返回GDC数据库中数据的版本号和发布时间。
+任何数据分析的第一步是先确定好数据的版本和下载数据的方式。`getGDCInfo()`函数可以返回GDC数据库中数据的版本号和发布时间。
 
 ```{r gdc_query}
 library(SingscoreAMLMutations)
@@ -144,10 +144,9 @@ gdc_info = getGDCInfo()
 gdc_info
 ```
 
-接下来我们需要创建一个查询命令，从GDC找到并下载特定的文件。这一步和使用GDC portal创建*MANIFEST*文件很类似。查询命令的第一个参数（project）指定了项目的名称（使用`getGDCprojects()`功能或者进入<https://portal.gdc.cancer.gov/projects>可以获得所有项目名称），TCGA急性髓细胞样白血病（acute myeloid leukemia，AML）数据属于TCGA-LAML项目。接下来还需要指定数据分类（data.category）、数据类型（data.type）和工作流程类型（workflow.type）。下面这个查询命令指定了count-level的转录组数据。输入各参数的值可以从“query”vignette文档的"searching arguments"部分找到（使用`vignette("query", package = "TCGAbiolinks")`命令）。查询命令最终会返回一个包含了文件名和相关注释的数据框。
+接下来我们需要创建一个查询命令，从GDC找到并下载特定的文件。这一步和使用GDC portal创建*MANIFEST*文件很类似。查询命令的第一个参数（project）指定了项目的名称（使用`getGDCprojects()`函数或者进入<https://portal.gdc.cancer.gov/projects>可以获得所有项目名称），TCGA急性髓细胞样白血病（acute myeloid leukemia，AML）数据属于TCGA-LAML项目。接下来还需要指定数据分类（data.category）、数据类型（data.type）和工作流程类型（workflow.type）。下面这个查询命令指定了count-level的转录组数据。输入各参数的值可以从“query”vignette文档的"searching arguments"部分找到（使用`vignette("query", package = "TCGAbiolinks")`命令）。查询命令最终会返回一个包含了文件名和相关注释的数据框。
 
-Read count level data are selected instead of the processed FPKM data as one of the downstream pre-processing analysis results in filtering out of genes. A general recommendation is to compute FPKM values after filtering genes out so as to ensure counts are normalised by the corresponding library sizes. In cases where count-level data is not available, filtering can be performed directly on FPKM values, provided that the library size is large enough.
-
+这里我们选择count-level的数据而不是FPKM是因为我们先要对基因进行过滤。通常，FPKM的计算在基因过滤之后，以确保FPKM计算时使用的library sizes大小正确。如果library sizes足够大，在无法获得count-level数据的情况下使用FPKM值也是合理的。
 
 ```{r gdc_results}
 #form a query for the RNAseq data
@@ -166,35 +165,36 @@ dim(rnaseq_res)
 colnames(rnaseq_res)
 ```
 
-Downloading the TCGA AML RNA-seq read counts {#download-data}
+下载TCGA AML RNA-seq数据（read counts） {#download-data}
 --------------------------------------------
 
-The `GDCdownload` function then executes the query on the GDC database and begins downloading the data using the GDC API. The download method should be changed to "client", if the size of the data is expected to be large, e.g for RNA-seq read data or methylation data. It is good practice to specify the directory for data storage - we store all the data in the "GDCdata" directory relative to the current path. The function downloads the data and organises it into the folder based on parameters specified in the query. This allows multiple different levels and types of data to be stored in the same directory structure. Files with counts are stored at *./GDCdata/TCGA-LAML/harmonized/Transcriptome_Profiling/Gene_Expression_Quantification/*.
+`GDCdownload`函数可以执行查询并使用GDC API下载数据。如果需要下载的文件很大（如RNA-seq的read数据或者甲基化数据），应该把`GDCdownload`函数里的下载方法切换成“client”。这里我们暂时将数据存储在“GDCdata”文件夹中，用户应该指定自己的存储路径以妥善保存好数据。`GDCdownload`函数通过这种参数设定的方法使我们能够将不同类型的数据存储在同一个文件夹内进行管理与使用。这里，下载后我们可以看到count-level数据被存储在*TEMPDIR/GDCdata/TCGA-LAML/harmonized/Transcriptome_Profiling/Gene_Expression_Quantification/*路径下。
 
 ```{r gdc_download, results='hide'}
-datapath = 'GDCdata'
+datapath = file.path(tempdir(), 'GDCdata')
 GDCdownload(query_rna, directory = datapath) #(size: 39MB)
 ```
 
-Reading count-level data into R {#read-data}
+将count-level数据读入R {#read-data}
 -------------------------------
 
-The `GDCprepare` function reads and processes the downloaded data into a `RangedSummarizedExperiment` object from the `SummarizedExperiment` package [@R-SummarizedExperiment] which allows patient annotations, gene annotations and count data to be stored in one object. Patient annotations are downloaded upon calling this function and subsequently mapped and attached to the resulting object. A RangedSummarizedExperiment object is similar to an ExpressionSet object but provides added functionality such as indexing with genomic coordinates and storing multiple data matrices with the same structure. Feature annotations used to annotate the data are stored in an RDA/RDATA file.
+`GDCprepare`函数可以将下载好的数据读入R并处理成`RangedSummarizedExperiment`对象（来自`SummarizedExperiment`包），该对象可以同时储存read count、基因注释和临床信息。在调用该函数的时候临床信息自动下载并整合入`RangedSummarizedExperiment`对象中。RangedSummarizedExperiment对象和ExpressionSet很类似，但它还可以使用基因坐标进行索引以及存储具有相同结构的多个数据矩阵。用来注释数据的特征（feature）注释被存储在一个RDA/RDATA文件中。
 
 ```{r gdc_prepare, results='hide'}
 aml_se = GDCprepare(query_rna, directory = datapath)
 ```
 
-The object contains data for 56,925 features and 151 samples. The original data files contain 60,483 features, some of which (3,767) could not be mapped to ENSEMBL GRCh38.p12. Feature and sample annotations can be accessed using `rowData(se)` and `colData(se)` respectively and the counts data can be accessed using `assay(se)`. The TCGA data usually contains some formalin-fixed paraffin-embedded (FFPE) samples which should be discarded from the analysis as the protocol introduces biological artefacts. This procedure is only performed on solid tumours and not leukemias, therefore, no filtering is required for this data set.
+对象（object）中包含了56925个特征（features）和151个样本。原始数据包含60483个特征，其中3767个特征因无法和ENSEMBL GRCh38.p12匹配而被丢弃。用`rowData(se)`和`colData(se)`函数可以获得特征和样本的注释信息，用`assay(se)`函数可以获得counts数据。TCGA数据往往包含一些福尔马林固定、石蜡包埋（formalin-fixed paraffin-embedded，FFPE）的样本，这些样本需要被过滤掉以避免protocol不同而引入的误差。这一步在本数据集中不需要，因为这一步骤是针对实体瘤（solid tumors）而非白血病（leukemias）的。
 
 ```{r show_se}
 aml_se
 ```
 
-Filter out genes with low counts {#filter-data}
+过滤掉counts数低的基因 {#filter-data}
 --------------------------------
 
 The `edgeR` package [@R-edgeR] contains methods that assist in the data normalisation and transformation required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment. Creation of a DGEList object is initially unsuccessful due to duplicated row names in the data matrix (176 features). The raw count files for individual samples do not have any duplicated features indicating this is introduced by the `GDCprepare` function. This is further supported by the fact that the counts for a single feature are the same for duplicated entries. An example of such a feature is shown below and we have verified duplicated entries of all other features to be the same.
+`edgeR`包提供了过滤所需的数据标准化与转换方法。这些方法要求数据存储在DGEList对象中，因此我们需要将SummarizedExperiment对象转换成DGEList对象。最初因为数据矩阵中包含重复的行名（176个）而无法转换成DGEList对象。原始数据中并没有任何重复的特征，因此可能是在`GDCprepare`函数这一步发生了错误。检查后我们发现特征名称相同的数据具有相同的count值。
 
 ```{r dup_entries}
 library(SummarizedExperiment)
@@ -205,7 +205,7 @@ dup_data = assay(aml_se[rownames(aml_se) %in% dup_feature, ])
 identical(dup_data[1, ], dup_data[2, ])
 ```
 
-As such, it is safe to discard duplicated entries.
+因此我们可以直接去除掉重复数据当中的一个。
 
 ```{r remove_dups}
 library(edgeR)
@@ -216,6 +216,7 @@ aml_dge = DGEList(counts = assay(aml_se), genes = rowData(aml_se))
 
 Genes with low counts across most samples are discarded from the analysis. This is a standard step in differential expression analysis as inclusion of such genes in the analysis could skew estimates of dispersion. It is also motivated in rank-based analysis, such as with singscore, to avoid rank duplication. Rank duplication reduces the discriminant power of scores as the number of unique ranks is reduced. A commonly used filter is to select only those genes that have CPMs above a certain threshold across a proportion of samples. Filtering is performed on the CPMs rather than raw counts as the former accounts for variation in library sizes, therefore, is unbiased. For instance, a CPM of 1 would equate to read counts between 19 and 50 for samples in the AML data where library sizes vary between 18.6 and 49.7 million reads. Here, we retain genes that have a CPM > 1 across more than 50% of the samples. Other methods to filter out genes with low counts exist and may be preferable in specific applications. @chen16 and @law16 filter genes based on the experimental design whereby the proportion of samples with enough read counts are evaluated per experimental group. As the AML data have many samples, filtering is performed across all samples rather than within sub-groups. Group specific filtering would be recommended for the study of rare groups. The distribution of logCPMs is much closer to the expected log-normal distribution after filtering out genes with low counts as seen in Figure \@ref(fig:plot-hist-filtering).
 
+本分析流程中，在大多数样本里count数很低的基因被丢弃。这一步骤往往是差异表达分析的标准步骤，因为这些基因使得对离差（dispersion）的估计发生偏离。
 ```{r plot-hist-filtering, fig.wide=TRUE, fig.cap="Histogram of logCPM values for the AML data before and after filtering. Filtering results in fewer zeros in the data. Most genes with CPM less than 1, logCPM < 0; (red line) across the majority of samples get discarded, resulting in an approcimately log-normal distribution."}
 prop_expressed = rowMeans(cpm(aml_dge) > 1)
 keep = prop_expressed > 0.5
