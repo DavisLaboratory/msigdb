@@ -194,7 +194,8 @@ aml_se
 --------------------------------
 
 The `edgeR` package [@R-edgeR] contains methods that assist in the data normalisation and transformation required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment. Creation of a DGEList object is initially unsuccessful due to duplicated row names in the data matrix (176 features). The raw count files for individual samples do not have any duplicated features indicating this is introduced by the `GDCprepare` function. This is further supported by the fact that the counts for a single feature are the same for duplicated entries. An example of such a feature is shown below and we have verified duplicated entries of all other features to be the same.
-`edgeR`包提供了过滤所需的数据标准化与转换方法。这些方法要求数据存储在DGEList对象中，因此我们需要将SummarizedExperiment对象转换成DGEList对象。最初因为数据矩阵中包含重复的行名（176个）而无法转换成DGEList对象。原始数据中并没有任何重复的特征，因此可能是在`GDCprepare`函数这一步发生了错误。检查后我们发现特征名称相同的数据具有相同的count值。
+
+`edgeR`包提供了过滤所需的数据标准化与转换方法。这些方法要求数据存储在DGEList对象中，因此我们需要将SummarizedExperiment对象转换成DGEList对象。一开始我们发现数据矩阵中包含重复的行名（176个）因而无法转换成DGEList对象。但实际上原始数据中不包含任何重复的特征，因此可能是在`GDCprepare`函数这一步发生了错误，检查后发现特征名称相同的数据具有相同的count值。
 
 ```{r dup_entries}
 library(SummarizedExperiment)
@@ -214,9 +215,8 @@ aml_se = aml_se[!duplicated(rownames(aml_se)), ]
 aml_dge = DGEList(counts = assay(aml_se), genes = rowData(aml_se))
 ```
 
-Genes with low counts across most samples are discarded from the analysis. This is a standard step in differential expression analysis as inclusion of such genes in the analysis could skew estimates of dispersion. It is also motivated in rank-based analysis, such as with singscore, to avoid rank duplication. Rank duplication reduces the discriminant power of scores as the number of unique ranks is reduced. A commonly used filter is to select only those genes that have CPMs above a certain threshold across a proportion of samples. Filtering is performed on the CPMs rather than raw counts as the former accounts for variation in library sizes, therefore, is unbiased. For instance, a CPM of 1 would equate to read counts between 19 and 50 for samples in the AML data where library sizes vary between 18.6 and 49.7 million reads. Here, we retain genes that have a CPM > 1 across more than 50% of the samples. Other methods to filter out genes with low counts exist and may be preferable in specific applications. @chen16 and @law16 filter genes based on the experimental design whereby the proportion of samples with enough read counts are evaluated per experimental group. As the AML data have many samples, filtering is performed across all samples rather than within sub-groups. Group specific filtering would be recommended for the study of rare groups. The distribution of logCPMs is much closer to the expected log-normal distribution after filtering out genes with low counts as seen in Figure \@ref(fig:plot-hist-filtering).
+本分析流程中，我们过滤掉了在大多数样本中表达量很低的基因。这一步骤是差异表达分析的标准步骤，因为这些基因导致离差（dispersion）估计发生偏离。在以排序为基础的方法中这一步也很有必要，因为重复的排名（rank duplication）会减弱方法的判别能力。通常我们只选择那些在一定比例样本中CPM值高于一定阈值的基因。之所以用CPM值进行过滤而不是raw counts是因为CPM值对总reads数，也就是library sizes进行了均一化，因此CPM值相对于raw counts而言是无偏的。阈值的选择不是绝对的，假设AML数据的library sizes范围是1860~4970（百万reads），那么CPM = 1意味着read counts的范围为19~50（reads）。在这里我们保留了在50%的样本中CPM值超过1（CPM > 1）的基因。在特定情况下可能其它过滤低表达基因的方法更加适用。@chen16和@law16根据实验设计来过滤基因,他们先在各个组内确定表达量过低的基因，然后在所有样本中过滤掉这些基因。这种过滤策略适合那些样本较少的数据集，AML数据有足够多的样本因此我们直接对所有样本进行过滤。在图\@ref(fig:plot-hist-filtering)中我们可以看到过滤后logCPMs值的分布更加接近理想的log-normal分布。
 
-本分析流程中，在大多数样本里count数很低的基因被丢弃。这一步骤往往是差异表达分析的标准步骤，因为这些基因使得对离差（dispersion）的估计发生偏离。
 ```{r plot-hist-filtering, fig.wide=TRUE, fig.cap="Histogram of logCPM values for the AML data before and after filtering. Filtering results in fewer zeros in the data. Most genes with CPM less than 1, logCPM < 0; (red line) across the majority of samples get discarded, resulting in an approcimately log-normal distribution."}
 prop_expressed = rowMeans(cpm(aml_dge) > 1)
 keep = prop_expressed > 0.5
@@ -236,12 +236,12 @@ aml_dge = aml_dge[keep, , keep.lib.sizes = FALSE]
 aml_se = aml_se[keep, ]
 ```
 
-Transformation to FPKM values and normalisation {#calc-fpkm}
+转换成FPKM值并归一化（normalisation） {#calc-fpkm}
 -----------------------------------------------
 
-Singscore requires gene expression measurements to be comparable between genes within a sample, therefore, correction for gene length bias needs to be performed [@oshlack09]. Transformations such as transcripts per million (TPM) and reads/fragments per kilobase per million (RPKM/FPKM), that normalise by gene length, may be used. Both, TPM and RPKM/FPKM values should produce similar results when applying singscore provided that the library size is large enough, which they are here. RPKM values are generally computed after correcting for compositional biases. The `calcNormFactors` function in edgeR provides three methods to do so, TMM normalisation being the default. @chen16 and @law16 discuss the implications of normalisation prior to down-stream processing such as differential expression analysis. Normlisation is generally performed for cross-sample analysis where samples need to be comparable. Singscores are invariant to data normalisation as the analysis is contained within the sample of interest. The idea extends to any transformation that preserves the relative ranks of genes within a sample such as a log transformation. Here, we use TMM normalisation solely for visualisation purposes.
+Singscore要求同一个样本内的基因表达量是可以互相比较的，因此我们需要对基因长度进行归一化[@oshlack09]。数据可以被转换成transcripts per million (TPM)或者reads/fragments per kilobase per million (RPKM/FPKM)，它们都对基因长度进行了归一化。因此针对这两种转换方法，只要library size足够大，singscore得到的结果应当是类似的。edgeR包中的`calcNormFactors`函数提供了三种对基因长度归一化的方法，在不指定的情况下TMM normalisation是默认的方法。@chen16和@law16讨论了在下游分析如差异表达分析之前进行数据归一化的意义。通常归一化的目的是使得样本之间的比较是有意义的。Singscore的分析是针对单个样本内的因此无需对整体样本进行归一化。同理，该方法也不受其它转换方式（如log transformation）的影响。这里我们仅出于可视化目的使用TMM normalisation。
 
-Data transformation to TPM or RPKM/FPKM requires the lengths for all genes to be calculated. Gene lengths need to be computed based on the alignment and quantification parameters. The TCGA transcriptomic data has been aligned using STAR and quantified using HTSeq (details of the pipeline available at <https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/>). HTSeq quantifies reads mapping to the exons of each gene, therefore, effective gene lengths can be calculated as the sum of all exons spanning the gene. The GENCODE v22 annotation file was used for quantification therefore the same file needs to be used to compute gene lengths.
+将数据转换成TPM或者RPKM/FPKM值需要先计算所有基因的长度。基因长度的计算依赖于序列比对过程和定量参数。TCGA转录组数据使用了STAR进行序列比对并用HTSeq进行定量（流程细节见<https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/>）。HTSeq统计了比对到每个基因外显子区域的read数量，因此有效基因长度应当是基因的所有外显子区域长度之和。GENCODE v22被用于定量过程中的注释，因此在计算基因长度时仍然应该用这个注释文件。
 
 ```{r download_gencode, results='hide'}
 #download v22 of the GENCODE annotation
@@ -254,7 +254,7 @@ gencode_link = paste(
 download.file(gencode_link, gencode_file, method = 'libcurl') #(size: 39MB)
 ```
 
-The `rtracklayer` R package [@R-rtracklayer] provides functions to help parse GTF files.
+`rtracklayer`这个R包提供了解析GTF文件的函数。
 
 ```{r compute_gene_lengths}
 library(rtracklayer)
