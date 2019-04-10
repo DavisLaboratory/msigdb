@@ -268,7 +268,7 @@ gene_lengths = ldply(grl, function(x) {
 }, .id = 'ensembl_gene_id')
 ```
 
-Genes are also annotated with their biotype for further analysis. The annotation file uses Ensembl IDs with versions as keys to records, which then need to be converted to Ensembl IDs. This is simply achieved by concatenating the trailing version number.
+Genes are also annotated with their biotype for further analysis. The annotation file uses Ensembl IDs with versions as keys to records, which then need to be converted to Ensembl IDs. This is simply achieved by truncating the trailing version number.
 
 ```{r add_biotype}
 #extract information on gene biotype
@@ -329,7 +329,7 @@ saveRDS(patients, file = 'AMLPatientMutationsTCGA.rds')
 
 ```{r annotate_mutations}
 data(AMLPatientMutationsTCGA)
-patient_mutations = AMLPatientMutationsTCGA
+patient_mutations = AMLPatientMutationsTCGA[colnames(aml_se), ]
 aml_mutations = colnames(patient_mutations)
 colData(aml_se) = cbind(colData(aml_se), patient_mutations)
 colData(aml_se)[, aml_mutations]
