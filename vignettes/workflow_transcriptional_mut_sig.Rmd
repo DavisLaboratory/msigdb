@@ -200,7 +200,7 @@ The `edgeR` package [@R-edgeR] contains methods that assist in the data normalis
 library(SummarizedExperiment)
 
 #example check on one feature ID
-dup_feature = 'ENSG00000277610'
+dup_feature = 'ENSG00000011454'
 dup_data = assay(aml_se[rownames(aml_se) %in% dup_feature, ])
 identical(dup_data[1, ], dup_data[2, ])
 ```
@@ -329,8 +329,9 @@ saveRDS(patients, file = 'AMLPatientMutationsTCGA.rds')
 
 ```{r annotate_mutations}
 data(AMLPatientMutationsTCGA)
-patient_mutations = AMLPatientMutationsTCGA[colnames(aml_se), ]
-aml_mutations = colnames(patient_mutations)
+patient_mutations = AMLPatientMutationsTCGA
+patient_mutations = patient_mutations[colnames(aml_se), ] # order samples
+aml_mutations = colnames(patient_mutations) # get mutation labels
 colData(aml_se) = cbind(colData(aml_se), patient_mutations)
 colData(aml_se)[, aml_mutations]
 ```
