@@ -382,12 +382,12 @@ head(sort(table(gene_annot[!keep, 'gene_biotype']), decreasing = TRUE), n = 10)
 aml_se = aml_se[keep, ]
 ```
 
-Transcriptional signatures to predict mutation status {#transcriptional-mut-sig}
+转录组标签（signatures）预测突变状态 {#transcriptional-mut-sig}
 =====================================================
 
-The signature by @verhaak05 is now used to predict the mutation status of the NPM1c mutation. This is done by quantifying the concordance of genes in the signature with their expression in each sample. As such, high expression of up-regulated genes and low expression of down-regulated genes would result in higher scores. This single value can then be used to predict the mutation status of individual samples if these data were unavailable.
+在这里，来自@verhaak05的标签（signature）被用来预测NPM1c突变的状态。我们需要量化标签（signature）内的基因和它们在样本中表达水平的一致性（concordance）。如标签（signature）内的上调基因（up-regulated genes）在样本中高表达，下调基因（down-regulated genes）在样本中低表达就会产生较高的分数。接下来，这个分数就可以被用来预测样本的突变状态。
 
-The signatures of interest are first downloaded from the MSigDB and read into `GeneSet` objects from the `GSEABase` R package [@R-GSEABase]. We then use the `singscore` R/Bioconductor package to quantify each sample for the Verhaak signature. Some of the visualisation and diagnostic tools within the `singscore` package are used to interpret the signatures and scores. Finally, we use a simple logistic regression model on the scores to predict the mutation status.
+首先，我们先将标签（signature）从MSigDB中下载下来并使用R包`GSEABase`[@R-GSEABase]读入`GeneSet`对象中。接着我们用R/Bioconductor包`singscore`来给Verhaak标签（signature）打分，`singscore`包内的一些函数可用于后续的可视化与诊断。最后，我们对最终分数使用了逻辑回归模型（logistic regression model）来预测突变状态。
 
 Download signature and load into R {#prepare-signature}
 ----------------------------------
