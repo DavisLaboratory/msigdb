@@ -193,9 +193,7 @@ aml_se
 过滤掉counts数低的基因 {#filter-data}
 --------------------------------
 
-The `edgeR` package [@R-edgeR] contains methods that assist in the data normalisation and transformation required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment. Creation of a DGEList object is initially unsuccessful due to duplicated row names in the data matrix (176 features). The raw count files for individual samples do not have any duplicated features indicating this is introduced by the `GDCprepare` function. This is further supported by the fact that the counts for a single feature are the same for duplicated entries. An example of such a feature is shown below and we have verified duplicated entries of all other features to be the same.
-
-`edgeR`包提供了过滤所需的数据标准化与转换方法。这些方法要求数据存储在DGEList对象中，因此我们需要将SummarizedExperiment对象转换成DGEList对象。一开始我们发现数据矩阵中包含重复的行名（176个）因而无法转换成DGEList对象。但实际上原始数据中不包含任何重复的特征，因此可能是在`GDCprepare`函数这一步发生了错误，检查后发现特征名称相同的数据具有相同的count值。
+`edgeR`包提供了过滤所需的数据标准化与转换方法。这些方法要求数据存储在DGEList对象中，因此我们需要将SummarizedExperiment对象转换成DGEList对象。一开始我们发现数据矩阵中存在行名重复（176个）因而无法转换成DGEList对象。但实际上原始数据中不包含任何重复的特征名称，因此我们推测可能是在使用`GDCprepare`函数这一步发生了错误，检查后发现特征名称相同的数据具有相同的count值。
 
 ```{r dup_entries}
 library(SummarizedExperiment)
@@ -218,14 +216,14 @@ aml_dge = DGEList(counts = assay(aml_se), genes = rowData(aml_se))
 本分析流程中，我们过滤掉了在大多数样本中表达量很低的基因。这一步骤是差异表达分析的标准步骤，因为这些基因导致离差（dispersion）估计发生偏离。在以排序为基础的方法中这一步也很有必要，因为重复的排名（rank duplication）会减弱方法的判别能力。通常我们只选择那些在一定比例样本中CPM值高于一定阈值的基因。之所以用CPM值进行过滤而不是raw counts是因为CPM值对总reads数，也就是library sizes进行了均一化，因此CPM值相对于raw counts而言是无偏的。阈值的选择不是绝对的，假设AML数据的library sizes范围是1860~4970（百万reads），那么CPM = 1意味着read counts的范围为19~50（reads）。在这里我们保留了在50%的样本中CPM值超过1（CPM > 1）的基因。在特定情况下可能其它过滤低表达基因的方法更加适用。@chen16和@law16根据实验设计来过滤基因,他们先在各个组内确定表达量过低的基因，然后在所有样本中过滤掉这些基因。这种过滤策略适合那些样本较少的数据集，AML数据有足够多的样本因此我们直接对所有样本进行过滤。在图\@ref(fig:plot-hist-filtering)中我们可以看到过滤后logCPMs值的分布更加接近理想的log-normal分布。
 
 ```{r plot-hist-filtering, fig.wide=TRUE, fig.cap="Histogram of logCPM values for the AML data before and after filtering. Filtering results in fewer zeros in the data. Most genes with CPM less than 1, logCPM < 0; (red line) across the majority of samples get discarded, resulting in an approcimately log-normal distribution."}
-prop_expressed = rowMeans(cpm(aml_dge) > 1)
+prop_expressed = rowMeans(edgeR::cpm(aml_dge) > 1)
 keep = prop_expressed > 0.5
 
 op = par(no.readonly = TRUE)
 par(mfrow = c(1, 2))
-hist(cpm(aml_dge, log = TRUE), main = 'Unfiltered', xlab = 'logCPM')
+hist(edgeR::cpm(aml_dge, log = TRUE), main = 'Unfiltered', xlab = 'logCPM')
 abline(v = log(1), lty = 2, col = 2)
-hist(cpm(aml_dge[keep, ], log = TRUE), main = 'Filtered', xlab = 'logCPM')
+hist(edgeR::cpm(aml_dge[keep, ], log = TRUE), main = 'Filtered', xlab = 'logCPM')
 abline(v = log(1), lty = 2, col = 2)
 par(op)
 ```
@@ -269,7 +267,7 @@ gene_lengths = ldply(grl, function(x) {
 }, .id = 'ensembl_gene_id')
 ```
 
-Genes are also annotated with their biotype for further analysis. The annotation file uses Ensembl IDs with versions as keys to records, which then need to be converted to Ensembl IDs. This is simply achieved by concatenating the trailing version number.
+我们获取了基因的Ensembl IDs和gene type注释信息以便于下游分析。直接从GTF文件里获得的Ensembl IDs末尾带有版本号，我们需要将其去掉以转换为正式的Ensembl IDs。
 
 ```{r add_biotype}
 #extract information on gene biotype
@@ -283,7 +281,7 @@ saveRDS(gene_lengths, file = 'gene_lengths_HTSeq_gencodev22.rds')
 gene_lengths
 ```
 
-The SummarizedExperiment object allows feature annotations to be stored, therefore, information on gene length and biotypes should be added to the existing annotations. Similarly, annotations need to be added to the DGEList object. The column containing lengths should include "length" in its name.
+SummarizedExperiment对象可以存储基因的注释信息，因此我们需要把Ensembl IDs、gene length和gene type加进去。类似的，我们也要把这些注释信息加到DGEList对象中。
 
 ```{r add_length_annotation}
 #allocate rownames for ease of indexing
@@ -295,7 +293,8 @@ rowData(aml_se)$gene_biotype = gene_lengths[rownames(aml_se), 'gene_type']
 aml_dge$genes$length = gene_lengths[rownames(aml_dge), 'gene_length']
 ```
 
-RPKM/FPKM values can now be calculated with the computed gene lengths after computing the normalisation factors. The SummarizedExperiment object can store multiple levels of the data simultaneously, provided that the number of features and samples remains the same across measurements. As such, FPKM values are appended to the existing object.
+
+计算normalisation factors之后我们就可以将数据转换成RPKM/FPKM值了。只要特征数量（行）和样本数量（列）相同，SummarizedExperiment对象可以同时存储多层数据。因此我们直接将FPKM值存在已建立的SummarizedExperiment对象`aml_se`中。
 
 ```{r compute_fpkm}
 aml_dge_tmm = calcNormFactors(aml_dge, method = 'TMM')
@@ -305,10 +304,11 @@ assay(aml_se, 'logFPKM_TMM') = rpkm(aml_dge_tmm, log = TRUE)
 aml_se
 ```
 
-Annotate samples with mutation data {#annotate-mutations}
+对样本注释突变信息 {#annotate-mutations}
 -----------------------------------
 
 Original file at <https://tcga-data.nci.nih.gov/docs/publications/aml_2012/SupplementalTable01.xlsx>
+突变信息的原始文件在：<https://tcga-data.nci.nih.gov/docs/publications/aml_2012/SupplementalTable01.xlsx>
 
 For this analysis we have used the curated mutation list from the original TCGA AML publication [@cancer13] (above) rather than variant calls from the standard TCGA pipeline (available through the [National Cancer Institute Genomic Data Commons](https://gdc.cancer.gov/)) and readers should note that there are some discrepancies between these. For genetic lesions of interest (NPM1c, *KMT2A-MLL*, *KMT2A*-PTD and *PML-RARA*), patients were identified by the following criteria:
 
@@ -317,6 +317,14 @@ For this analysis we have used the curated mutation list from the original TCGA 
 * **KMT2A-fusion**: TRUE if the 'MLL-partner' column contains the string 'MLL-' or '-MLL' (note that the official gene symbol for *MLL* is now *KMT2A*)
 * **KMT2A-PTD**: TRUE if the 'MLL-PTD' column contains the string 'exons'
 * **PML-RARA**: TRUE if the 'PML-RARA' column contains the string 'PML-RARA'
+
+读者们需要注意的是，本分析流程中我们用了从原始TCGA AML文献中[@cancer13]提取的突变列表而不是标准TCGA流程中的突变信息（可以在[National Cancer Institute Genomic Data Commons](https://gdc.cancer.gov/)获得），两者存在一定差异。针对我们所关心的遗传病变（NPM1c, *KMT2A-MLL*, *KMT2A*-PTD and *PML-RARA*），病人通过以下几个标签被分类：
+
+* **Patient ID**: TCGA Patient ID
+* **NPM1c**: 当'NPM1'列包含有'p.W287fs' 或 'p.W288fs'时，返回TRUE
+* **KMT2A-fusion**: 当'MLL-partner'列包含有'MLL-' 或 '-MLL'时，返回TRUE（注意*MLL*的official gene symbol是*KMT2A*）
+* **KMT2A-PTD**: 当'MLL-PTD'列包含有'exons'时，返回TRUE
+* **PML-RARA**: 当'PML-RARA'列包含有'PML-RARA'时，返回TRUE
 
 ```{r preproc_mutations, eval=FALSE, include=FALSE}
 #preprocessing - read tsv (Joe's version) and convert save as RDS
@@ -336,12 +344,12 @@ colData(aml_se) = cbind(colData(aml_se), patient_mutations)
 colData(aml_se)[, aml_mutations]
 ```
 
-Map Ensembl IDs to Entrez IDs {#map-gene-ids}
+匹配Entrez IDs {#map-gene-ids}
 -----------------------------
 
-Ensembl annotations (Ensembl IDs) have higher coverage of the genome which may be useful in applications such as variant calling and similar exploratory analysis [@zhao15]. However, RefSeq annotations (Entrez IDs) may be better suited to RNA-seq analyses which require a stable reference annotation for comparison [@wu13]. As such, we choose to map Ensembl IDs to Entrez IDs and discard any unmapped features.
+Ensembl注释（Ensembl IDs）在基因组上有更高的覆盖度，因此适合用于识别突变（variant calling）等类似的分析过程[@zhao15]。而RefSeq注释（Entrez IDs）对RNA-seq分析更适用，通常RNA-seq分析需要稳定的注释信息以便于未来的比较[@wu13]。因此我们选择将Entrez IDs和Ensembl IDs匹配后去掉那些没有匹配到Entrez ID的基因。
 
-Mapping can be performed using the Ensembl Biomart service which can be queried using the biomaRt bioconductor package. This would provide the most up to date annotations. Alternatively, mapping could be performed with the bi-annually updated `org.Hs.eg.db` annotation R package [@R-org.Hs.eg.db] which provides a stable set of annotations, thereby enhancing reproducibility. Mapping is performed with the `mapIds` function in the `AnnotationDbi` R package [@R-AnnotationDbi].
+匹配可以通过biomaRt的bioconductor R包完成，它可以提供最新的注释信息。匹配还可以通过一年更新两次的R包`org.Hs.eg.db`[@R-org.Hs.eg.db]完成，它提供了更加稳定的注释信息，提高了分析的可重现性。R包`AnnotationDbi`[@R-AnnotationDbi]中的`mapIds`函数可以实现匹配功能。
 
 ```{r map_ensembl_entrez}
 library(org.Hs.eg.db)
@@ -356,7 +364,8 @@ rowData(aml_se)$entrezgene = mapIds(
 gene_annot = rowData(aml_se)
 ```
 
-Multimapped Ensembl IDs are replaced by `NAs`, then discarded to enforce unique mapping. Similarly, Entrez IDs that map to multiple Ensembl IDs are identified from the mapping, and discarded. Only features with unique Ensembl ID to Entrez ID mappings remain.
+匹配到多个Entrez ID的Ensembl IDs返回值为`NAs`，接下来我们就可以去掉这些行以保证一对一的匹配。类似的，我们还需要去掉匹配到多个Ensembl IDs的Entrez IDs。最后我们得到了Ensembl ID和Entrez ID一对一匹配的数据。
+
 
 ```{r discard_multimapped_genes}
 #select genes with mapped Entrez IDs
