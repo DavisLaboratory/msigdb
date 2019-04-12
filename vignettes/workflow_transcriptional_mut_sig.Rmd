@@ -194,7 +194,7 @@ aml_se
 Filter out genes with low counts {#filter-data}
 --------------------------------
 
-The `edgeR` package [@R-edgeR] contains methods that assist in the data normalisation and transformation required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment. Creation of a DGEList object is initially unsuccessful due to duplicated row names in the data matrix (176 features). The raw count files for individual samples do not have any duplicated features indicating this is introduced by the `GDCprepare` function. This is further supported by the fact that the counts for a single feature are the same for duplicated entries. An example of such a feature is shown below and we have verified duplicated entries of all other features to be the same.
+The `edgeR` package [@R-edgeR] contains methods that assist in the data normalisation and transformation required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment. Creation of a DGEList object is initially unsuccessful due to duplicated row names in the data matrix (107 features). The raw count files for individual samples do not have any duplicated features indicating this is introduced by the `GDCprepare` function. This is further supported by the fact that the counts for a single feature are the same for duplicated entries. An example of such a feature is shown below and we have verified duplicated entries of all other features to be the same.
 
 ```{r dup_entries}
 library(SummarizedExperiment)
@@ -458,11 +458,15 @@ Diagnostics of the Verhaak signature {#diagnostics-verhaak}
 The `singscore` package provides a set of visualisation tools that enable diagnostics of the gene signature. For instance, these tools may be used to determine the importance of each component for a bidirectional signature (up- and down-regulated gene sets) to the total score, determine the importance of each gene of a signature in discriminating between the classes of interest, and to investigate the relationship between the final score and the dispersion of signature gene ranks. Annotations of interest can be overlayed on each plot. Singscore supports both continous and categorical annotations, which can either be input as a vector, or as a string specifying a column within the score data frame. We begin by investigating the relationship between the score and dispersion of ranks for the up-regulated gene signature, down-regulated gene signature and the full signature. The `plotDispersion` functions generates a diagnostic plot with annotations overlaid. Annotations can be discrete or continuous, and can be passed as independent variables, or as a column name when the data is appended to the score data frame. It should be noted that all plotting functions in `singscore` can be made interactive by setting the `isInteractive` argument to `TRUE`.
 
 ```{r plot-dispersion, fig.wide=TRUE, fig.height=4, fig.cap="NPM1c signature scores from the up- and down-regulated gene sets, both combined (Total) and independently, can separate samples with NPM1c mutations or *MLL* fusions/PTDs from samples not bearing these genomic lesions. Scores are plot against the median absolute deviation (MAD) of the ranks of genes in each gene set forming the NPM1c signature. The plots also reveal that scores close to 0 result in higher MADs."}
+
+#relative size of text in the figure
+relSize = 1.2
+
 #create annotation
 mutated_gene = rep('Other', ncol(aml_se))
 mutated_gene[aml_se$NPM1c.Mut] = 'NPM1c Mut'
 mutated_gene[aml_se$KMT2A.Fusion | aml_se$KMT2A.PTD] = 'MLL Fusion/PTD'
-p1 = plotDispersion(verhaak_scores, annot = mutated_gene)
+p1 = plotDispersion(verhaak_scores, annot = mutated_gene, textSize = relSize)
 p1
 ```
 
@@ -486,7 +490,7 @@ rank_plots = lapply(names(select_samples), function(x) {
   p1 = plotRankDensity(rankData = aml_ranked[, aml_sample, drop = FALSE],
                        upSet = verhaak_sigs[[1]],
                        downSet = verhaak_sigs[[2]],
-                       textSize = 1)
+                       textSize = relSize)
   
   #overwrite title of the plot with the description of the sample
   #this is possible because singscore uses ggplot2
@@ -637,7 +641,7 @@ p_mll_npm1c = plotScoreLandscape(
   verhaak_scores,
   rossmll_scores,
   scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', 'ROSS_AML_WITH_MLL_FUSIONS'),
-  textSize = 1.4
+  textSize = relSize
   )
 p_mll_npm1c
 ```
@@ -693,7 +697,7 @@ p1 = plotScoreLandscape(
   verhaak_scores,
   newsig_scores,
   scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', newsig_name),
-  textSize = 1.4
+  textSize = relSize
 )
 
 #project NPM1 mutations onto the landscape
