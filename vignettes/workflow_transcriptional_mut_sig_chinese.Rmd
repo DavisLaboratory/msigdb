@@ -116,7 +116,7 @@ The Cancer Genome Atlas（TCGA）提供了上千的病人转录组数据，通�
 
 AML中的复发性遗传损伤还包括赖氨酸甲基转移酶2A（*KMT2A*，以前被称为*MLL*）融合基因，*KMT2A*基因（*KMT2A* -PTD）内的部分串联重复，以及早幼粒细胞白血病蛋白（*PML*）和视黄酸受体α（*RARA*）之间的融合基因（*PML-RARA*）。鉴于NPM1c突变对Hox基因家族的失调作用，具有MLL融合基因的AML样本显示出Hox家族基因的表达失调成为了一个值得探究的问题 [@hess04, @ross04]。然而，具有*MLL*-PTD的样本似乎显示出与MLL-融合样本相对不同的表型 [@ross04]。尽管有充分的证据证明NPM1c突变和其它遗传损伤在阻碍AML细胞分化中的作用，但具有*PML-RARA*融合的样本被诊断为一种叫做急性早幼粒细胞白血病（acute promyelocytic leukemia，APL)的AML亚型。这种临床AML亚型与French-American-British (FAB)分类系统中的FAB-M3相关。由于早幼粒细胞阶段的分化阻滞，该亚型的细胞显示出特有的形态 [@dethe91]。
 
-在这个工作流程中，我们证明了singscore方法 [@outoutan18]从转录组数据中区分不同肿瘤“驱动突变（driver mutations）”的能力。我们使用了已定义的NPM1c突变的gene signature[@verhaak05]，以及*PML-RARA*基因融合和MLL融合的gene signatures。后两个gene signatures来自于儿科AML样本，但是已被证明适用于成人AML样本的分类 [@ross04]。这些gene signatures已存在于MSigDB数据库（molecular signatures database） [@liberzon15]中，通过使用这些gene signatures，我们证明了singscore的打分方法可以根据不同的突变将TCGA AML样本分类，且结果具有良好的精确度（precision）和召回率（recall）。该方法的优点之一在于它是能够根据表型特征（phenotypic signatures）将样本映射到二维或者更高维度的空间中。通过比较NPM1c和*KMT2A*-/*MLL*- 融合signatures的得分，我们展示了这种分类可能是由于Hox家族失调产生的共同的下游效应而导致的。我们还将NPM1c突变signature与*PML-RARA* signature进行比较，这两个亚型的明显分离反映了它们显著不同的表型和相互排斥的突变。
+在这个工作流程中，我们证明了singscore方法 [@foroutan18]从转录组数据中区分不同肿瘤“驱动突变（driver mutations）”的能力。我们使用了已定义的NPM1c突变的gene signature[@verhaak05]，以及*PML-RARA*基因融合和MLL融合的gene signatures。后两个gene signatures来自于儿科AML样本，但是已被证明适用于成人AML样本的分类 [@ross04]。这些gene signatures已存在于MSigDB数据库（molecular signatures database） [@liberzon15]中，通过使用这些gene signatures，我们证明了singscore的打分方法可以根据不同的突变将TCGA AML样本分类，且结果具有良好的精确度（precision）和召回率（recall）。该方法的优点之一在于它是能够根据表型特征（phenotypic signatures）将样本映射到二维或者更高维度的空间中。通过比较NPM1c和*KMT2A*-/*MLL*- 融合signatures的得分，我们展示了这种分类可能是由于Hox家族失调产生的共同的下游效应而导致的。我们还将NPM1c突变signature与*PML-RARA* signature进行比较，这两个亚型的明显分离反映了它们显著不同的表型和相互排斥的突变。
 
 数据下载与处理 {#download-and-prepare}
 ==================================
@@ -199,7 +199,7 @@ aml_se
 library(SummarizedExperiment)
 
 #example check on one feature ID
-dup_feature = 'ENSG00000277610'
+dup_feature = 'ENSG00000011454'
 dup_data = assay(aml_se[rownames(aml_se) %in% dup_feature, ])
 identical(dup_data[1, ], dup_data[2, ])
 ```
@@ -310,14 +310,6 @@ aml_se
 Original file at <https://tcga-data.nci.nih.gov/docs/publications/aml_2012/SupplementalTable01.xlsx>
 突变信息的原始文件在：<https://tcga-data.nci.nih.gov/docs/publications/aml_2012/SupplementalTable01.xlsx>
 
-For this analysis we have used the curated mutation list from the original TCGA AML publication [@cancer13] (above) rather than variant calls from the standard TCGA pipeline (available through the [National Cancer Institute Genomic Data Commons](https://gdc.cancer.gov/)) and readers should note that there are some discrepancies between these. For genetic lesions of interest (NPM1c, *KMT2A-MLL*, *KMT2A*-PTD and *PML-RARA*), patients were identified by the following criteria:
-
-* **Patient ID**: The 'TCGA Patient ID' column was extracted directly
-* **NPM1c**: TRUE if the 'NPM1' column contains the strings 'p.W287fs' or 'p.W288fs'
-* **KMT2A-fusion**: TRUE if the 'MLL-partner' column contains the string 'MLL-' or '-MLL' (note that the official gene symbol for *MLL* is now *KMT2A*)
-* **KMT2A-PTD**: TRUE if the 'MLL-PTD' column contains the string 'exons'
-* **PML-RARA**: TRUE if the 'PML-RARA' column contains the string 'PML-RARA'
-
 读者们需要注意的是，本分析流程中我们用了从原始TCGA AML文献中[@cancer13]提取的突变列表而不是标准TCGA流程中的突变信息（可以在[National Cancer Institute Genomic Data Commons](https://gdc.cancer.gov/)获得），两者存在一定差异。针对我们所关心的遗传病变（NPM1c, *KMT2A-MLL*, *KMT2A*-PTD and *PML-RARA*），病人通过以下几个标签被分类：
 
 * **Patient ID**: TCGA Patient ID
@@ -339,7 +331,8 @@ saveRDS(patients, file = 'AMLPatientMutationsTCGA.rds')
 ```{r annotate_mutations}
 data(AMLPatientMutationsTCGA)
 patient_mutations = AMLPatientMutationsTCGA
-aml_mutations = colnames(patient_mutations)
+patient_mutations = patient_mutations[colnames(aml_se), ] # order samples
+aml_mutations = colnames(patient_mutations) # get mutation labels
 colData(aml_se) = cbind(colData(aml_se), patient_mutations)
 colData(aml_se)[, aml_mutations]
 ```
@@ -389,10 +382,11 @@ aml_se = aml_se[keep, ]
 
 首先，我们先将标签（signature）从MSigDB中下载下来并使用R包`GSEABase`[@R-GSEABase]读入`GeneSet`对象中。接着我们用R/Bioconductor包`singscore`来给Verhaak标签（signature）打分，`singscore`包内的一些函数可用于后续的可视化与诊断。最后，我们对最终分数使用了逻辑回归模型（logistic regression model）来预测突变状态。
 
-Download signature and load into R {#prepare-signature}
+
+下载标签并载入 {#prepare-signature}
 ----------------------------------
 
-The @verhaak05 signature is composed of an up-regulated and a down-regulated gene set. Many signatures are developed in such a manner to improve discrimination of samples. MSigDB stores such signatures using names with suffixes "_UP" and "_DN" representing the independent components of the signature. Here, we form the download links for the signature with the base name "VERHAAK_AML_WITH_NPM1_MUTATED".
+@verhaak05的标签包含有上调和下调的基因列表。许多标签都是这种形式以增强其对样本的区分力。MSigDB将这样的标签（signatures）分成两部分并分别用后缀“_UP”和“_DN”标记。这里，我们直接将标签名“VERHAAK_AML_WITH_NPM1_MUTATED”和"_UP"或"_DN"连接以形成下载链接。
 
 ```{r signature_names}
 #create signature names
@@ -400,7 +394,7 @@ verhaak_names = paste('VERHAAK_AML_WITH_NPM1_MUTATED', c('UP', 'DN'), sep = '_')
 verhaak_names
 ```
 
-The signatures are then downloaded using the links, resulting in an XML file for each component of the signature. The `mapply` function is used to run the download function on all pairs of link-output arguments.
+利用刚才创造的链接下载后，"_UP"和"_DN"分别可以得到一个XML文件，在这里我们指定好输出XML文件的文件名（参数`verhaak_files`）。`mapply`函数可以用来循环下载类似的“链接-输出”参数对。
 
 ```{r download_signatures, results='hide'}
 #generate URLs
@@ -415,7 +409,7 @@ verhaak_files = paste0(verhaak_names, '.xml')
 mapply(download.file, verhaak_links, verhaak_files, method = 'libcurl')
 ```
 
-Functions in the `GSEABase` package help with reading, parsing and processing the signatures. Signatures from an MSigDB XML file can be read using the `getBroadSets` function which results in a `GeneSet` object. Gene symbols, Entrez IDs and affymetrix chip IDs from the original experiment (HG-U133A in this case) are stored in the XML file. Entrez IDs are read from the file as these can be mapped directly to our data. Conversions to other identifiers can be achieved using the `mapIdentifiers` function from `GSEABase` and an annotation package that contains the mappings. The advantage of using this function instead of the `mapIds` function from the `AnnotationDbi` package is that the former retains the `GeneSet` object after conversion of IDs.
+`GSEABase`包中的函数可以用来读取、解析和处理标签（signatures）。`getBroadSets`函数用来读取MSigDB XML文件中的标签（signatures）并生成一个`GeneSet`对象。XML文件还提供了来自原始实验（即HG-U133A）的Gene symbols，Entrez IDs和affymetrix chip IDs。我们仅读入了Entrez IDs因为它能直接和我们的数据匹配起来。`GSEABase`包中的`mapIdentifiers`函数可以帮助你进行ID转换，之所以用这个函数而不是`AnnotationDbi`包中的`mapIds`是因为这个函数在转换ID的同时保留了`GeneSet`对象。
 
 ```{r read_signatures}
 library(GSEABase)
@@ -424,7 +418,7 @@ verhaak_sigs = getBroadSets(verhaak_files, membersId = 'MEMBERS_EZID')
 verhaak_sigs
 ```
 
-To make data indexing easier during signature scoring, row names of the `SummarisedExperiment` object are changed to Entrez IDs which are already part of the row annotations.
+为了使得分析过程中的索引更加方便，我们把`SummarisedExperiment`对象的行名改成Entrez IDs。
 
 ```{r rows_to_entrez}
 rownames(aml_se) = rowData(aml_se)$entrezgene
