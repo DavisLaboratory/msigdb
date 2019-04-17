@@ -99,9 +99,10 @@ knitr::write_bib(c(
 介绍 {#intro}
 ============
 
-癌症是一种异质性疾病，其具有多种临床和病理亚型。以乳腺癌为例，临床上主要依靠激素受体（雌激素受体：ER；孕酮受体：PR）的表达或Erb-B2受体酪氨酸激酶（*HER2*）的过度表达进行分型，这些特征拥有直接靶向治疗的药物。许多癌症的亚型分类主要依赖于识别大型患者队列中的复发性突变（recurrent mutations），通过全基因组或全外显子组测序来获得具有临床意义的亚型 [@cancer13, @papaemmanuil16]。
+微阵列（microarray）技术的发展和RNA测序技术的快速应用为检测生物样品的转录谱（或转录组）提供了平台[@ cieslik18]。转录组学分析通常侧重于样品不同分组之间基因的“差异表达（differential expression）”，然而随着公开可用RNA数据的快速增长，“相对方法（relative approached”的使用越来越多，量化了样品与特定的基因标签（gene signatures）之间的一致性[@ cieslik18]。对于用突变或融合基因进行肿瘤亚型分类与鉴定，以及寻找驱动癌症进展的基因组损伤而言，基因组的测序十分重要。而转录组学分析则可以提供携带这些突变的细胞的形态或表型信息。
 
-尽管基因组测序得到的突变或融合基因对于肿瘤亚型分类十分重要，我们仍然很难弄清携带有这些突变的细胞的状态或表型。微阵列（microarray）技术的发展和RNA测序技术的应用则使得我们可以分析生物样本的表达谱（transcriptional profile），掌握更多细胞的表型信息[@cieslik18]。过去转录组分析主要聚焦在不同样本之间基因的差异表达，而随着公开RNA数据的快速增长，越来越多的人开始使用“relative approaches”来量化样本与gene signatures之间的一致性。最常见的例子就是临床上PAM50 signatures被用来预测乳腺癌病人的亚型 [@parker09, @cieslik18]。
+癌症是一种异质性疾病，其具有多种临床和病理亚型。以乳腺癌为例，临床上主要依靠激素受体（雌激素受体：ER；孕酮受体：PR）的表达或Erb-B2受体酪氨酸激酶（*HER2*）的过度表达进行分型，这些特征拥有直接靶向治疗的药物。一个常见的例子就是临床上使用PAM50（prediction analysis of microarray 50）标签来区分不同的乳腺癌亚型[@parker09, @cieslik18]。许多癌症的亚型分类主要依赖于识别大型患者队列中的复发性突变（recurrent mutations），通过全基因组或全外显子组测序来获得具有临床意义的亚型 [@cancer13, @papaemmanuil16]。
+
 
 流行的“relative approach”有single-sample gene set enrichment analysis (ssGSEA) [@barbie09]，用户可以通过GenePattern web-tool使用该方法（http://software.broadinstitute.org/cancer/software/genepattern）。另一种常见的方法是gene set variation analysis (GSVA) [@hanzelmann13]，以R/Bioconductor package的形式实现(https://bioconductor.org/packages/release/bioc/html/GSVA.html)。该package中还包括了ssGSEA，PLAGE [@tomfohr05]和z-score [@lee08]方法。ssGSEA和GSVA都使用了Kolmogorov-Smirnov like random-walk statistic来将归一化（normalised）的基因排名转换成样本得分。这一“归一化（normalised）”的步骤使得样本得分不再是“单样本（single-sample）”的，而且样本组成带来的variations（比如样本由不同的肿瘤亚型组成）会对样本得分造成影响。其次，这些方法产生的样本得分具有不同的数值范围（range），为结果的解释带来一些困难。为了克服这些问题，我们开发了一种单样本的基因集打分方法*singscore* [@foroutan18] (<http://bioconductor.org/packages/singscore/>)， 它利用了给定基因集中基因的排名并相对这些基因得分的最大值与最小值进行归一化（normalization）。
 
@@ -424,10 +425,10 @@ verhaak_sigs
 rownames(aml_se) = rowData(aml_se)$entrezgene
 ```
 
-Score TCGA AML samples using the Verhaak signature {#score-samples}
+使用标签给样本打分 {#score-samples}
 --------------------------------------------------
 
-Singscore is a rank based metric of gene set enrichment in single samples. Scores for multiple signatures make use of the same ranked expression per sample. As such, it makes sense to compute the ranks only once and re-use them for scoring different signatures. The implementation separates these two phases of the analysis to reduce the computational cost of scoring. The `rankGenes` function will compute ranks from expression data in the form of either a numeric matrix, numeric data frame, ExpressionSet object, DGEList object or a SummarizedExperiment object. Users also have to specify what method should be used to break ties. The default is 'min' and we recommend this be used for RNA-seq data which may have many genes with zero counts. This will reduce the effect of zeros in the scores, however, appropriate pre-filtering of genes with low counts will still be required (see Section \@ref(filter-data)).
+Singscore 是一种基于排名的，对基因集（gene set）在单个样本中富集程度的度量。对不同的基因集（gene set）的打分利用的样本基因表达量是相同的，因此我们只要根据表达量对样本进行一次排序就可以对不同的基因集（gene set）进行打分。在Singscore包中我们将这两步分开以节约计算资源。`rankGenes`函数可以对以numeric matrix、numeric data fame、ExpressionSet对象、DGEList对象或者SummarizedExperiment对象为存储形式的表达谱数据计算排名。用户需要指定排序过程中重复排名的处理方法（tiesMethod参数），默认方法为“min”，如有10个基因根据其表达量得到的排名均为1，则这10个基因的排名记为1，第11个基因的排名为11。我们推荐在RNA-seq数据里使用该方法，因为RNA-seq数据里通常有很多基因的表达量为0。这样可以减少零值对排名带来的影响，不过在数据质量控制时过滤掉低表达基因仍然是必不可少的步骤（见\@ref(filter-data部分）。
 
 ```{r compute_ranks_aml}
 library(singscore)
@@ -436,11 +437,11 @@ library(singscore)
 aml_ranked = rankGenes(assay(aml_se, 'logFPKM_TMM'))
 ```
 
-Singscores can be computed using three modes, depending on the properties of the gene signature. The first mode of operation is applied when two directed gene sets (expected up- and down-regulated gene sets) form the transcriptomic signature. Many signatures in the MSigDB, including the @verhaak05 signature come in such pairs. This mode can be invoked by passing the up- and down-regulated gene sets to the arguments `upSet` and `downSet` respectively. In some cases, only one set of genes forms the signature. If all genes in the gene set are up-regulated or all down-regulated, the second mode of operation applies and is invoked by passing the gene set to the `upSet` argument. For sets of down-regulated genes, the score would simply be inverted (-score if scores are centered, 1 - score otherwise). Finally, if the user is unsure of the composition of genes in the gene-set, such that, the gene set may contain both up- and down- regulated genes, the final mode of singscore applies. The gene set is passed to the `upSet` argument similar to the previous mode with the additional argument `knownDirection` set to `FALSE`.
+Singscore针对不同的基因标签（gene signature）有三种计算模式。第一种模式适用于基因标签内有上调（up）和下调（down）基因列表。MSigDB中许多标签（signature），包括这里我们用的@verhaak05的标签（signature）都是这种形式的。这个模式下，上调和下调基因列表应分别传递给`upSet`和`downSet`。如果基因标签中的基因都是上调或者下调的，用户只要把基因列表传递给`upSet`参数。在这第二种模式下，下调的基因的得分会直接被倒转（如果得分已经被中心化，则直接取相反数，否则取“1-score”）。如果用户不确定标签（signature）内基因的组成，比如里面的基因可能是上调或者下调的，那么可以使用第三种模式。用户把基因列表指定给参数`upSet`后将`knownDirection`参数设定成`FALSE`即可。
 
-By default, singscores are centered such that the range of scores is $[-1, 1]$ and $[-0.5, 0.5]$ for the first two modes respectively. Negative scores indicate an inverse enrichment of signatures, that is, expected up-regulated genes are in fact down-regulated and vice-versa. Scores from the last mode can not be centered and have the range $[0, 1]$. In this mode, high scores are obtained when ranks of genes are distant from the median and low scores obtained when ranks converge to the median rank. If scores are centered in this scenario, it would lead to the conclusion that a negative score shows inverted enrichment, which is not the case. Score centering only serves the purpose of easing interpretation for users, a simple linear transformation is applied to achieve it.
+scores默认被中心化，这样前两种模式得到的分数（scores）范围分别是$[-1, 1]$和$[-0.5, 0.5]$。负的得分表明基因存在相反的富集，即预期上调的基因实际上在样本中是下调的，反之同理。第三种模式得到的分数（scores）无法被中心化，它的范围是$[0, 1]$。在这个模式下，分数越高表明基因的排名离开中位数越远。如果我们对得分（scores）进行了中心化，负的得分并不能代表相反的富集因此并不适用。在这里，中心化只是为了更好地解释结果。
 
-Scores for the NPM1c mutation signature are computed using the default settings, with the first mode of operation being used due to the presence of an up- and down- regulated gene set. The function returns a data frame reporting the score and dispersion of ranks for the up-regulated gene set, down-regulated gene set and the combination of both. Dispersion of the combined gene set in this mode is simply the mean of the independent dispersion estimates. If any gene names/IDs are present in the signature but missing in the expression data, a warning will be reported.
+我们使用默认参数给给NPM1c突变标签（Verhaak Signature）打分，由于标签内含有上调和下调基因列表因此我们使用第一种模式。最后函数会返回一个data frame，里面有对上调基因列表、下调基因列表和所有列表的打分（scores）和离差（dispersion）。在这种模式下，所有列表的离差（dispersion）是上调基因列表和下调基因列表离差（dispersion）的平均值。函数会返回一个warning指明出现在标签（signature）内但不包括在表达谱数据内的基因名称/ID。
 
 ```{r compute_scores_verhaak, warning=TRUE}
 #apply the scoring function
@@ -449,16 +450,21 @@ verhaak_scores = simpleScore(aml_ranked,
                              downSet = verhaak_sigs[[2]])
 ```
 
-It should be noted that singscores are composed of two components, an enrichment score and a dispersion estimate of ranks. The quantity of interest in gene set enrichment is the distribution of the expression or ranks of genes in the signature. In an ideal scenario, all expected up-regulated genes would have high expression therefore higher values of ranks. As such, ranks would be distributed on the higher end of the entire rank spectrum. Singscore aims to quantify this distribution of ranks, therefore, computes and reports the average and dispersion of ranks of genes in the signature relative to all other genes. The first quantity is similar to scores computed from all other single sample scoring methods. We determined a two component score to be a more appropriate and accurate representation of the distribution of ranks of signature genes. The default and recommended measure of dispersion is the median absolute deviation (MAD) due to its non-parametric property. Other appropriate measure of dispersion could be the inter-quartile range (IQR) and can be used by passing the `IQR` function as an argument to the `dispersionFun` argument.
+
+应该注意的是，singscores由两部分组成，即代表富集程度的分数（score）和对排名的离散程度的估计。在理想情况下，所有预期上调的基因都具有高表达，因此将基因从低表达到高表达排序后得到的值越大，这样的值应当位于分布的右端。Singscore旨在量化这种排名的分布，因此它计算了标签（signature）中基因排名的平均值和离差（dispersion）。平均值的计算和其它单样本打分方法类似，但是我们认为用平均值和离差（dispersion）两个数据来观察标签（signature）内基因排名的分布更为合理。默认且推荐的离差（dispersion）统计方法是具有非参数统计特性的绝对中位差（median absolute deviation，MAD）。其它方法还有四分差（inter-quartile range，IQR），用户可以将`IQR`函数作为参数传递给`dispersionFun`。
+
+
 
 ```{r}
 head(verhaak_scores)
 ```
 
-Diagnostics of the Verhaak signature {#diagnostics-verhaak}
+对Verhaak标签的进一步探索 {#diagnostics-verhaak}
 ------------------------------------
 
-The `singscore` package provides a set of visualisation tools that enable diagnostics of the gene signature. For instance, these tools may be used to determine the importance of each component for a bidirectional signature (up- and down-regulated gene sets) to the total score, determine the importance of each gene of a signature in discriminating between the classes of interest, and to investigate the relationship between the final score and the dispersion of signature gene ranks. Annotations of interest can be overlayed on each plot. Singscore supports both continous and categorical annotations, which can either be input as a vector, or as a string specifying a column within the score data frame. We begin by investigating the relationship between the score and dispersion of ranks for the up-regulated gene signature, down-regulated gene signature and the full signature. The `plotDispersion` functions generates a diagnostic plot with annotations overlaid. Annotations can be discrete or continuous, and can be passed as independent variables, or as a column name when the data is appended to the score data frame. It should be noted that all plotting functions in `singscore` can be made interactive by setting the `isInteractive` argument to `TRUE`.
+`singscore`R包提供了一系列可视化工具来探索基因标签（gene signature）。比如，这些工具可以用来观察双向标签中上调基因列表和下调基因列表的重要程度，观察基因标签中单个基因对不同样本类别的区分程度，以及还可以用来探索最终得分和离差（dispersion）之间的关系。注释可以直接被叠加在图上，Singscore支持连续型和离散型注释。连续型注释可以以向量（vector）形式或者用字符串（string）指定注释位于data frame的某一列。
+
+针对上调基因、下调基因或者所有基因，我们开始探索分数（score）和离差（dispersion）之间的关系。`plotDispersion`函数可以用来生成带有注释的图。注释可以是离散型或者连续型变量，如果注释被合并在最后的得分data frame中则直接指定列名即可。`singscore`包中所有的画图函数都可以通过指定`isInteractive`为`TRUE`而生成可交互的动态图。
 
 ```{r plot-dispersion, fig.wide=TRUE, fig.height=4, fig.cap="NPM1c signature scores from the up- and down-regulated gene sets, both combined (Total) and independently, can separate samples with NPM1c mutations or *MLL* fusions/PTDs from samples not bearing these genomic lesions. Scores are plot against the median absolute deviation (MAD) of the ranks of genes in each gene set forming the NPM1c signature. The plots also reveal that scores close to 0 result in higher MADs."}
 #create annotation
@@ -469,7 +475,7 @@ p1 = plotDispersion(verhaak_scores, annot = mutated_gene)
 p1
 ```
 
-Figure \@ref(fig:plot-dispersion) shows that the set of down-regulated genes has more discriminant power in separating NPM1c mutated samples from those those without. Moreover, the signature is able to discriminate *MLL* (*KMT2A*) fusions and PTDs from the other samples. NPM1c mutations produce higher scores for the down-regulated gene set while *MLL* fusions and PTDs produce moderate scores. Similar trends are observed with the set of up-regulated genes, however, despite the range of scores increasing, the discriminant power drops moderately. In fact, the signature of up-regulated genes is able to discriminate samples without the genomic changes of interest ('Other') better by producing negative scores for most of these samples. Negative scores for the expected up-regulated gene set indicate that these genes are expressed below median expression, therefore, likely down-regulated within corresponding samples. Another observation from these plots is based on the trend of the dispersion (MAD). The dispersion is generally expected to be higher for scores close to zero. Zero scores are achieved in three possible scenarios: when genes are expressed at median expression level; when genes are evenly distributed at both ends of the expression spectrum; or, the more likely scenario whereby the rank of expression of all genes are uniformly distributed. The last two scenarios would result in a high dispersion. To explain these ideas, we select 3 samples and plot the ranks of genes in both signatures. The sample with the highest total score, lowest total score and highest dispersion are chosen.
+图\@ref(fig:plot-dispersion)显示下调的基因更能区分出具有NPM1c突变的样本。而且我们可以看到该标签（signature）还能够将*MLL*（*KMT2A*）fusions和PTDs从其它样本中区分开来。在下调基因标签的打分中，具有NPM1c突变的样本分数最高，其次是*MLL*fusions和PTDs样本。在上调基因标签的打分中，分数也有这样的趋势，而且尽管分数的范围变大了，它区分不同类型样本的能力只发生了略微减弱。事实上，上调基因能够更好地区分出那些没有我们感兴趣的突变的样本（标记为“Other”），这些样本大多数具有负的得分。上调基因标签的打分为负分意味着这些基因在样本中的表达量低于中位数，即可能在样本中是下调的基因。观察离差（MAD）的趋势我们发现，分数越接近0值则离差越大。有三种情况会导致得分接近0值：1）标签中基因的表达量在中位数附近；2）标签中基因的表达量平均分布在表达谱两端；3）标签中基因的表达量均匀分布在整个表达谱中（可能性最大）。后两种情况会导致离差（dispersion）值很大。为了进一步弄清这个问题，我们选择了三个样本并对上调和下调基因标签中基因的排名分布进行作图。三个样本分别为总体得分最高的样本、总体得分最低的样本和总体离差（dispersion）值最高的样本。
 
 ```{r plot-rank-density, fig.wide=TRUE, fig.height=4, fig.cap="Rank distribution of genes reveals that expected up-regulated genes are up-regulated in high scoring samples and down-regulated in low-scoring samples with a similar, but inverse, observation for the expected down-regulated genes. Samples with the highest score, lowest score and highest dispersion (MAD) are show from left to right. The barcode plot for ranks of genes in each signature along with the density of the ranks is shown in each plot. Up-regulated genes are represented in green and down-regulated genes in purple. Gaussian distributions are observed at the extremes for the lowest and highest scores. High dispersion results in scores close to 0 because all genes are either evenly distributed (down-regulated gene set) or bi-modally distributed at the extrema (up-regulated gene set)"}
 library(gridExtra)
@@ -502,16 +508,17 @@ rank_plots = lapply(names(select_samples), function(x) {
 grid.arrange(grobs = rank_plots, nrow = 1)
 ```
 
-Figure \@ref(fig:plot-rank-density) shows that both the up- and down-regulated gene sets contribute to the score of the top scoring sample as these genes are at the extremes ends of the rank spectrum. Similarly, the lowest scoring sample has the ranks of genes in each set inverted. As observed in the previous plot, the up-regulated genes improve discrimination between NPM1c mutated samples and other samples and may be a stronger indicator of wild-type NPM1c samples than the down-regulated genes. Finally, the sample with the maximum dispersion exhibits uniformly distributed down-regulated gene ranks and a bimodal distribution of the up-regulated gene ranks with the modes at the extremes of the spectrum.
+图\@ref(fig:plot-rank-density)显示上调和下调基因列表分别对总体得分最高的样本作出了贡献，这些基因分别位于排名分布的两端。类似地，在得分最低的样本中，上调基因位于排名分布的左端而下调基因位于排名分布的右端从而产生了很低的得分。正如前一张图中看到的那样，上调基因列表提高了NPM1c突变样本和other样本之间的区分度，可能相比下调基因列表能更好地指示野生型NPM1c样本。最后，离差（dispersion）值最高的样本中，下调基因的排名呈均匀分布而上调基因的排名呈双峰分布，双峰分别位于谱的两端。
 
-Combined, these plots show that both the up- and down-regulated genes play an important role in discriminating between NPM1c mutated (and *MLL* fusion/PTD samples), and wild-type samples. These diagnostic plots help in determining the importance of genes in signatures with respect to the samples of interest and should be used prior to application of signatures. In some cases, signatures may have been developed in specific contexts due to inherent biases in datasets and yet, described or applied in a generalised setting. These diagnostic plots may help in validating their application in specific contexts and possibly assist in characterising the contexts of all existing signatures.
+综上，这些图显示了上调基因和下调基因列表在区分NPM1c突变、*MLL*fusion/PTD和野生型样本时都很重要。这些图能帮助用户在应用之前先确定标签（signature）的重要性，有时候标签（signature）是在特定情境下产生的，本身带有偏差因而只能在特定情况下使用。这些图还能帮助验证这些标签（signature）的适用情境。
 
-Predicting mutations using the Verhaak signature {#predict-verhaak}
+
+用Verhaak标签预测突变 {#predict-verhaak}
 ------------------------------------------------
 
-Mutation status can be predicted from singscores using a logistic regression model with a "logit" link function. The benefits of this model over one where each gene in the signature is used as a term in the model is the simplicity of the model. The @verhaak05 signature consists of 429 genes which would result in a regression model with 429 predictors. As there are fewer samples than the predictors, some feature selection method would be required which may result in the loss of information. Moreover, automating model development on a larger selection of gene signatures would be limited with gene-level models. Additionally, models trained using singscore would inherit its non-parametric properties to some extent. For instance, such models would be invariant to all data transformations that retain within sample ranks of genes. The main limitation of such models would be the loss of accuracy due to summarisation of the data (information on 429 genes is summarised into a two-component score).
+突变状态可以通过logit函数的逻辑回归模型（logistic regression model）进行预测。这个模型相对于将标签（signature）中每一个基因作为变量的方法而言更加简便，@verhaak05的标签（signature）中的429个基因在逻辑回归中可以产生429个预测变量（predictor）。由于样本数少于预测变量（predictor）数，一些特征选取（feature selection）方法可能导致信息的丢失。此外，基因水平的模型在选择更多基因标签（gene signatures）上存在限制。而singscore的模型在某种程度上会继承它非参数的特性。比如该模型对于任何保留了基因排序的数据转换都是稳健的。该模型主要的不足在于丢失了一定的准确性，因为它将429个基因的信息限制到两个分类中。
 
-In any case, our aim here is not to discuss the various models that can be used to predict mutation status, but to exhibit the discriminant power of singscore and transcriptomic signatures. consequently, the data used to train the model are used to evaluate the basic performance properties. We begin by combining the scores with mutation annotations.
+不管怎样，我们的目的不是讨论哪个模型应该被用于预测突变状态，而是展示singscore和转录组标签（signature）区分样本的能力。因此我们在这里用训练模型的数据评价该模型的表现。我们先把分数和突变注释合并到一起。
 
 ```{r create_plotdf_boxplot}
 #create a dataframe with the data required: scores and mutations
@@ -520,7 +527,7 @@ scoredf$Score = verhaak_scores$TotalScore
 scoredf$Dispersion = verhaak_scores$TotalDispersion
 ```
 
-Before training a model, we can visualise how well scores resulting from the @verhaak05 signature separates the mutants from wild-type samples for some genes of interest. Figure \@ref(fig:plot-boxplot-mutscores) shows that NPM1c signature scores can discriminate between NPM1c wild-type and mutants. Similar observations are made for *MLL* (*KMT2A*) fusions and *PML-RARA* fusions.
+在训练模型之前，我们可以先可视化一下，看@verhaak05的标签（signature）得到的分数区分突变型和野生型样本的能力。图\@ref(fig:plot-boxplot-mutscores)展示了分数可以区分开NPM1c突变型样本和野生型样本，*MLL* (*KMT2A*) fusions和*PML-RARA* fusions的情况也是如此。
 
 ```{r plot-boxplot-mutscores, fig.height=5, fig.cap="NPM1c signature scores are able to separate mutants from wild-types. Boxplot of scores from the NPM1c signature split by different types of mutations."}
 #restructure the data for ploting
@@ -540,7 +547,7 @@ p1 = ggplot(plotdf, aes(Mutation, Score, fill = Status)) +
 p1
 ```
 
-To quantify the above observations, we fit logistic regression models with each gene as the response variable and the score as the predictor. Coefficient estimates, standard errors, z-statistics, and $p$-values of each model are listed below.
+为了量化以上的结果，我们将每个基因损伤（genomic lesion）作为因变量（response variable），样本的分数作为预测变量（predictor）进行逻辑回归并列出回归系数估计，标准差，z值和p值。
 
 ```{r predict_mutation_glm}
 #fit GLMs to each mutation
@@ -557,12 +564,12 @@ coefs = lapply(glms, function(x) coef(summary(x)))
 ldply(coefs, function(x) x[2, ], .id = 'Mutation')
 ```
 
-NPM1c mutations are significantly associated with the score. Samples carrying a *MLL* gene fusion are also associated with the score reflecting their shared effects on Hox gene dysregulation, although with a lower significance. Interestingly the *PML-RARA* fusion carries a negative coefficient, likely reflecting the distinct cellular morphology/phenotype of acute promyelocytic leukemia relative to other subsets of AML, as noted above.
+NPM1c突变和分数显著相关，*MLL* gene fusion也和分数显著相关，这显示了它们在Hox基因失调中共享的作用。有趣的是，*PML-RARA* fusion的系数是负值，这很可能反映了急性早幼粒细胞白血病(acute promyelocytic leukemia, APL)相对于其它AML亚型而言独特的细胞形态或表型特征。
 
-Evaluate prediction model performance {#prediction-performance}
+评估预测模型的表现{#prediction-performance}
 -------------------------------------
 
-The above statistics give insight on the models trained but not on their performance. Precision and recall provide insight on a models predictive performance. The `dcanr` package [@R-dcanr] provides functions to compute these metrics along with other measures of performance.
+以上统计数字只提供了模型本身的信息而非模型的表现好坏。精确率（precision）和召回率（recall）可以衡量模型表现的好坏。`dcanr`包[@R-dcanr]提供了函数进行这类计算。
 
 ```{r eval_prediction_performance}
 library(dcanr)
@@ -580,9 +587,9 @@ prec_rec = ldply(glms, function(glm1) {
 prec_rec
 ```
 
-Precision for predictions of all genomic changes other than NPM1c is undefined because all samples are predicted to be wild-types. Consequently, their recall is zero. Precision, recall and the F1 score of the NPM1c mutation model are high as expected. As mentioned in Section \@ref(score-samples), singscores are two-components scores , therefore, performance may be further improved by including the dispersion of ranks. This is observed in Figure \@ref(fig:plot-dispersion).
+只有NPM1c突变具有预测的精确率（precision）因为所有其它的样本都被预测成了wild-types，因此它们的召回率（recall）是0。NPM1c突变的模型的精确率（precision）、召回率（recall）、F1-score和预期的一样高。就像\@ref(score-samples)部分提到的，singscores是由两部分组成的分数，因此在考虑排名的离差（dispersion）后，模型表现应该更加优秀（图\@ref(fig:plot-dispersion)）。
 
-As observed from the model below, using both components of singscores significantly improves the predictive performance.
+以下的模型显示，使用了singscores中的score及离差（dispersion）后，模型的预测能力显著提升。
 
 ```{r predict_with_mads}
 #include dispersion in the model
@@ -600,15 +607,16 @@ c(
   )
 ```
 
-Signature landscapes with multiple signatures {#signature-landscape}
+多个基因标签（signature）的landscapes {#signature-landscape}
 =============================================
 
-Often, we are interested in the relationship between two dependent or independent phenotypes, for instance, the epithelial and mesenchymal phenotypes. The role of most signatures is to estimate an unobservable molecular phenotype so they may be considered as proxies of phenotypes. As such, we could investigate the relationship between two phenotypes using corresponding signatures. @foroutan17 first introduced the idea of molecular signature landscapes to investigate the relationship between signatures related to the epithelial-mesenchymal transition (EMT) and TGF$\beta$ induced EMT. Subsequently, @cursons18 computed epithelial and mesenchymal phenotype signature singscores and demonstrated an epithelial phenotype shift following miR-200c transfection into a mesenchymal cell line using a signature landscape. @foroutan18 used signature landscapes to stratify breast cancer subtypes along the epithelial-mesenchymal axis and included it as part of the `singscore` package. Here, we show how such landscapes can be used beyond the current application of the epithelial-mesenchymal axis. We demonstrate how transcriptomic signatures of different mutations can be used to stratify AML samples.
+通常我们会对两个独立的或者相互依赖的表型之间的关系感兴趣，比如EMT过程中epithelial和mesenchymal表型。大多数标签（signature）是为了估计无法衡量的分子表型从而可以成为表型的代表。因此，我们可以用对应的标签（signature）来探索两个表型之间的关系。@foroutan17首次介绍了使用molecular signature landscapes来探索标签（signature）之间的关系，这些标签（signature）均和EMT及TGF$\beta$导致的EMT相关。之后，@cursons18计算了EMT表型标签（signature）的singscores得分并用signature landscape证明了将miR-200c转染到mesenchymal细胞系之后发生了向epithelial表型的转变。@foroutan18使用signature landscapes在epithelial-mesenchymal尺度上划分乳腺癌亚型并把它包含在了`singscore`包中。这里，我们展示了signature landscapes的进一步应用，即使用代表不同突变的转录组标签（signature）来划分AML样本。
+
 
 Ross MLL fusion signature vs. Verhaak signature landscape {#sig-landscape-mll}
 ---------------------------------------------------------
 
-We now use the @ross04 MLL-fusion signatures to score the TCGA AML samples. Unlike the NPM1c signature, this signature is composed of genes that discriminate samples with MLL-fusion genes. We download and parse the signature as demonstrated in \@ref(prepare-signature).
+我们现在使用@ross04的MLL-fusion标签（signatures）来给TCGA AML样本打分。不像NPM1c标签，这个标签中的基因可以用来区分具有MLL-fusion基因的样本。我们按照\@ref(prepare-signature)中的流程下载并处理标签。
 
 ```{r process_rossmll_sigs}
 #create signature names
@@ -627,13 +635,14 @@ rossmll_sig = getBroadSets(rossmll_file, membersId = 'MEMBERS_EZID')
 rossmll_sig
 ```
 
-The gene set is a composition of both up- and down-regulated genes as genes were selected based on their ability to discriminate mutants from wild-types. We use the third mode of singscore as described in Section \@ref(score-samples) which does not require the direction of genes in the gene set to be known. The `knownDirection` parameter of the `simpleScore` function is set to `FALSE` to induce this mode. Ranks computed in Section \@ref(score-samples) can be reused to compute scores with the new signature.
+该标签包含有上调和下调基因以区分突变型和野生型。我们用\@ref(score-samples)部分提到过的singscore的第三种模式进行打分，该模式不需要提前知道或确定基因是上调还是下调的。`simpleScore`函数里的`knownDirection`参数应当设定成`FALSE`。\@ref(score-samples)部分已经计算过的基因排名可以在这里再次使用，以计算新的标签的分数。
 
 ```{r score_rossmll}
 rossmll_scores = simpleScore(aml_ranked, rossmll_sig[[1]], knownDirection = FALSE)
 ```
 
-The `plotScoreLandscape` function plots a hexbin plot to visualise the two-dimensional distribution of scores. Scores computed using the @verhaak05 signature and the @ross04 *MLL*-fusions signature are passed as arguments. Both scores should have been computed on the same samples with the order of samples retained. Names of the scores should be passed as arguments to the `scorenames` argument. The `textSize` argument can be used to specify the size of all text relative to the plot size. This may prove useful when plots are being generated for scientific posters, publications and presentations, all of which require different image sizes.
+
+我们可以用`plotScoreLandscape`函数画hexbin图来可视化分数的分布。使用@verhaak05标签及@ross04 *MLL*-fusions标签得到的分数被传递给了该函数。两个分数应该基于相同的样本计算后得到。这两个分数所对应的名字应当传递给`scorenames`参数。`textSize`参数可以用来指定图中文字相对于图片的大小，这在应对不同poster、publications和presentations的要求时非常有用。
 
 ```{r plot-signature-landscape, fig.height=7, fig.width=7, fig.cap="Signature landscape between the MLL fusion and NPM1c signatures. A positive association is revealed between the two signatures in AML."}
 p_mll_npm1c = plotScoreLandscape(
@@ -645,7 +654,7 @@ p_mll_npm1c = plotScoreLandscape(
 p_mll_npm1c
 ```
 
-Figure \@ref(fig:plot-signature-landscape) shows a strong positive association between scores from the two signatures (Spearman's $\rho$ = `r round(cor(verhaak_scores$TotalScore, rossmll_scores$TotalScore, method = 'spearman'), digits = 3)`) despite only 16 genes being shared across the two signatures (signature sizes are 78 and 429 genes). In such an analysis, we may be interested in projecting new data points onto the landscape as done by @cursons18. Alternatively, we may want to overlay some existing data points to investigate sample stratification using scores. Here, we overlay *MLL* fusions, *MLL* PTDs, *PML-RARA* fusions and NPM1c mutations onto the landscape. First, we build the annotation vector.
+图\@ref(fig:plot-signature-landscape)显示，尽管两个标签之间只有16个共同基因（标签大小分别为78和429个基因），两个标签的分数之间仍具有很强的正相关（Spearman's $\rho$ = `r round(cor(verhaak_scores$TotalScore, rossmll_scores$TotalScore, method = 'spearman'), digits = 3)`）。在这样的分析中，我们可能想像@cursons18文章里那样把新的数据点投影在图上。或者我们可能希望将已有的数据点投影在图上以观察样本的分类情况。这里我们将*MLL* fusions、*MLL* PTDs、*PML-RARA* fusions和NPM1c mutations四类样本的数据点进行投影。首先我们需要先建立注释。
 
 ```{r new_annotations}
 #new annotation - modify previously used annotations
@@ -654,7 +663,7 @@ mutated_gene[aml_se$KMT2A.PTD] = 'MLL PTD'
 mutated_gene[aml_se$PML.RARA] = 'PML-RARA'
 ```
 
-Points are projected onto an existing landscape using the `projectScoreLandscape` function. This functions uses the `p_mll_npm1c` plot generated using the `plotScoreLandscape` and overlays new data points onto it. Scores for the new data must be computed with the same signatures that were used to compute the landscape. As we are using existing data, scores computed in earlier sections are re-used. The `subSamples` can be used to select a subset of samples to project. Here, we select samples with the mutations we are interested in annotating.
+`projectScoreLandscape`函数可以用来将数据点投影在已有的图上。这个函数使用`plotScoreLandscape`函数产生的`p_mll_npm1c`变量并将新的数据点投影上去。计算新数据点分数的基因标签必须和已有图中使用的标签相同。在这里我们直接用之前已经计算好的分数来画新的数据点。`subSamples`参数用于选择想要投影的数据点子集，这里我们选择了感兴趣的四种样本。
 
 ```{r plot-project-mll, fig.height=7.5, fig.width=7, fig.cap="The landscape reveals a distinction between the MLL fusions and PTDs as previously reported. Different mutations occupy different regions of the landscape, possessing different types of molecular traits."}
 select_aml = !mutated_gene %in% 'Other'
@@ -667,12 +676,12 @@ p1 = projectScoreLandscape(p_mll_npm1c,
 p1
 ```
 
-Figure \@ref(fig:plot-project-mll) shows that the *MLL* fusions and *MLL* PTDs exhibit variation across different axes. *MLL* PTDs have a lower score than MLL fusions for the *MLL* fusion signature as expected. These sets of samples do not cluster along the two axes, consistent with observations by @ross04. Overlaying samples annotations onto the plot assists in interpreting different regions of the landscape.
+图\@ref(fig:plot-project-mll)显示*MLL* fusions和*MLL* PTDs两组样本在两个维度上被分开。在*MLL* fusion标签的方向上，*MLL* PTDs相比*MLL* fusions的得分更低。这些样本在两个维度的平面上没有形成cluster，这和@ross04的结论是一致的。在图上进行样本注释的投射有助于帮助我们解释landscape不同部分的意义。
 
 Ross PML-RARA fusion signature vs. Verhaak signature landscape {#sig-landscape-pmlrara}
 --------------------------------------------------------------
 
-It is evident from the previous analysis that *PML-RARA* samples differ from all other samples examined here. We repeat the analysis with the *PML-RARA* signature from @ross04 to verify this distinction. The signature is available on the MSigDB and is named "ROSS_AML_WITH_PML_RARA_FUSION". We download and parse the signature, score all samples against it, plot a landscape with scores from the @verhaak05 signature, and finally, project samples onto the plot (see Section \@ref(sig-landscape-mll)). The signature was constructed in a similar manner to the *MLL* fusions signature, therefore, samples are scored using the same settings.
+之前的分析显示*PML-RARA*样本和其它的样本有明显不同。这里我们用来自@ross04的*PML-RARA*标签重复了刚才的分析以验证这种不同。该标签在MSigDB中的名字为“ROSS_AML_WITH_PML_RARA_FUSION”。我们下载该标签并对所有样本进行打分，用该分数和@verhaak05标签得到的分数画landscape图。最后我们将样本投影到图上（见\@ref(sig-landscape-mll)部分）。该标签的和*MLL* fusions标签来自同一个研究结果因此我们仍然使用相同的参数进行打分。
 
 ```{r plot-project-pmlrara, fig.height=7.5, fig.width=7, echo=FALSE, fig.cap="The PML-RARA signature is independent from the NPM1c signature in AML. The L-shaped landscape suggests the molecular mechanisms underlying these mutations are mutually exclusive."}
 newsig_name = 'ROSS_AML_WITH_PML_RARA_FUSION'
@@ -715,26 +724,26 @@ p2 = projectScoreLandscape(p1,
 p2
 ```
 
-Figure \@ref(fig:plot-project-pmlrara) shows a completely different landscape from what was observed with the *MLL* fusion signature. The *PML-RARA* signature forms a clear separation between the *PML-RARA* and NPM1c samples such that *PML-RARA* samples are the only ones with a high score for this signature. Moveover, no association is observed between the two signatures. As discussed above (Description of the biological problem) the *PML-RARA* fusion is diagnostic of a specific subtype of AML known as acute prolmyelocytic leukemia, with a highly-distinct cell phenotype reflecting a block on differentiation at the promyelocyte stage [@dethe91]. The distinct features of this subtype are correspondingly reflected in the L-shaped landscape for these two signatures and the different mechanisms by which these lesions drive leukemogenesis. 
+图\@ref(fig:plot-project-pmlrara)展现了和*MLL* fusion标签完全不同的landscape。*PML-RARA*标签使得*PML-RARA*和NPM1c样本完全分开，*PML-RARA*样本是唯一在*PML-RARA*标签中得到高分的样本，而且两个标签之间没有显著相关。在样本背景介绍部分，*PML-RARA* fusion是AML中一种已知的亚型——急性早幼粒细胞白血病（acute prolmyelocytic leukemia，APL）的诊断标志，这种亚型独特的细胞表型反映了早幼粒细胞分化的阻滞[@dethe91]。这种特性反映在了L型的landscape中，以及这些基因组损伤驱动白血病不同的机制。
 
-Summary
+总结
 =======
 
-The singscore package provides an easy interface to apply gene set scoring methods within the R/Bioconductor environment. The TCGABiolinks package allows relatively easy access to large clinically-relevant data sets such as The Cancer Genome Atlas, together with appropriate annotation functions for interpreting biological data. Diagnostic and plotting functions included with singscore allow the user to investigate gene sets of interest to determine their power for distinguishing differences between samples. Different gene signatures can then be combined to explore how different cellular phenotypes are associated across a large cohort of cancer samples. As demonstrated, when appropriate gene set signatures are used, metrics calculated by singscore can be used for sample classification and this may be useful for further interrogation of large transcriptomic data sets where no genomic data are available
+singscore包通过R/Bioconductor环境给用户提供了一个简单的界面以使用基因集打分（gene set scoring）方法。 TCGABiolinks包使用户相对容易地访问大型的临床相关数据集，如TCGA及其相关注释。 singscore中包含的诊断和绘图功能允许用户调查感兴趣的基因集（gene set）以确定它们区分样本之间差异的能力。然后不同的基因集（gene set）可以组合在一起以探索不同的细胞表型在大型研究中的关系。以上分析展示了当恰当的基因集被使用是，singscore计算得到的结果可以用于样本分类，结果可以进一步被用到缺少基因组数据的大型转录组数据中。
 
-Packages used {.unnumbered}
+使用到的R包 {.unnumbered}
 =============
 
-This workflow depends on various packages from version `r BiocManager::version()` of the Bioconductor project, running on `r version$version.string` or higher. The complete list of the packages used for this workflow are shown below:
+此工作流程用到了许多Bioconductor项目`r BiocManager::version()`版本中的包，适用于R`r version$version.string`或更高版本。本工作流程中用到的所有包已列在下表中：
 
 ```{r session_info}
 sessionInfo()
 ```
 
-Acknowledgments {.unnumbered}
+致谢 {.unnumbered}
 ===============
 
-The results shown here are in whole or part based upon data generated by the TCGA Research Network: <https://www.cancer.gov/tcga>. Thanks to Chris Flensburg for advice on the TCGA AML mutation data.
+工作流程中的结果全部或部分基于TCGA Research Network（<https://www.cancer.gov/tcga>）产生的数据。感谢Chris Flensburg在TCGA AML mutation data上的帮助。
 
-References {.unnumbered}
+参考文献 {.unnumbered}
 ==========
