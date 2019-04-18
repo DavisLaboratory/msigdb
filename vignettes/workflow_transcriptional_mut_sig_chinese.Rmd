@@ -117,7 +117,7 @@ The Cancer Genome Atlas（TCGA）提供了上千的病人转录组数据，通�
 
 AML中的复发性遗传损伤还包括赖氨酸甲基转移酶2A（*KMT2A*，以前被称为*MLL*）融合基因，*KMT2A*基因（*KMT2A* -PTD）内的部分串联重复，以及早幼粒细胞白血病蛋白（*PML*）和视黄酸受体α（*RARA*）之间的融合基因（*PML-RARA*）。鉴于NPM1c突变对Hox基因家族的失调作用，具有MLL融合基因的AML样本显示出Hox家族基因的表达失调成为了一个值得探究的问题 [@hess04, @ross04]。然而，具有*MLL*-PTD的样本似乎显示出与MLL-融合样本相对不同的表型 [@ross04]。尽管有充分的证据证明NPM1c突变和其它遗传损伤在阻碍AML细胞分化中的作用，但具有*PML-RARA*融合的样本被诊断为一种叫做急性早幼粒细胞白血病（acute promyelocytic leukemia，APL)的AML亚型。这种临床AML亚型与French-American-British (FAB)分类系统中的FAB-M3相关。由于早幼粒细胞阶段的分化阻滞，该亚型的细胞显示出特有的形态 [@dethe91]。
 
-在这个工作流程中，我们证明了singscore方法 [@foroutan18]从转录组数据中区分不同肿瘤“驱动突变（driver mutations）”的能力。我们使用了已定义的NPM1c突变的gene signature[@verhaak05]，以及*PML-RARA*基因融合和MLL融合的gene signatures。后两个gene signatures来自于儿科AML样本，但是已被证明适用于成人AML样本的分类 [@ross04]。这些gene signatures已存在于MSigDB数据库（molecular signatures database） [@liberzon15]中，通过使用这些gene signatures，我们证明了singscore的打分方法可以根据不同的突变将TCGA AML样本分类，且结果具有良好的精确度（precision）和召回率（recall）。该方法的优点之一在于它是能够根据表型特征（phenotypic signatures）将样本映射到二维或者更高维度的空间中。通过比较NPM1c和*KMT2A*-/*MLL*- 融合signatures的得分，我们展示了这种分类可能是由于Hox家族失调产生的共同的下游效应而导致的。我们还将NPM1c突变signature与*PML-RARA* signature进行比较，这两个亚型的明显分离反映了它们显著不同的表型和相互排斥的突变。
+在这个工作流程中，我们证明了singscore方法 [@foroutan18]从转录组数据中区分不同肿瘤“驱动突变（driver mutations）”的能力。我们使用了已定义的NPM1c突变的gene signature[@verhaak05]，以及*PML-RARA*基因融合和MLL融合的gene signatures。后两个gene signatures来自于儿童AML样本，尽管我们知道儿童AML和成人AML之间的突变谱差别较大[@ma18]，但研究表明该signatures能够很好地区分具有类似基因损伤的成人AML样本[@ross04]。这些gene signatures已存在于MSigDB数据库（molecular signatures database） [@liberzon15]中，通过使用这些gene signatures，我们证明了singscore的打分方法可以根据不同的突变将TCGA AML样本分类，且结果具有良好的精确度（precision）和召回率（recall）。该方法的优点之一在于它是能够根据表型特征（phenotypic signatures）将样本映射到二维或者更高维度的空间中。通过比较NPM1c和*KMT2A*-/*MLL*- 融合signatures的得分，我们展示了这种分类可能是由于Hox家族失调产生的共同的下游效应而导致的。我们还将NPM1c突变signature与*PML-RARA* signature进行比较，这两个亚型的明显分离反映了它们显著不同的表型和相互排斥的突变。
 
 数据下载与处理 {#download-and-prepare}
 ==================================
@@ -311,7 +311,7 @@ aml_se
 Original file at <https://tcga-data.nci.nih.gov/docs/publications/aml_2012/SupplementalTable01.xlsx>
 突变信息的原始文件在：<https://tcga-data.nci.nih.gov/docs/publications/aml_2012/SupplementalTable01.xlsx>
 
-读者们需要注意的是，本分析流程中我们用了从原始TCGA AML文献中[@cancer13]提取的突变列表而不是标准TCGA流程中的突变信息（可以在[National Cancer Institute Genomic Data Commons](https://gdc.cancer.gov/)获得），两者存在一定差异。针对我们所关心的遗传病变（NPM1c, *KMT2A-MLL*, *KMT2A*-PTD and *PML-RARA*），病人通过以下几个标签被分类：
+读者们需要注意的是，本分析流程中我们用了从原始TCGA AML文献中[@cancer13]提取的突变列表( <https://tcga-data.nci.nih.gov/docs/publications/aml_2012/SupplementalTable01.xlsx>)而不是标准TCGA流程中的突变信息（可以在[National Cancer Institute Genomic Data Commons](https://gdc.cancer.gov/)获得），两者存在一定差异。针对我们所关心的遗传病变（NPM1c, *KMT2A-MLL*, *KMT2A*-PTD and *PML-RARA*），病人通过以下几个标签被分类：
 
 * **Patient ID**: TCGA Patient ID
 * **NPM1c**: 当'NPM1'列包含有'p.W287fs' 或 'p.W288fs'时，返回TRUE
@@ -459,7 +459,7 @@ verhaak_scores = simpleScore(aml_ranked,
 head(verhaak_scores)
 ```
 
-对Verhaak标签的进一步探索 {#diagnostics-verhaak}
+对Verhaak标签的诊断{#diagnostics-verhaak}
 ------------------------------------
 
 `singscore`R包提供了一系列可视化工具来探索基因标签（gene signature）。比如，这些工具可以用来观察双向标签中上调基因列表和下调基因列表的重要程度，观察基因标签中单个基因对不同样本类别的区分程度，以及还可以用来探索最终得分和离差（dispersion）之间的关系。注释可以直接被叠加在图上，Singscore支持连续型和离散型注释。连续型注释可以以向量（vector）形式或者用字符串（string）指定注释位于data frame的某一列。
@@ -467,11 +467,14 @@ head(verhaak_scores)
 针对上调基因、下调基因或者所有基因，我们开始探索分数（score）和离差（dispersion）之间的关系。`plotDispersion`函数可以用来生成带有注释的图。注释可以是离散型或者连续型变量，如果注释被合并在最后的得分data frame中则直接指定列名即可。`singscore`包中所有的画图函数都可以通过指定`isInteractive`为`TRUE`而生成可交互的动态图。
 
 ```{r plot-dispersion, fig.wide=TRUE, fig.height=4, fig.cap="NPM1c signature scores from the up- and down-regulated gene sets, both combined (Total) and independently, can separate samples with NPM1c mutations or *MLL* fusions/PTDs from samples not bearing these genomic lesions. Scores are plot against the median absolute deviation (MAD) of the ranks of genes in each gene set forming the NPM1c signature. The plots also reveal that scores close to 0 result in higher MADs."}
+#relative size of text in the figure
+relSize = 1.2
+
 #create annotation
 mutated_gene = rep('Other', ncol(aml_se))
 mutated_gene[aml_se$NPM1c.Mut] = 'NPM1c Mut'
 mutated_gene[aml_se$KMT2A.Fusion | aml_se$KMT2A.PTD] = 'MLL Fusion/PTD'
-p1 = plotDispersion(verhaak_scores, annot = mutated_gene)
+p1 = plotDispersion(verhaak_scores, annot = mutated_gene, textSize = relSize)
 p1
 ```
 
@@ -495,12 +498,12 @@ rank_plots = lapply(names(select_samples), function(x) {
   p1 = plotRankDensity(rankData = aml_ranked[, aml_sample, drop = FALSE],
                        upSet = verhaak_sigs[[1]],
                        downSet = verhaak_sigs[[2]],
-                       textSize = 1)
+                       textSize = relSize)
   
   #overwrite title of the plot with the description of the sample
   #this is possible because singscore uses ggplot2
   p1 = p1 + ggtitle(paste(x,  mutated_gene[aml_sample], sep = '\n')) +
-    theme(legend.title = element_blank())
+    guides(colour = guide_legend(ncol = 1))
   return(p1)
 })
 
@@ -649,7 +652,7 @@ p_mll_npm1c = plotScoreLandscape(
   verhaak_scores,
   rossmll_scores,
   scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', 'ROSS_AML_WITH_MLL_FUSIONS'),
-  textSize = 1.4
+  textSize = relSize
   )
 p_mll_npm1c
 ```
@@ -673,7 +676,7 @@ p1 = projectScoreLandscape(p_mll_npm1c,
                            rossmll_scores,
                            subSamples = select_aml,
                            annot = mutated_gene[select_aml])
-p1
+p1 + theme(legend.box = 'vertical')
 ```
 
 图\@ref(fig:plot-project-mll)显示*MLL* fusions和*MLL* PTDs两组样本在两个维度上被分开。在*MLL* fusion标签的方向上，*MLL* PTDs相比*MLL* fusions的得分更低。这些样本在两个维度的平面上没有形成cluster，这和@ross04的结论是一致的。在图上进行样本注释的投射有助于帮助我们解释landscape不同部分的意义。
@@ -705,7 +708,7 @@ p1 = plotScoreLandscape(
   verhaak_scores,
   newsig_scores,
   scorenames = c('VERHAAK_AML_WITH_NPM1_MUTATED', newsig_name),
-  textSize = 1.4
+  textSize = relSize
 )
 
 #project NPM1 mutations onto the landscape
@@ -721,7 +724,7 @@ p2 = projectScoreLandscape(p1,
                            newsig_scores,
                            subSamples = select_aml,
                            annot = as.factor(mutated_gene[select_aml]))
-p2
+p2 + theme(legend.box = 'vertical')
 ```
 
 图\@ref(fig:plot-project-pmlrara)展现了和*MLL* fusion标签完全不同的landscape。*PML-RARA*标签使得*PML-RARA*和NPM1c样本完全分开，*PML-RARA*样本是唯一在*PML-RARA*标签中得到高分的样本，而且两个标签之间没有显著相关。在样本背景介绍部分，*PML-RARA* fusion是AML中一种已知的亚型——急性早幼粒细胞白血病（acute prolmyelocytic leukemia，APL）的诊断标志，这种亚型独特的细胞表型反映了早幼粒细胞分化的阻滞[@dethe91]。这种特性反映在了L型的landscape中，以及这些基因组损伤驱动白血病不同的机制。
@@ -743,7 +746,7 @@ sessionInfo()
 致谢 {.unnumbered}
 ===============
 
-工作流程中的结果全部或部分基于TCGA Research Network（<https://www.cancer.gov/tcga>）产生的数据。感谢Chris Flensburg在TCGA AML mutation data上的帮助。
+工作流程中的结果全部或部分基于TCGA Research Network（<https://www.cancer.gov/tcga>）产生的数据。感谢来自The Walter and Eliza Hall Institute的Christoffer Flensburg在TCGA AML mutation data上的帮助。
 
 参考文献 {.unnumbered}
 ==========
