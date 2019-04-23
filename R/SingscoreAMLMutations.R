@@ -15,5 +15,6 @@
 #'   epigenomic landscapes of adult de novo acute myeloid leukemia. New England
 #'   Journal of Medicine, 368(22), pp.2059-2074.
 #' @source (https://tcga-data.nci.nih.gov/docs/publications/aml_2012/SupplementalTable01.xlsx)
-#' 
+#' @examples data(AMLPatientMutationsTCGA)
+#'
 "AMLPatientMutationsTCGA"
