@@ -57,12 +57,13 @@ Description: This workflow package shows how transcriptomic signatures can be us
   Bioconductor packages to achieve a gene-set level analysis.
 License: Artistic-2.0
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 Workflow: True
 biocViews: GeneExpressionWorkflow, GenomicVariantsWorkflow, ImmunoOncologyWorkflow, Workflow
 VignetteBuilder: knitr
 Depends: 
-    R (>= 3.6.0),
+    R (>= 3.6.0)
+Imports: 
     dcanr,
     edgeR,
     ggplot2,
@@ -83,3 +84,5 @@ Suggests:
     spelling
 RoxygenNote: 6.1.1
 Language: en-US
+URL: https://github.com/DavisLaboratory/SingscoreAMLMutations
+BugReports: https://github.com/DavisLaboratory/SingscoreAMLMutations/issues
