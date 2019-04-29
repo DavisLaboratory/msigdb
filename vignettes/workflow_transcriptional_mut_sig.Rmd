@@ -541,7 +541,7 @@ p1 = ggplot(plotdf, aes(Mutation, Score, fill = Status)) +
 p1
 ```
 
-To quantify the above observations, we fit logistic regression models with each gene as the response variable and the score as the predictor. Coefficient estimates, standard errors, z-statistics, and $p$-values of each model are listed below.
+To quantify the above observations, we fit logistic regression models with each genomic lesion as the response variable and the score as the predictor. Coefficient estimates, standard errors, z-statistics, and $p$-values of each model are listed below.
 
 ```{r predict_mutation_glm}
 #fit GLMs to each mutation
