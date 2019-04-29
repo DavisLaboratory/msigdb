@@ -21,6 +21,10 @@ AMLPatientMutationsTCGA
 This is the processed version of the mutation data available from the TCGA
 AML patients. The data set
 }
+\examples{
+data(AMLPatientMutationsTCGA)
+
+}
 \references{
 Cancer Genome Atlas Research Network, 2013. Genomic and
   epigenomic landscapes of adult de novo acute myeloid leukemia. New England

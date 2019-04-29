@@ -1,3 +1,18 @@
+#' @import dcanr
+#' @import edgeR
+#' @import ggplot2
+#' @import gridExtra
+#' @import GSEABase
+#' @import org.Hs.eg.db
+#' @import plyr
+#' @import reshape2
+#' @import rtracklayer
+#' @import singscore
+#' @import SummarizedExperiment
+#' @import TCGAbiolinks
+#' 
+"_PACKAGE"
+
 #' Mutation data for 4 genes for the TCGA AML patients
 #'
 #' This is the processed version of the mutation data available from the TCGA
