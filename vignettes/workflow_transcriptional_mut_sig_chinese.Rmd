@@ -44,7 +44,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 keywords: single sample, gene set scoring, signature scoring, AML mutations, NPM1c mutation, mutation prediction, TCGA
 abstract: >
-  针对生物转录组的RNA测序（RNA-seq）技术的进步彻底改变了我们理解转录调控机制的能力，这些转录调控机制可以帮助我们了解癌症等疾病。最近我们发表了singscore，一种基于排名的基因集打分（gene set scoring）方法，该方法量化了单个样本的转录谱与特定的基因集之间的一致性。在这里，我们展示了singscore应用于研究急性髓细胞白血病（acute myeloid leukemia，AML）转录谱，该转录谱与特定的几种突变和基因损伤相关。使用TCGA的基因组与转录组数据，我们展示了对恰当的标签（signature）打分可以区分出不同突变所对应的样本，反映这些突变驱动了异常的转录调控以导致白血病发生的能力。我们认为singscore方法对于研究特定癌症亚型内的异质性特别有用，并且我们展示了singscore识别那些驱动了类似转录机制的突变的能力。
+  针对生物转录组的RNA测序（RNA-seq）技术的进步革命性地提高了我们掌握转录调控机制的能力，这些转录调控机制可以帮助我们了解癌症等疾病的机理。最近我们发表了singscore，一种基于基因表达量排名的基因集打分（gene set scoring）方法，该方法量化了单个样本的转录谱与特定的基因集所代表的特征之间的一致性。在这里，我们展示了singscore如何应用于研究不同的急性髓细胞白血病（acute myeloid leukemia，AML）转录谱，这些转录谱与特定的几种突变和基因损伤相关。使用TCGA的基因组与转录组数据，我们展示了对恰当的标签（signature）打分可以区分出有不同突变的样本，反映出这些突变具有驱动异常的转录调控以导致白血病发生的能力。我们认为singscore方法对于研究特定癌症亚型内的异质性特别有用，并且我们展示了singscore识别那些驱动异常转录机制的突变的能力。
 ---
 
 <p>
@@ -100,12 +100,12 @@ knitr::write_bib(c(
 介绍 {#intro}
 ============
 
-微阵列（microarray）技术的发展和RNA测序技术的快速应用为检测生物样品的转录谱（或转录组）提供了平台[@cieslik18]。转录组学分析通常侧重于样品不同分组之间基因的“差异表达（differential expression）”，然而随着公开可用RNA数据的快速增长，“相对方法（relative approached”的使用越来越多，量化了样品与特定的基因标签（gene signatures）之间的一致性[@cieslik18]。对于用突变或融合基因进行肿瘤亚型分类与鉴定，以及寻找驱动癌症进展的基因组损伤而言，基因组的测序十分重要。而转录组学分析则可以提供携带这些突变的细胞的形态或表型信息。
+微阵列（microarray）技术的发展和RNA测序技术的快速应用为检测生物样品的转录谱（或转录组）提供了平台[@cieslik18]。转录组学分析通常侧重于样品不同分组之间基因的“差异表达（differential expression）”，然而随着公开可用RNA数据的快速增长，越来越多的人开始使用相对的方法来量化样品与特定的基因标签（gene signatures）代表的特征之间的一致性[@cieslik18]。对于用突变或融合基因进行肿瘤亚型分类与鉴定，以及寻找驱动癌症进展的基因组损伤而言，基因组的测序十分重要，而转录组学分析则可以提供携带这些突变的细胞的形态或表型信息。
 
-癌症是一种异质性疾病，其具有多种临床和病理亚型。以乳腺癌为例，临床上主要依靠激素受体（雌激素受体：ER；孕酮受体：PR）的表达或Erb-B2受体酪氨酸激酶（*HER2*）的过度表达进行分型，这些特征拥有直接靶向治疗的药物。一个常见的例子就是临床上使用PAM50（prediction analysis of microarray 50）标签来区分不同的乳腺癌亚型[@parker09, @cieslik18]。许多癌症的亚型分类主要依赖于识别大型患者队列中的复发性突变（recurrent mutations），通过全基因组或全外显子组测序来获得具有临床意义的亚型[@cancer13, @papaemmanuil16]。
+癌症是一种异质性疾病，其具有多种临床和病理亚型。以乳腺癌为例，临床上主要依靠激素受体（雌激素受体：ER；孕酮受体：PR）的表达或Erb-B2受体酪氨酸激酶（*HER2*）的过度表达进行分型，这些特征的癌症分型有可直接靶向治疗的药物。一个常见的例子就是临床上使用PAM50（prediction analysis of microarray 50）标签来区分不同的乳腺癌亚型[@parker09, @cieslik18]。许多癌症的亚型分类主要依赖于识别大型患者队列中的复发性突变（recurrent mutations），通过全基因组或全外显子组测序来获得具有临床意义的亚型[@cancer13, @papaemmanuil16]。
 
 
-流行的“relative approach”有single-sample gene set enrichment analysis (ssGSEA) [@barbie09]，用户可以通过GenePattern web-tool使用该方法（http://software.broadinstitute.org/cancer/software/genepattern）。另一种常见的方法是gene set variation analysis (GSVA) [@hanzelmann13]，以R/Bioconductor package的形式实现(https://bioconductor.org/packages/release/bioc/html/GSVA.html)。该package中还包括了ssGSEA，PLAGE [@tomfohr05]和z-score [@lee08]方法。ssGSEA和GSVA都使用了Kolmogorov-Smirnov like random-walk statistic来将归一化（normalised）的基因排名转换成样本得分。这一“归一化（normalised）”的步骤使得样本得分不再是“单样本（single-sample）”的，而且样本组成带来的variations（比如样本由不同的肿瘤亚型组成）会对样本得分造成影响。其次，这些方法产生的样本得分具有不同的数值范围（range），为结果的解释带来一些困难。为了克服这些问题，我们开发了一种单样本的基因集打分方法*singscore* [@foroutan18] (<http://bioconductor.org/packages/singscore/>)， 它利用了给定基因集中基因的排名并相对这些基因得分的最大值与最小值进行归一化（normalization）。
+流行的“relative approach”有single-sample gene set enrichment analysis (ssGSEA) [@barbie09]，用户可以通过GenePattern web-tool使用该方法（http://software.broadinstitute.org/cancer/software/genepattern）。另一种常见的方法是gene set variation analysis (GSVA) [@hanzelmann13]，以R/Bioconductor package的形式实现(https://bioconductor.org/packages/release/bioc/html/GSVA.html)。该package中还包括了ssGSEA，PLAGE [@tomfohr05]和z-score [@lee08]方法。ssGSEA和GSVA都使用了Kolmogorov-Smirnov like random-walk statistic来将归一化（normalised）的基因排名转换成样本得分。这一“归一化（normalised）”的步骤使得这些方法不适用于单一样本（single-sample），而且样本组成带来的variations（比如样本由不同的肿瘤亚型组成）会对样本得分造成影响。其次，这些方法产生的样本得分具有不同的数值范围（range），为阐释结果带来一些困难。为了克服这些问题，我们开发了一种单样本的基因集打分方法*singscore* [@foroutan18] (<http://bioconductor.org/packages/singscore/>)， 它利用了给定基因集中基因的排名并相对这些基因排名的最大值与最小值进行归一化（normalization）。
 
 The Cancer Genome Atlas（TCGA）提供了上千的病人转录组数据，通常这些数据还有配对的基因组或表观基因组数据（通常为DNA甲基化数据）。这些数据可以帮助我们找到突变所对应的功能上的变化，探索由于表观因素或者转录调控而引起的肿瘤异质性。在这里，我们展示了singscore方法 [@foroutan18] 可以利用NPM1c mutation, *KMT2A* (*MLL*) 基因融合（gene fusions）, 和 *PML-RARA* 基因融合（gene fusions）的转录组gene signatures对TCGA中的AML样本进行分类。在不需要参数拟合或估计的情况下，用singscore对基因集打分可以区分出携带有这些突变的样本。在这里，我们将介绍基因集打分不仅可以用于识别差异，还可以衡量临床结果不同的AML亚型之间的相对相似性。
 
@@ -114,11 +114,11 @@ The Cancer Genome Atlas（TCGA）提供了上千的病人转录组数据，通�
 
 与大多数癌症一样，急性髓细胞白血病（acute myeloid leukemia，AML）是一种具有许多亚型的异质性疾病。通过对TCGA AML基因组数据的分析，有人根据特定“驱动突变（driver mutations）”的存在与否对AML进行了分类，总结并扩展了之前已定义的临床上的亚型 [@cancer13]。最近一项主要针对基因组数据的研究进一步完善了具有临床意义的AML亚型 [@papaemmanuil16]，其中囊括了许多共同发生以及相互排斥的突变。
 
-值得注意的是，在临床AML样本中最常见的突变之一是*NPM1*基因第12外显子上的移码突变（frameshift mutation）[@papaemmanuil16]。这种突变导致核磷蛋白（nucleophosmin）的异常定位与胞质积累（cytoplasmic accumulation），因此这种突变经常被称作NPM1c突变 [@brunetti18]。如 @verhaak05 所述，NPM1c突变与同源框结构域（Hox）转录因子家族的活性失调相关，而该转录因子家族对于发育模式（developmental patterning）是必需的。最近的研究进一步证实了改突变在疾病进展中的作用，NPM1c的缺失会导致AML细胞的分化[@brunetti18]。
+值得注意的是，在临床AML样本中最常见的突变之一是*NPM1*基因第12外显子上的移码突变（frameshift mutation）[@papaemmanuil16]。这种突变导致核磷蛋白（nucleophosmin）的异常定位与胞质积累（cytoplasmic accumulation），因此这种突变经常被称作NPM1c突变 [@brunetti18]。如 @verhaak05 所述，NPM1c突变与同源框结构域（Hox）转录因子家族的活性失调相关，而该转录因子家族对于发育模式（developmental patterning）是必需的。最近的研究进一步证实了该突变在疾病进展中的作用，NPM1c的缺失会导致AML细胞的分化[@brunetti18]。
 
-AML中的复发性遗传损伤还包括赖氨酸甲基转移酶2A（*KMT2A*，以前被称为*MLL*）融合基因，*KMT2A*基因（*KMT2A* -PTD）内的部分串联重复，以及早幼粒细胞白血病蛋白（*PML*）和视黄酸受体α（*RARA*）之间的融合基因（*PML-RARA*）。鉴于NPM1c突变对Hox基因家族的失调作用，具有MLL融合基因的AML样本显示出Hox家族基因的表达失调成为了一个值得探究的问题 [@hess04, @ross04]。然而，具有*MLL*-PTD的样本似乎显示出与MLL-融合样本相对不同的表型 [@ross04]。尽管有充分的证据证明NPM1c突变和其它遗传损伤在阻碍AML细胞分化中的作用，但具有*PML-RARA*融合的样本被诊断为一种叫做急性早幼粒细胞白血病（acute promyelocytic leukemia，APL)的AML亚型。这种临床AML亚型与French-American-British (FAB)分类系统中的FAB-M3相关。由于早幼粒细胞阶段的分化阻滞，该亚型的细胞显示出特有的形态 [@dethe91]。
+AML中的复发性遗传损伤还包括赖氨酸甲基转移酶2A（*KMT2A*，以前被称为*MLL*）融合基因，*KMT2A*基因（*KMT2A* -PTD）内的部分串联重复，以及早幼粒细胞白血病蛋白（*PML*）和视黄酸受体α（*RARA*）之间的基因融合（*PML-RARA*）。鉴于NPM1c突变对Hox基因家族的失调作用，具有MLL基因融合的AML样本显示出Hox家族基因的表达失调成为了一个值得探究的问题 [@hess04, @ross04]。然而，具有*MLL*-PTD的样本似乎显示出与MLL-融合样本相对不同的表型 [@ross04]。尽管有充分的证据证明NPM1c突变和其它遗传损伤在阻碍AML细胞分化中的作用，但具有*PML-RARA*融合的样本被诊断为一种叫做急性早幼粒细胞白血病（acute promyelocytic leukemia，APL)的AML亚型。这种临床AML亚型与French-American-British (FAB)分类系统中的FAB-M3相关。由于早幼粒细胞阶段的分化阻滞，该亚型的细胞显示出特有的形态 [@dethe91]。
 
-在这个工作流程中，我们证明了singscore方法 [@foroutan18]从转录组数据中区分不同肿瘤“驱动突变（driver mutations）”的能力。我们使用了已定义的NPM1c突变的gene signature[@verhaak05]，以及*PML-RARA*基因融合和MLL融合的gene signatures。后两个gene signatures来自于儿童AML样本，尽管我们知道儿童AML和成人AML之间的突变谱差别较大[@ma18]，但研究表明该signatures能够很好地区分具有类似基因损伤的成人AML样本[@ross04]。这些gene signatures已存在于MSigDB数据库（molecular signatures database）中[@liberzon15]，通过使用这些gene signatures，我们证明了singscore的打分方法可以根据不同的突变将TCGA AML样本分类，且结果具有良好的精确度（precision）和召回率（recall）。该方法的优点之一在于它是能够根据表型特征（phenotypic signatures）将样本映射到二维或者更高维度的空间中。通过比较NPM1c和*KMT2A*-/*MLL*- 融合signatures的得分，我们展示了这种分类可能是由于Hox家族失调产生的共同的下游效应而导致的。我们还将NPM1c突变signature与*PML-RARA* signature进行比较，这两个亚型的明显分离反映了它们显著不同的表型和相互排斥的突变。
+在本分析流程中，我们证明了singscore方法 [@foroutan18]从转录组数据中区分不同肿瘤“驱动突变（driver mutations）”的能力。我们使用了已定义的NPM1c突变的gene signature[@verhaak05]，以及*PML-RARA*基因融合和MLL融合的gene signatures。后两个gene signatures来自于儿童AML样本，尽管儿童AML和成人AML之间的突变谱差别较大[@ma18]，但研究表明该signatures能够很好地区分具有类似基因损伤的成人AML样本[@ross04]。这些gene signatures已存在于MSigDB数据库（molecular signatures database）中[@liberzon15]，通过这些gene signatures，我们证明了singscore的双向打分方法可以根据不同的突变将TCGA AML样本分类，且结果具有良好的精确度（precision）和召回率（recall）。该方法的优点之一在于它是能够根据表型特征（phenotypic signatures）将样本映射到二维或者更高维度的空间中。通过比较NPM1c和*KMT2A*-/*MLL*- 融合signatures的得分，我们展示了这种分类可能是由于Hox家族失调产生的共同的下游效应而导致的。我们还将NPM1c突变signature与*PML-RARA* signature进行比较，这两个亚型的明显分离反映了它们显著不同的表型和相互排斥的突变。
 
 数据下载与处理 {#download-and-prepare}
 ==================================
@@ -130,7 +130,7 @@ AML中的复发性遗传损伤还包括赖氨酸甲基转移酶2A（*KMT2A*，�
 2. 执行查询以下载数据；
 3. 将下载好的数据读入R中；
 4. 过滤掉表达量低的基因；
-5. 校正compositional bias并对基因长度进行标准化 [@foroutan18]
+5. 校正样本组成带来的偏差并对基因长度进行标准化 [@foroutan18]
 
 查询GDC数据库 {#gdc-query}
 -------------------------
@@ -180,7 +180,7 @@ GDCdownload(query_rna, directory = datapath) #(size: 39MB)
 将count-level数据读入R {#read-data}
 -------------------------------
 
-`GDCprepare`函数可以将下载好的数据读入R并处理成`RangedSummarizedExperiment`对象（来自`SummarizedExperiment`包），该对象可以同时储存read count、基因注释和临床信息。在调用该函数的时候临床信息自动下载并整合入`RangedSummarizedExperiment`对象中。RangedSummarizedExperiment对象和ExpressionSet很类似，但它还可以使用基因坐标进行索引以及存储具有相同结构的多个数据矩阵。用来注释数据的特征（feature）注释被存储在一个RDA/RDATA文件中。
+`GDCprepare`函数可以将下载好的数据读入R并处理成`RangedSummarizedExperiment`对象（来自`SummarizedExperiment`包），该对象可以同时储存read count、基因注释和临床信息。在调用该函数的时候临床信息自动下载并整合入`RangedSummarizedExperiment`对象中。RangedSummarizedExperiment对象和ExpressionSet很类似，但它还可以使用基因坐标进行索引以及存储具有相同结构的多个数据矩阵。关于数据特征（feature）的注释被存储在一个RDA/RDATA文件中。
 
 ```{r gdc_prepare, results='hide'}
 aml_se = GDCprepare(query_rna, directory = datapath)
@@ -426,7 +426,7 @@ rownames(aml_se) = rowData(aml_se)$entrezgene
 使用标签给样本打分 {#score-samples}
 --------------------------------------------------
 
-Singscore 是一种基于排名的，对基因集（gene set）在单个样本中富集程度的度量。对不同的基因集（gene set）的打分利用的样本基因表达量是相同的，因此我们只要根据表达量对样本进行一次排序就可以对不同的基因集（gene set）进行打分。在Singscore包中我们将这两步分开以节约计算资源。`rankGenes`函数可以对以numeric matrix、numeric data fame、ExpressionSet对象、DGEList对象或者SummarizedExperiment对象为存储形式的表达谱数据计算排名。用户需要指定排序过程中重复排名的处理方法（tiesMethod参数），默认方法为“min”，如有10个基因根据其表达量得到的排名均为1，则这10个基因的排名记为1，第11个基因的排名为11。我们推荐在RNA-seq数据里使用该方法，因为RNA-seq数据里通常有很多基因的表达量为0。这样可以减少零值对排名带来的影响，不过在数据质量控制时过滤掉低表达基因仍然是必不可少的步骤（见\@ref(filter-data)部分）。
+Singscore 是一种基于排名的，对基因集（gene set）在单个样本中富集程度的度量方法。对不同的基因集（gene set）的打分利用的样本基因表达量是相同的，因此我们只要根据表达量对样本进行一次排序就可以对不同的基因集（gene set）进行打分。在Singscore包中我们将这两步分开以节约计算资源。`rankGenes`函数可以对以numeric matrix、numeric data fame、ExpressionSet对象、DGEList对象或者SummarizedExperiment对象为存储形式的表达谱数据计算排名。用户需要指定排序过程中重复排名的处理方法（tiesMethod参数），默认方法为“min”，如有10个基因根据其表达量得到的排名均为1，则这10个基因的排名记为1，第11个基因的排名为11。我们推荐在RNA-seq数据里使用该方法，因为RNA-seq数据里通常有很多基因的表达量为0。这样可以减少零值对排名带来的影响，不过在数据质量控制时过滤掉低表达基因仍然是必不可少的步骤（见\@ref(filter-data)部分）。
 
 ```{r compute_ranks_aml}
 library(singscore)
@@ -460,7 +460,7 @@ head(verhaak_scores)
 对Verhaak标签的诊断{#diagnostics-verhaak}
 ------------------------------------
 
-`singscore`R包提供了一系列可视化工具来探索基因标签（gene signature）。比如，这些工具可以用来观察双向标签中上调基因列表和下调基因列表的重要程度，观察基因标签中单个基因对不同样本类别的区分程度，以及还可以用来探索最终得分和离差（dispersion）之间的关系。注释可以直接被叠加在图上，Singscore支持连续型和离散型注释。连续型注释可以以向量（vector）形式或者用字符串（string）指定注释位于data frame的某一列。
+`singscore`R包提供了一系列可视化工具来探索基因标签（gene signature）。比如，这些工具可以用来观察双向标签中上调基因列表和下调基因列表的重要程度，观察基因标签中单个基因对不同样本类别的区分能力，以及还可以用来探索最终得分和离差（dispersion）之间的关系。注释可以直接被叠加在图上，Singscore支持连续型和离散型注释。连续型注释可以以向量（vector）形式或者用字符串（string）指定注释位于data frame的某一列。
 
 针对上调基因、下调基因或者所有基因，我们开始探索分数（score）和离差（dispersion）之间的关系。`plotDispersion`函数可以用来生成带有注释的图。注释可以是离散型或者连续型变量，如果注释被合并在最后的得分data frame中则直接指定列名即可。`singscore`包中所有的画图函数都可以通过指定`isInteractive`为`TRUE`而生成可交互的动态图。
 
@@ -565,7 +565,7 @@ coefs = lapply(glms, function(x) coef(summary(x)))
 ldply(coefs, function(x) x[2, ], .id = 'Mutation')
 ```
 
-NPM1c突变和分数显著相关，*MLL* gene fusion也和分数显著相关，这显示了它们在Hox基因失调中共享的作用。有趣的是，*PML-RARA* fusion的系数是负值，这很可能反映了急性早幼粒细胞白血病(acute promyelocytic leukemia, APL)相对于其它AML亚型而言独特的细胞形态或表型特征。
+NPM1c突变和分数显著相关，*MLL* gene fusion也和分数显著相关，这显示了它们在Hox基因失调中共有的作用。有趣的是，*PML-RARA* fusion的系数是负值，这很可能反映了急性早幼粒细胞白血病(acute promyelocytic leukemia, APL)相对于其它AML亚型而言独特的细胞形态或表型特征。
 
 评估预测模型的表现{#prediction-performance}
 -------------------------------------
@@ -588,7 +588,7 @@ prec_rec = ldply(glms, function(glm1) {
 prec_rec
 ```
 
-只有NPM1c突变具有预测的精确率（precision）因为所有其它的样本都被预测成了wild-types，因此它们的召回率（recall）是0。NPM1c突变的模型的精确率（precision）、召回率（recall）、F1-score和预期的一样高。就像\@ref(score-samples)部分提到的，singscores是由两部分组成的分数，因此在考虑排名的离差（dispersion）后，模型表现应该更加优秀（图\@ref(fig:plot-dispersion)）。
+这里我们只能计算对NPM1c突变预测的精确率（precision），具有其它突变类型的样本在此情景下的预测结果是野生型（wild-types），因此无法计算它们的精确率。同理，具有其他突变类型的样本的召回率（recall）是0。NPM1c突变的模型的精确率（precision）、召回率（recall）、F1-score和预期的一样高。就像\@ref(score-samples)部分提到的，singscores是由两部分组成的分数，因此在考虑排名的离差（dispersion）后，模型表现应该更加优秀（图\@ref(fig:plot-dispersion)）。
 
 以下的模型显示，使用了singscores中的score及离差（dispersion）后，模型的预测能力显著提升。
 
@@ -611,7 +611,7 @@ c(
 多个基因标签（signature）的landscapes {#signature-landscape}
 =============================================
 
-通常我们会对两个独立的或者相互依赖的表型之间的关系感兴趣，比如EMT过程中epithelial和mesenchymal表型。大多数标签（signature）是为了估计无法衡量的分子表型从而可以成为表型的代表。因此，我们可以用对应的标签（signature）来探索两个表型之间的关系。 @foroutan17 首次介绍了使用molecular signature landscapes来探索标签（signature）之间的关系，这些标签（signature）均和EMT及TGF$\beta$导致的EMT相关。之后， @cursons18 计算了EMT表型标签（signature）的singscores得分并用signature landscape证明了将miR-200c转染到mesenchymal细胞系之后发生了向epithelial表型的转变。 @foroutan18 使用signature landscapes在epithelial-mesenchymal尺度上划分乳腺癌亚型并把它包含在了`singscore`包中。这里，我们展示了signature landscapes的进一步应用，即使用代表不同突变的转录组标签（signature）来划分AML样本。
+通常我们会对两个独立的或者相互依赖的表型之间的关系感兴趣，比如EMT过程中epithelial和mesenchymal表型。大多数标签（signature）的作用是为了便于量化一些难以衡量的分子表型。因此，我们可以用对应的标签（signature）来探索两个表型之间的关系。 @foroutan17 首次介绍了使用molecular signature landscapes来探索标签（signature）之间的关系，这些标签（signature）均和EMT及TGF$\beta$导致的EMT相关。之后， @cursons18 计算了EMT表型标签（signature）的singscores得分并用signature landscape证明了将miR-200c转染到mesenchymal细胞系之后发生了向epithelial表型的转变。 @foroutan18 使用signature landscapes在epithelial-mesenchymal尺度上划分乳腺癌亚型并把它包含在了`singscore`包中。这里，我们展示了signature landscapes的进一步应用，即使用代表不同突变的转录组标签（signature）来划分AML样本。
 
 
 Ross MLL fusion signature vs. Verhaak signature landscape {#sig-landscape-mll}
@@ -730,7 +730,7 @@ p2 + theme(legend.box = 'vertical')
 总结
 =======
 
-singscore包通过R/Bioconductor环境给用户提供了一个简单的界面以使用基因集打分（gene set scoring）方法。 TCGABiolinks包使用户相对容易地访问大型的临床相关数据集，如TCGA及其相关注释。 singscore中包含的诊断和绘图功能允许用户调查感兴趣的基因集（gene set）以确定它们区分样本之间差异的能力。然后不同的基因集（gene set）可以组合在一起以探索不同的细胞表型在大型研究中的关系。以上分析展示了当恰当的基因集被使用是，singscore计算得到的结果可以用于样本分类，结果可以进一步被用到缺少基因组数据的大型转录组数据中。
+singscore包通过R/Bioconductor环境给使用者提供了一个用户友好的界面来进行基因集打分（gene set scoring）。 TCGABiolinks包使用户相对容易地访问大型的临床相关数据集，如TCGA及其相关注释。 singscore中包含的诊断和绘图功能允许用户调查感兴趣的基因集（gene set）以确定它们区分样本之间差异的能力。然后不同的基因集（gene set）可以组合在一起以探索不同的细胞表型在大型研究中的关系。以上分析展示了当恰当的基因集被使用时，singscore计算得到的结果可以用于样本分类，结果可以进一步被用到缺少基因组数据的大型转录组数据中。
 
 使用到的R包 {.unnumbered}
 =============
