@@ -1,6 +1,6 @@
 Package: SingscoreAMLMutations
 Title: Using singscore to predict mutations in AML from transcriptomic signatures
-Version: 0.99.16
+Version: 0.99.17
 Authors@R: 
     c(
       person(
@@ -19,8 +19,8 @@ Authors@R:
         comment = c(ORCID = '0000-0002-1440-0457')
       ),
       person(
-        "Xie",
         "Yi",
+        "Xie",
         email = "xie.y@wehi.edu.au",
         role = c("aut"),
         comment = c(ORCID = '0000-0002-1938-4089')
