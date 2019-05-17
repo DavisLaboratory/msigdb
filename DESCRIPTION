@@ -1,6 +1,6 @@
 Package: SingscoreAMLMutations
 Title: Using singscore to predict mutations in AML from transcriptomic signatures
-Version: 1.1.0
+Version: 1.1.1
 Authors@R: 
     c(
       person(
