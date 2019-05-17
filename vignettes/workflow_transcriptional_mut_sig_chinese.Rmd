@@ -309,7 +309,7 @@ aml_se
 对样本注释突变信息 {#annotate-mutations}
 -----------------------------------
 
-读者们需要注意的是，本分析流程中我们用了从原始TCGA AML文献中[@cancer13]提取的突变列表( <https://tcga-data.nci.nih.gov/docs/publications/aml_2012/SupplementalTable01.xlsx>)而不是标准TCGA流程中的突变信息（可以在[National Cancer Institute Genomic Data Commons](https://gdc.cancer.gov/)获得），两者存在一定差异。针对我们所关心的遗传病变（NPM1c, *KMT2A-MLL*, *KMT2A*-PTD and *PML-RARA*），病人通过以下几个标签被分类：
+读者们需要注意的是，本分析流程中我们用了从原始TCGA AML文献中[@cancer13]提取的突变列表(Supplemental Table 01 at <https://gdc.cancer.gov/node/876>)而不是标准TCGA流程中的突变信息（可以在[National Cancer Institute Genomic Data Commons](https://gdc.cancer.gov/)获得），两者存在一定差异。针对我们所关心的遗传病变（NPM1c, *KMT2A-MLL*, *KMT2A*-PTD and *PML-RARA*），病人通过以下几个标签被分类：
 
 * **Patient ID**: TCGA Patient ID
 * **NPM1c**: 当“NPM1”列包含有“p.W287fs”或“p.W288fs”时，返回TRUE

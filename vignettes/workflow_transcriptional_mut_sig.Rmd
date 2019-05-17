@@ -308,7 +308,7 @@ aml_se
 Annotate samples with mutation data {#annotate-mutations}
 -----------------------------------
 
-For this analysis we have used the curated mutation list from the original TCGA AML publication [@cancer13] (supplementary file at <https://tcga-data.nci.nih.gov/docs/publications/aml_2012/SupplementalTable01.xlsx>) rather than variant calls from the standard TCGA pipeline (available through the [National Cancer Institute Genomic Data Commons](https://gdc.cancer.gov/)) and readers should note that there are some discrepancies between these. For genetic lesions of interest (NPM1c, *KMT2A-MLL*, *KMT2A*-PTD and *PML-RARA*), patients were identified by the following criteria:
+For this analysis we have used the curated mutation list from the original TCGA AML publication [@cancer13] (Supplemental Table 01 at <https://gdc.cancer.gov/node/876>) rather than variant calls from the standard TCGA pipeline (available through the [National Cancer Institute Genomic Data Commons](https://gdc.cancer.gov/)) and readers should note that there are some discrepancies between these. For genetic lesions of interest (NPM1c, *KMT2A-MLL*, *KMT2A*-PTD and *PML-RARA*), patients were identified by the following criteria:
 
 * **Patient ID**: The 'TCGA Patient ID' column was extracted directly
 * **NPM1c**: TRUE if the 'NPM1' column contains the strings 'p.W287fs' or 'p.W288fs'
