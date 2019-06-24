@@ -1,5 +1,5 @@
 ---
-title: "Using singscore to predict mutations in AML from transcriptomic signatures"
+title: "Using singscore to predict mutation status in AML from transcriptomic signatures"
 author:
   - name: Dharmesh D Bhuva
     affiliation:
@@ -186,7 +186,7 @@ The `GDCprepare` function reads and processes the downloaded data into a `Ranged
 aml_se = GDCprepare(query_rna, directory = datapath)
 ```
 
-The object contains data for 56,925 features and 151 samples. The original data files contain 60,483 features, some of which (3,767) could not be mapped to ENSEMBL GRCh38.p12. Feature and sample annotations can be accessed using `rowData(se)` and `colData(se)`, respectively, and the counts data can be accessed using `assay(se)`. TCGA data usually contains some formalin-fixed paraffin-embedded (FFPE) samples which should be discarded from the analysis as the protocol introduces biological artefacts. This procedure is only performed on solid tumours and not leukemias, therefore, no filtering is required for this data set.
+The object contains data for 56,925 features and 151 samples. The original data files contain 60,483 features, some of which (3,881) could not be mapped to ENSEMBL GRCh38.p12. Feature and sample annotations can be accessed using `rowData(se)` and `colData(se)`, respectively, and the counts data can be accessed using `assay(se)`. TCGA data usually contains some formalin-fixed paraffin-embedded (FFPE) samples which should be discarded from the analysis as the protocol introduces biological artefacts. This procedure is only performed on solid tumours and not leukemias, therefore, no filtering is required for this data set.
 
 ```{r show_se}
 aml_se
@@ -195,29 +195,17 @@ aml_se
 Filter out genes with low counts {#filter-data}
 --------------------------------
 
-The `edgeR` package [@R-edgeR] contains methods that assist in the data normalisation and transformation required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment. Creation of a DGEList object is initially unsuccessful due to duplicated row names in the data matrix (107 features). The raw count files for individual samples do not have any duplicated features indicating this is introduced by the `GDCprepare` function. This is further supported by the fact that the counts for a single feature are the same for duplicated entries. An example of such a feature is shown below and we have verified duplicated entries of all other features to be the same.
-
-```{r dup_entries}
-library(SummarizedExperiment)
-
-#example check on one feature ID
-dup_feature = 'ENSG00000011454'
-dup_data = assay(aml_se[rownames(aml_se) %in% dup_feature, ])
-identical(dup_data[1, ], dup_data[2, ])
-```
-
-As such, it is safe to discard duplicated entries.
+The `edgeR` package [@R-edgeR] contains methods that assist in the data normalisation and transformation required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment.
 
 ```{r remove_dups}
 library(edgeR)
 
-aml_se = aml_se[!duplicated(rownames(aml_se)), ]
 aml_dge = DGEList(counts = assay(aml_se), genes = rowData(aml_se))
 ```
 
 Genes with low counts across most samples are discarded from the analysis. This is a standard step in differential expression analysis as inclusion of such genes in the analysis could skew estimates of dispersion. It is also motivated in rank-based analysis, such as with singscore, to avoid rank duplication. Rank duplication reduces the discriminant power of scores as the number of unique ranks is reduced. A commonly used filter is to select only those genes that have CPMs above a certain threshold across a proportion of samples. Filtering is performed on the CPMs rather than raw counts as the former accounts for variation in library sizes, therefore, is unbiased. For instance, a CPM of 1 would equate to read counts between 19 and 50 for samples in the AML data where library sizes vary between 18.6 and 49.7 million reads. Here, we retain genes that have a CPM > 1 across more than 50% of the samples. Other methods to filter out genes with low counts exist and may be preferable in specific applications. @chen16 and @law16 filter genes based on the experimental design whereby the proportion of samples with enough read counts are evaluated per experimental group. As the AML data have many samples, filtering is performed across all samples rather than within sub-groups. Group specific filtering would be recommended for the study of rare groups. The distribution of logCPMs is much closer to the expected log-normal distribution after filtering out genes with low counts as seen in Figure \@ref(fig:plot-hist-filtering).
 
-```{r plot-hist-filtering, fig.wide=TRUE, fig.cap="Histogram of logCPM values for the AML data before and after filtering. Filtering results in fewer zeros in the data. Most genes with CPM less than 1, logCPM < 0; (red line) across the majority of samples get discarded, resulting in an approcimately log-normal distribution."}
+```{r plot-hist-filtering, fig.wide=TRUE, fig.cap="Histogram of logCPM values for the AML data before and after filtering. Filtering results in fewer zeros in the data. Most genes with CPM less than 1, logCPM < 0; (red line) across the majority of samples get discarded, resulting in an approximately log-normal distribution."}
 prop_expressed = rowMeans(cpm(aml_dge) > 1)
 keep = prop_expressed > 0.5
 
@@ -456,7 +444,7 @@ Diagnostics of the Verhaak signature {#diagnostics-verhaak}
 
 The `singscore` package provides a set of visualisation tools that enable diagnostics of the gene signature. For instance, these tools may be used to determine the importance of each component for a bidirectional signature (up- and down-regulated gene sets) to the total score, determine the importance of each gene of a signature in discriminating between the classes of interest, and to investigate the relationship between the final score and the dispersion of signature gene ranks. Annotations of interest can be overlayed on each plot. Singscore supports both continuous and categorical annotations, which can either be input as a vector, or as a string specifying a column within the score data frame. We begin by investigating the relationship between the score and dispersion of ranks for the up-regulated gene signature, down-regulated gene signature and the full signature. The `plotDispersion` functions generates a diagnostic plot with annotations overlaid. Annotations can be discrete or continuous, and can be passed as independent variables, or as a column name when the data is appended to the score data frame. It should be noted that all plotting functions in `singscore` can be made interactive by setting the `isInteractive` argument to `TRUE`.
 
-```{r plot-dispersion, fig.wide=TRUE, fig.height=4, fig.cap="NPM1c signature scores from the up- and down-regulated gene sets, both combined (Total) and independently, can separate samples with NPM1c mutations or *MLL* fusions/PTDs from samples not bearing these genomic lesions. Scores are plot against the median absolute deviation (MAD) of the ranks of genes in each gene set forming the NPM1c signature. The plots also reveal that scores close to 0 result in higher MADs."}
+```{r plot-dispersion, fig.wide=TRUE, fig.height=4, fig.cap="NPM1c signature scores from the up- and down-regulated gene sets, both combined (Total) and independently, can separate samples with NPM1c mutations or MLL fusions/PTDs from samples not bearing these genomic lesions. Scores are plotted against the median absolute deviation (MAD) of the ranks of genes in each gene set forming the NPM1c signature. The plots also reveal that scores close to 0 result in higher MADs."}
 
 #relative size of text in the figure
 relSize = 1.2
@@ -507,8 +495,8 @@ Figure \@ref(fig:plot-rank-density) shows that both the up- and down-regulated g
 
 Combined, these plots show that both the up- and down-regulated genes play an important role in discriminating between NPM1c mutated (and *MLL* fusion/PTD samples), and wild-type samples. These diagnostic plots help in determining the importance of genes in signatures with respect to the samples of interest and should be used prior to application of signatures. In some cases, signatures may have been developed in specific contexts due to inherent biases in datasets and yet, described or applied in a generalised setting. These diagnostic plots may help in validating their application in specific contexts and possibly assist in characterising the contexts of all existing signatures.
 
-Predicting mutations using the Verhaak signature {#predict-verhaak}
-------------------------------------------------
+Predicting NPM1c mutation status using the Verhaak signature {#predict-verhaak}
+------------------------------------------------------------
 
 Mutation status can be predicted from singscores using a logistic regression model with a "logit" link function. The benefits of this model over one where each gene in the signature is used as a term in the model is the simplicity of the model. The @verhaak05 signature consists of 429 genes which would result in a regression model with 429 predictors. As there are fewer samples than the predictors, some feature selection method would be required which may result in the loss of information. Moreover, automating model development on a larger selection of gene signatures would be limited with gene-level models. Additionally, models trained using singscore would inherit its non-parametric properties to some extent. For instance, such models would be invariant to all data transformations that retain within sample ranks of genes. The main limitation of such models would be the loss of accuracy due to summarisation of the data (information on 429 genes is summarised into a two-component score).
 

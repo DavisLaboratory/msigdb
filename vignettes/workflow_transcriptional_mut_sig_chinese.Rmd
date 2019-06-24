@@ -186,7 +186,7 @@ GDCdownload(query_rna, directory = datapath) #(size: 39MB)
 aml_se = GDCprepare(query_rna, directory = datapath)
 ```
 
-`RangedSummarizedExperiment`对象中包含了56925个特征（features）和151个样本。原始数据包含60483个特征，其中3767个特征因无法和ENSEMBL GRCh38.p12匹配而被丢弃。用`rowData(se)`和`colData(se)`函数可以获得特征和样本的注释信息，用`assay(se)`函数可以获得counts数据。TCGA数据往往包含一些福尔马林固定、石蜡包埋（formalin-fixed paraffin-embedded，FFPE）的样本，这些样本需要被过滤掉以避免protocol不同而引入的误差。这一步在本数据集中不需要，因为这一步骤是针对实体瘤（solid tumors）而非白血病（leukemias）的。
+`RangedSummarizedExperiment`对象中包含了56925个特征（features）和151个样本。原始数据包含60483个特征，其中3881个特征因无法和ENSEMBL GRCh38.p12匹配而被丢弃。用`rowData(se)`和`colData(se)`函数可以获得特征和样本的注释信息，用`assay(se)`函数可以获得counts数据。TCGA数据往往包含一些福尔马林固定、石蜡包埋（formalin-fixed paraffin-embedded，FFPE）的样本，这些样本需要被过滤掉以避免protocol不同而引入的误差。这一步在本数据集中不需要，因为这一步骤是针对实体瘤（solid tumors）而非白血病（leukemias）的。
 
 ```{r show_se}
 aml_se
@@ -195,23 +195,11 @@ aml_se
 过滤掉counts数低的基因 {#filter-data}
 --------------------------------
 
-`edgeR`包提供了过滤所需的数据标准化与转换方法。这些方法要求数据存储在DGEList对象中，因此我们需要将SummarizedExperiment对象转换成DGEList对象。一开始我们发现数据矩阵中存在行名重复（176个）因而无法转换成DGEList对象。但实际上原始数据中不包含任何重复的特征名称，因此我们推测可能是在使用`GDCprepare`函数这一步发生了错误，检查后发现特征名称相同的数据具有相同的count值。
-
-```{r dup_entries}
-library(SummarizedExperiment)
-
-#example check on one feature ID
-dup_feature = 'ENSG00000011454'
-dup_data = assay(aml_se[rownames(aml_se) %in% dup_feature, ])
-identical(dup_data[1, ], dup_data[2, ])
-```
-
-因此我们可以直接去除掉重复数据当中的一个。
+`edgeR`包提供了过滤所需的数据标准化与转换方法。这些方法要求数据存储在DGEList对象中，因此我们需要将SummarizedExperiment对象转换成DGEList对象。
 
 ```{r remove_dups}
 library(edgeR)
 
-aml_se = aml_se[!duplicated(rownames(aml_se)), ]
 aml_dge = DGEList(counts = assay(aml_se), genes = rowData(aml_se))
 ```
 

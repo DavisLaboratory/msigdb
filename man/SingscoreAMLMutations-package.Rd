@@ -27,11 +27,11 @@ Useful links:
 
 Authors:
 \itemize{
-  \item Momeneh Foroutan \email{foroutan.m@wehi.edu.au}
-  \item Xie Yi \email{xie.y@wehi.edu.au}
+  \item Momeneh Foroutan \email{foroutan.m@wehi.edu.au} (0000-0002-1440-0457)
+  \item Yi Xie \email{xie.y@wehi.edu.au} (0000-0002-1938-4089)
   \item Ruqian Lyu \email{lyu.r@wehi.edu.au}
   \item Joseph Cursons \email{cursons.j@wehi.edu.au} (0000-0002-5053-4540)
-  \item Melissa J. Davis \email{lyu.r@wehi.edu.au}
+  \item Melissa J. Davis \email{lyu.r@wehi.edu.au} (0000-0003-4864-7033)
 }
 
 }
