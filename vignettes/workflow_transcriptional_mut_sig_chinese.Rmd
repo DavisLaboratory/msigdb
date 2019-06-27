@@ -198,6 +198,7 @@ aml_se
 `edgeR`包提供了过滤所需的数据标准化与转换方法。这些方法要求数据存储在DGEList对象中，因此我们需要将SummarizedExperiment对象转换成DGEList对象。
 
 ```{r remove_dups}
+library(SummarizedExperiment)
 library(edgeR)
 
 aml_dge = DGEList(counts = assay(aml_se), genes = rowData(aml_se))

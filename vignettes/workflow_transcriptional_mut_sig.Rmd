@@ -198,6 +198,7 @@ Filter out genes with low counts {#filter-data}
 The `edgeR` package [@R-edgeR] contains methods that assist in the data normalisation and transformation required for filtering and subsequent steps. The methods require a DGEList object therefore we begin by creating a DGEList for the AML data from the SummarizedExperiment.
 
 ```{r remove_dups}
+library(SummarizedExperiment)
 library(edgeR)
 
 aml_dge = DGEList(counts = assay(aml_se), genes = rowData(aml_se))
