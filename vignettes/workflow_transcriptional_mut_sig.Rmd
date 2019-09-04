@@ -101,7 +101,6 @@ Introduction {#intro}
 ============
 
 The development of microarrays and more recently the rapid uptake of RNA-sequencing technologies have provided a platform to examine the transcriptional profile (or transcriptome) of biological samples [@cieslik18]. Transcriptomic analyses have traditionally focused on 'differential expression' of genes between sets of samples, however with the rapid growth of publicly available RNA data there has been increasing usage of 'relative approaches', which quantify the relative concordance of a sample or samples with a specific gene signature [@cieslik18]. While sequencing of genomic mutations has been important for classifying different tumour subsets based upon the presence of mutations or fusion genes, and identifying genetic lesions which may act as drivers of cancer progression, transcriptomic profiling can provide further information on the state or phenotype of cells carrying these mutations. 
-
 Cancers are a heterogeneous set of diseases with a number of clinical and pathological subtypes. In diseases such as breast cancer the primary clinical classifications relate to the expression of hormone receptors (estrogen receptor: ER; and progesterone receptor: PR) or the overexpression of Erb-B2 receptor tyrosine kinase (*HER2*), as these features can be directly targeted with therapeutic agents.  A common example of transcriptomic or gene expression data informing clinical practice is the use of prediction analysis of microarray 50 (PAM50) signatures for distinguishing the intrinsic breast cancer subtypes [@parker09, @cieslik18]. For many other cancers, subtype classification has largely relied upon identifying sets of recurrent mutations across large patient cohorts, with whole genome or whole exome sequencing studies helping to resolve the clinically significant subtypes [@cancer13, @papaemmanuil16]. 
 
 Perhaps the most well-known 'relative approach' is single-sample gene set enrichment analysis (ssGSEA) [@barbie09], often used through the [GenePattern web-tool](http://software.broadinstitute.org/cancer/software/genepattern/modules/docs/ssGSEAProjection/4). Another common approach is [gene set variation analysis (GSVA)](https://bioconductor.org/packages/release/bioc/html/GSVA.html) [@hanzelmann13] which is available as an R/Bioconductor package that also includes functionality for ssGSEA, an alternative approach known as PLAGE [@tomfohr05], and a z-score based approach [@lee08]. Both ssGSEA and GSVA use a Kolmogorov-Smirnov like random-walk statistic to convert normalised gene ranks to the resulting score, however this normalisation procedure means that the scores are not truly 'single-sample', and variations in the overall sample composition for a study (e.g. variations in the presence or relative frequency of different cancer subtypes) can lead to unexpected changes in sample scores. Furthermore, the resultant scores from these methods can vary in their range and absolute value, making them difficult to interpret without further processing. To overcome this, we have developed a single-sample gene set scoring method [singscore](<http://bioconductor.org/packages/singscore/>) [@foroutan18] which simply uses the ranks of genes within a given set, normalised relative to the maximum and minimum theoretical scores for a gene set of a given size.
@@ -443,7 +442,7 @@ head(verhaak_scores)
 Diagnostics of the Verhaak signature {#diagnostics-verhaak}
 ------------------------------------
 
-The `singscore` package provides a set of visualisation tools that enable diagnostics of the gene signature. For instance, these tools may be used to determine the importance of each component for a bidirectional signature (up- and down-regulated gene sets) to the total score, determine the importance of each gene of a signature in discriminating between the classes of interest, and to investigate the relationship between the final score and the dispersion of signature gene ranks. Annotations of interest can be overlayed on each plot. Singscore supports both continuous and categorical annotations, which can either be input as a vector, or as a string specifying a column within the score data frame. We begin by investigating the relationship between the score and dispersion of ranks for the up-regulated gene signature, down-regulated gene signature and the full signature. The `plotDispersion` functions generates a diagnostic plot with annotations overlaid. Annotations can be discrete or continuous, and can be passed as independent variables, or as a column name when the data is appended to the score data frame. It should be noted that all plotting functions in `singscore` can be made interactive by setting the `isInteractive` argument to `TRUE`.
+The `singscore` package provides a set of visualisation tools that enable diagnostics of the gene signature. For instance, these tools may be used to determine the importance of each component for a bidirectional signature (up- and down-regulated gene sets) to the total score, determine the importance of each gene of a signature in discriminating between the classes of interest, and to investigate the relationship between the final score and the dispersion of signature gene ranks. Sample annotations of interest (e.g. clinical annotations) can be colour coded on each plot. Singscore supports both continuous and categorical annotations, which can either be input as a vector, or as a string specifying a column within the score data frame. We begin by investigating the relationship between the score and dispersion of ranks for the up-regulated gene signature, down-regulated gene signature and the full signature. The `plotDispersion` functions generates a diagnostic plot with annotations overlaid. Annotations can be discrete or continuous, and can be passed as independent variables, or as a column name when the data is appended to the score data frame. It should be noted that all plotting functions in `singscore` can be made interactive by setting the `isInteractive` argument to `TRUE`.
 
 ```{r plot-dispersion, fig.wide=TRUE, fig.height=4, fig.cap="NPM1c signature scores from the up- and down-regulated gene sets, both combined (Total) and independently, can separate samples with NPM1c mutations or MLL fusions/PTDs from samples not bearing these genomic lesions. Scores are plotted against the median absolute deviation (MAD) of the ranks of genes in each gene set forming the NPM1c signature. The plots also reveal that scores close to 0 result in higher MADs."}
 
@@ -590,6 +589,32 @@ c(
   )
 ```
 
+Unsupervised classification of mutations{#mutation-classification}
+----------------------------------------
+
+There may be some cases where annotation for samples is not available. In such scenarios, we are unable to build regression models to assist in the interpretation of scores. A higher singscore would provide stronger evidence for the signature but the magnitude would be difficult to interpret without a reference. One approach to deal with this sitution would be to compare scores to those from other datasets where the mutations status is known. An alternative approach would be to compare scores within the dataset using unsupervised learning methods. In general, we recommend the choice to be problem specific.
+
+Unsupervised clustering methods could be used here to assist in stratifying scores into high and low categories. Here we show how 3 clustering methods, Gaussian mixture decomposition, k-means clustering, and hierarchical clustering can be used to stratify samples. We use the adjusted Rand index (ARI) to evaluate predictions against the true mutation status. As expected, supervised (GLM) classification results in the best prediction. This is followed by clustering based on the score using Gaussian mixture decomposition. Any other classification algorithm along with prior knowledge could be used to improve unsupervised prediction of the mutation status. The important characteristic of singscores is that they maintain the discriminant power of gene signatures therefore can be coupled with supervised, semi-supervised or unsupervised algorithms to perform startification.
+
+```{r classify_mclust, message=FALSE, warning=FALSE}
+library(mclust)
+
+#Gaussian mixture model
+m1 = Mclust(scoredf$Score, G = 2, verbose = FALSE)
+#k-means clustering
+m2 = kmeans(scoredf[, 5:6], centers = 2, nstart = 100)
+#hierarchical clustering
+m3 = hclust(dist(scoredf[, 5:6]))
+
+mutation_inference = cbind(
+  'GLM' = prediction,
+  'mclust' = m1$classification,
+  'k-means' = m2$cluster,
+  'hclust' = cutree(m3, k = 2)
+)
+apply(mutation_inference, 2, adjustedRandIndex, scoredf$NPM1c.Mut)
+```
+
 Signature landscapes with multiple signatures {#signature-landscape}
 =============================================
 
@@ -648,12 +673,20 @@ Points are projected onto an existing landscape using the `projectScoreLandscape
 
 ```{r plot-project-mll, fig.height=7.5, fig.width=7, fig.cap="The landscape reveals a distinction between the MLL fusions and PTDs as previously reported. Different mutations occupy different regions of the landscape, possessing different types of molecular traits."}
 select_aml = !mutated_gene %in% 'Other'
-#project above mutations onto the landscape
-p1 = projectScoreLandscape(p_mll_npm1c,
-                           verhaak_scores,
-                           rossmll_scores,
-                           subSamples = select_aml,
-                           annot = mutated_gene[select_aml])
+
+#label samples with an mclust NPM1c classification uncertainty of > 0.3
+label_samples = substr(rownames(verhaak_scores), 6, 12) #sample ID from barcodes
+label_samples[m1$uncertainty < 0.3] = NA
+
+#project mutations onto the landscape
+p1 = projectScoreLandscape(
+  p_mll_npm1c,
+  verhaak_scores,
+  rossmll_scores,
+  subSamples = select_aml,
+  annot = mutated_gene[select_aml],
+  sampleLabels = label_samples[select_aml]
+)
 p1 + theme(legend.box = 'vertical')
 ```
 
