@@ -73,6 +73,7 @@ library(singscore)
 library(reshape2)
 library(gridExtra)
 library(dcanr)
+library(mclust)
 
 #ggplot theme
 rl = 1.2

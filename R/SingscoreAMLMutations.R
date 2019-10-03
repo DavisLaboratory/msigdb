@@ -10,6 +10,7 @@
 #' @import singscore
 #' @import SummarizedExperiment
 #' @import TCGAbiolinks
+#' @import mclust
 #' 
 "_PACKAGE"
 
