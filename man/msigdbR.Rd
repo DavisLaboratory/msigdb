@@ -29,6 +29,12 @@ using gene symbols.
 using Entrez IDs.
 }
 }
+\examples{
+library(ExperimentHub)
+eh <- ExperimentHub()
+myfiles <- query(eh, "msigdbR")
+
+}
 \references{
 Subramanian, A., Tamayo, P., Mootha, V. K., Mukherjee, S., Ebert,
 B. L., Gillette, M. A., ... & Mesirov, J. P. (2005). Gene set enrichment
@@ -43,10 +49,4 @@ Bioinformatics, 27(12), 1739-1740.
 Liberzon, A., Birger, C., Thorvaldsdóttir, H., Ghandi, M., Mesirov, J. P.,
 & Tamayo, P. (2015). The molecular signatures database hallmark gene set
 collection. Cell systems, 1(6), 417-425.
-
-@examples
-
-library(ExperimentHub)
-eh <- ExperimentHub()
-myfiles <- query(eh, "msigdbR")
 }

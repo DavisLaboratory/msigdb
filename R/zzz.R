@@ -35,15 +35,14 @@
 #'   & Tamayo, P. (2015). The molecular signatures database hallmark gene set
 #'   collection. Cell systems, 1(6), 417-425.
 #'   
-#'  @examples
-#'  
-#'  library(ExperimentHub)
-#'  eh <- ExperimentHub()
-#'  myfiles <- query(eh, "msigdbR")
+#' @examples
+#' library(ExperimentHub)
+#' eh <- ExperimentHub()
+#' msigdb_datasets <- query(eh, "msigdbR")
 #'
 #' @name msigdbR
 #' @aliases msigdbR-package
-#'   
+#' 
 NULL
 
 .onLoad <- function(libname, pkgname) {
