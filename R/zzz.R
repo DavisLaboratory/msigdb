@@ -19,6 +19,7 @@
 #' using Entrez IDs.
 #' 
 #' @name msigdbR-package
+#' @alias msigdbR
 #'
 NULL
 
