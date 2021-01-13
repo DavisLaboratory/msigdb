@@ -19,4 +19,9 @@ BugReports: https://github.com/DavisLaboratory/msigdbR/issues
 Suggests: 
     GSEABase,
     singscore,
-    enrichnets
+    enrichnets,
+    knitr
+NeedsCompilation: no
+Imports: 
+    ExperimentHub,
+    utils
