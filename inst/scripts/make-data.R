@@ -15,7 +15,8 @@ msigdb = getBroadSets(msigpath, membersId = 'MEMBERS_SYMBOLIZED')
 #remove empty gene sets
 msigdb_lengths = sapply(lapply(msigdb, geneIds), length)
 msigdb = GeneSetCollection(msigdb[msigdb_lengths > 0])
-save(msigdb, file = 'msigdb.v7.1.SYM.rda')
+msigdb.v7.1.SYM = msigdb
+save(msigdb.v7.1.SYM, file = 'msigdb.v7.1.SYM.rda')
 
 #----MSigDB v7.1 Entrez IDs----
 #read genesets into a geneset collection
@@ -24,4 +25,5 @@ msigdb = getBroadSets(msigpath, membersId = 'MEMBERS_EZID')
 #remove empty gene sets
 msigdb_lengths = sapply(lapply(msigdb, geneIds), length)
 msigdb = GeneSetCollection(msigdb[msigdb_lengths > 0])
-save(msigdb, file = 'msigdb.v7.1.EZID.rda')
+msigdb.v7.1.EZID = msigdb
+save(msigdb.v7.1.EZID, file = 'msigdb.v7.1.EZID.rda')
