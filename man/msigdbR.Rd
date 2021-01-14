@@ -32,7 +32,7 @@ using Entrez IDs.
 \examples{
 library(ExperimentHub)
 eh <- ExperimentHub()
-myfiles <- query(eh, "msigdbR")
+msigdb_datasets <- query(eh, "msigdbR")
 
 }
 \references{

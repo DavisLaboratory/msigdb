@@ -29,6 +29,16 @@ The [molecular signatures database (MSigDB)](https://www.gsea-msigdb.org/gsea/ms
 
 Alternatively, they can be used to perform single-sample gene-set analysis of individual transcriptomic profiles using approaches such as [singscore](https://doi.org/doi:10.18129/B9.bioc.singscore), ssGSEA and [GSVA](https://doi.org/doi:10.18129/B9.bioc.GSVA).
 
+This package can be installed using the code below:
+
+```{r install}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("msigdbR")
+```
+
+
 # Download data from msigdbR
 
 This ExperimentHub package processes the MSigDB database into R objects that can be queried using the [GSEABase](https://doi.org/doi:10.18129/B9.bioc.GSEABase) R/Bioconductor package. The entire database is stored in a `GeneSetCollection` object which in turn stores each signature as a `GeneSet` object. All empty gene expression signatures (i.e. no genes formed the signature) have been dropped. Data in this package can be downloaded using the `ExperimentHub` interface as shown below.
