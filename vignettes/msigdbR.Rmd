@@ -1,0 +1,112 @@
+---
+title: "msigdbR: The molecular signatures database (MSigDB) in R"
+author: "Dharmesh D. Bhuva"
+date: "`r BiocStyle::doc_date()`"
+output:
+  prettydoc::html_pretty:
+    theme: hpstr
+    toc: yes
+    toc_depth: 2
+    number_sections: yes
+    fig_caption: yes
+    df_print: paged
+vignette: >
+  %\VignetteIndexEntry{msigdbR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# The Molecular Signatures Database (MSigDB)
+
+The [molecular signatures database (MSigDB)](https://www.gsea-msigdb.org/gsea/msigdb) is one of the largest collections of molecular signatures or gene expression signatures. A variety of gene expression signatures are hosted on this database including experimentally derived signatures and signatures representing pathways and ontologies from other curated databases. This rich collection of gene expression signatures (>25,000) can facilitate a wide variety of signature-based analyses, the most popular being gene set enrichment analyses. These signatures can be used to perform enrichment analysis in a DE experiment using tools such as GSEA, fry (from limma) and camera (from limma).
+
+Alternatively, they can be used to perform single-sample gene-set analysis of individual transcriptomic profiles using approaches such as [singscore](https://doi.org/doi:10.18129/B9.bioc.singscore), ssGSEA and [GSVA](https://doi.org/doi:10.18129/B9.bioc.GSVA).
+
+# Download data from msigdbR
+
+This ExperimentHub package processes the MSigDB database into R objects that can be queried using the [GSEABase](https://doi.org/doi:10.18129/B9.bioc.GSEABase) R/Bioconductor package. The entire database is stored in a `GeneSetCollection` object which in turn stores each signature as a `GeneSet` object. All empty gene expression signatures (i.e. no genes formed the signature) have been dropped. Data in this package can be downloaded using the `ExperimentHub` interface as shown below.
+
+To download the data, we first need to get a list of the data available in the `msigdbR` package and determine the unique identifiers for each data. The `query()` function assists in getting this list.
+
+```{r get-msigdb}
+library(msigdbR)
+library(ExperimentHub)
+
+eh = ExperimentHub()
+query(eh , 'msigdbR')
+```
+Data can then be downloaded using the unique identifier.
+
+```{r download-msigdb-sym}
+msigdb.v7.1.SYM = eh[['']]
+msigdb.v7.1.SYM
+```
+
+```{r download-msigdb-ezid}
+msigdb.v7.1.EZID = eh[['']]
+msigdb.v7.1.EZID
+```
+
+Alternatively, data can be downloaded using accessors in the `msigdbR` package as below:
+
+```{r alt-download}
+#metadata are displayed
+msigdb.v7.1.SYM(metadata = TRUE)
+#data are loaded
+msigdb.v7.1.SYM()
+#data are loaded
+msigdb.v7.1.EZID()
+```
+
+# Accessing the GeneSet and GeneSetCollection objects
+
+A GeneSetCollection object is effectively a list therefore all list processing functions such as `length` and `lapply` can be used to process its constituents
+
+```{r process-gsc}
+length(msigdb.v7.1.SYM)
+```
+
+Each signature is stored in a `GeneSet` object and can be processed using functions in the `GSEABase` R/Bioconductor package.
+
+```{r access-gs}
+gs = msigdb.v7.1.SYM[[1]]
+gs
+#get genes in the signature
+geneIds(gs)
+#get collection type
+collectionType(gs)
+#get MSigDB category
+bcCategory(collectionType(gs))
+#get MSigDB subcategory
+bcSubCategory(collectionType(gs))
+#get description
+description(gs)
+#get details
+details(gs)
+```
+
+We can also summarise some of these values across the entire database. Description of these codes can be found at the MSigDB website (<https://www.gsea-msigdb.org/gsea/msigdb>).
+
+```{r summarise-gsc}
+#calculate the number of signatures in each category
+table(sapply(lapply(msigdb.v7.1.SYM, collectionType), bcCategory))
+#calculate the number of signatures in each subcategory
+table(sapply(lapply(msigdb.v7.1.SYM, collectionType), bcSubCategory))
+#plot the distribution of sizes
+hist(sapply(lapply(msigdb.v7.1.SYM, geneIds), length),
+     main = 'MSigDB signature size distribution',
+     xlab = 'Signature size')
+```
+
+# Session information
+
+```{r sessionInfo}
+sessionInfo()
+```

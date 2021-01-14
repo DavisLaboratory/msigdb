@@ -1,6 +1,6 @@
 Package: msigdbR
 Title: An ExperimentHub Package for the Molecular Signatures Database (MSigDB).
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: 
     person(given = "Dharmesh D.",
            family = "Bhuva",
@@ -16,12 +16,16 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 URL: https://davislaboratory.github.io/msigdbR
 BugReports: https://github.com/DavisLaboratory/msigdbR/issues
+Imports: 
+    ExperimentHub,
+    utils
 Suggests: 
     GSEABase,
     singscore,
     enrichnets,
-    knitr
+    knitr,
+    prettydoc,
+    BiocStyle,
+    rmarkdown
 NeedsCompilation: no
-Imports: 
-    ExperimentHub,
-    utils
+VignetteBuilder: knitr
