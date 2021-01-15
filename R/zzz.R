@@ -38,10 +38,10 @@
 #' @examples
 #' library(ExperimentHub)
 #' eh <- ExperimentHub()
-#' msigdb_datasets <- query(eh, "msigdbR")
+#' msigdb_datasets <- query(eh, "msigdb")
 #'
-#' @name msigdbR
-#' @aliases msigdbR-package
+#' @name msigdb
+#' @aliases msigdb-package
 #' 
 NULL
 

@@ -1,5 +1,5 @@
 ---
-title: "msigdbR: The molecular signatures database (MSigDB) in R"
+title: "msigdb: The molecular signatures database (MSigDB) in R"
 author: "Dharmesh D. Bhuva"
 date: "`r BiocStyle::doc_date()`"
 output:
@@ -11,7 +11,7 @@ output:
     fig_caption: yes
     df_print: paged
 vignette: >
-  %\VignetteIndexEntry{msigdbR}
+  %\VignetteIndexEntry{msigdb}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -35,22 +35,22 @@ This package can be installed using the code below:
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
-BiocManager::install("msigdbR")
+BiocManager::install("msigdb")
 ```
 
 
-# Download data from msigdbR
+# Download data from the msigdb R package
 
 This ExperimentHub package processes the MSigDB database into R objects that can be queried using the [GSEABase](https://doi.org/doi:10.18129/B9.bioc.GSEABase) R/Bioconductor package. The entire database is stored in a `GeneSetCollection` object which in turn stores each signature as a `GeneSet` object. All empty gene expression signatures (i.e. no genes formed the signature) have been dropped. Data in this package can be downloaded using the `ExperimentHub` interface as shown below.
 
-To download the data, we first need to get a list of the data available in the `msigdbR` package and determine the unique identifiers for each data. The `query()` function assists in getting this list.
+To download the data, we first need to get a list of the data available in the `msigdb` package and determine the unique identifiers for each data. The `query()` function assists in getting this list.
 
 ```{r get-msigdb}
-library(msigdbR)
+library(msigdb)
 library(ExperimentHub)
 
 eh = ExperimentHub()
-query(eh , 'msigdbR')
+query(eh , 'msigdb')
 ```
 Data can then be downloaded using the unique identifier.
 
@@ -64,7 +64,7 @@ msigdb.v7.1.EZID = eh[['EH4693']]
 msigdb.v7.1.EZID
 ```
 
-Alternatively, data can be downloaded using accessors in the `msigdbR` package as below:
+Alternatively, data can be downloaded using accessors in the `msigdb` package as below:
 
 ```{r alt-download}
 #metadata are displayed

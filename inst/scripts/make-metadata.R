@@ -1,5 +1,5 @@
 meta = data.frame(
-  Title = c('msigdb.v7.1.SYM', 'msigdb.v7.1.EZID'),
+  Title = c('msigdb.hs.v7.1.SYM', 'msigdb.hs.v7.1.EZID'),
   Description = c(
     'Gene expression signatures from the Molecular Signatures Database (v7.1). Signatures are represented using gene symbols.',
     'Gene expression signatures from the Molecular Signatures Database (v7.1). Signatures are represented using Entrez IDs.'
@@ -19,9 +19,9 @@ meta = data.frame(
   Maintainer = 'Dharmesh D. Bhuva <bhuva.d@wehi.edu.au>',
   RDataClass = 'GSEABase::GeneSetCollection',
   DispatchClass = 'Rda',
-  RDataPath = c('msigdbR/msigdb.v7.1.SYM.rda', 'msigdbR/msigdb.v7.1.EZID.rda')
+  RDataPath = c('msigdb/msigdb.hs.v7.1.SYM.rda', 'msigdb/msigdb.hs.v7.1.EZID.rda')
 )
 
 write.csv(meta, file = 'inst/extdata/metadata.csv', row.names = FALSE)
 
-ExperimentHubData::makeExperimentHubMetadata('../msigdbR')
+ExperimentHubData::makeExperimentHubMetadata('../msigdb')
