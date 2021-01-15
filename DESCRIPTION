@@ -1,6 +1,6 @@
 Package: msigdbR
 Title: An ExperimentHub Package for the Molecular Signatures Database (MSigDB).
-Version: 0.0.2
+Version: 0.0.3
 Authors@R: 
     person(given = "Dharmesh D.",
            family = "Bhuva",

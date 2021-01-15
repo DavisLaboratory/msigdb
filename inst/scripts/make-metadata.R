@@ -4,7 +4,7 @@ meta = data.frame(
     'Gene expression signatures from the Molecular Signatures Database (v7.1). Signatures are represented using gene symbols.',
     'Gene expression signatures from the Molecular Signatures Database (v7.1). Signatures are represented using Entrez IDs.'
   ),
-  BiocVersion = c(3.12, 3.12),
+  BiocVersion = c(3.13, 3.13),
   Genome = NA,
   SourceType = c('XML'),
   SourceUrl = c(
@@ -19,7 +19,7 @@ meta = data.frame(
   Maintainer = 'Dharmesh D. Bhuva <bhuva.d@wehi.edu.au>',
   RDataClass = 'GSEABase::GeneSetCollection',
   DispatchClass = 'Rda',
-  RDataPath = c('msigdbR/msigdbv7.1.SYM.rda', 'msigdbR/msigdbv7.1.EZID.rda')
+  RDataPath = c('msigdbR/msigdb.v7.1.SYM.rda', 'msigdbR/msigdb.v7.1.EZID.rda')
 )
 
 write.csv(meta, file = 'inst/extdata/metadata.csv', row.names = FALSE)
