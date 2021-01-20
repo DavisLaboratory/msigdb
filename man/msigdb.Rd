@@ -19,7 +19,9 @@ signatures is collected and stored in the data in this package.
 \details{
 All data in this package are stored in a GeneSetCollection objects from the
 GSEABase package. Each gene expression signature in the collection is stored
-in a GeneSet object from the GSEABase package.
+in a GeneSet object from the GSEABase package. This data does not include
+KEGG gene sets due to copyrights. Users can download this data using
+functions provided in the package (see Details).
 
 The following datasets are included in this package:
 \enumerate{
@@ -28,17 +30,22 @@ using gene symbols.
 \item msigdb.v7.1.EZID - The MSigDB v7.1 with gene expression signatures defined
 using Entrez IDs.
 }
+
+Data in this package does not include gene sets from the KEGG
+database due to licensing limitations. Users can use the \code{\link[=appendKEGG]{appendKEGG()}}
+function in this package to download KEGG gene sets directly from the
+MSigDB and append to existing data objects.
 }
 \section{Acknowledgement}{
- MSigDB is protected by copyright © 2004-2020
-Broad Institute, Inc., Massachusetts Institute of Technology, and Regents
-of the University of California. Use of MSigDB is subject to the terms and
+ MSigDB is protected by copyright © 2004-2020 Broad
+Institute, Inc., Massachusetts Institute of Technology, and Regents of the
+University of California. Use of MSigDB is subject to the terms and
 conditions of the Creative Commons Attribution 4.0 International License -
 \url{https://creativecommons.org/licenses/by/4.0/}.
 
 MSigDB gene sets derived from BioCarta pathways are the subject of
-copyright © 2000-2017 BioCarta, and are subject to Biocarta's Disclaimer
-of Liability and of Warranties -
+copyright © 2000-2017 BioCarta, and are subject to Biocarta's Disclaimer of
+Liability and of Warranties -
 \url{https://data.broadinstitute.org/gsea-msigdb/msigdb/biocarta/biocarta_disclaimer_of_liability_and_of_warranties.txt}
 }
 

@@ -18,9 +18,9 @@ URL: https://davislaboratory.github.io/msigdb
 BugReports: https://github.com/DavisLaboratory/msigdb/issues
 Imports: 
     ExperimentHub,
-    utils
+    utils,
+    GSEABase
 Suggests: 
-    GSEABase,
     singscore,
     enrichnets,
     knitr,
