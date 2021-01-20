@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
 
 # The Molecular Signatures Database (MSigDB)
 
-The [molecular signatures database (MSigDB)](https://www.gsea-msigdb.org/gsea/msigdb) is one of the largest collections of molecular signatures or gene expression signatures. A variety of gene expression signatures are hosted on this database including experimentally derived signatures and signatures representing pathways and ontologies from other curated databases. This rich collection of gene expression signatures (>25,000) can facilitate a wide variety of signature-based analyses, the most popular being gene set enrichment analyses. These signatures can be used to perform enrichment analysis in a DE experiment using tools such as GSEA, fry (from limma) and camera (from limma).
+The [molecular signatures database (MSigDB)](https://www.gsea-msigdb.org/gsea/msigdb) is one of the largest collections of molecular signatures or gene expression signatures. A variety of gene expression signatures are hosted on this database including experimentally derived signatures and signatures representing pathways and ontologies from other curated databases. This rich collection of gene expression signatures (\>25,000) can facilitate a wide variety of signature-based analyses, the most popular being gene set enrichment analyses. These signatures can be used to perform enrichment analysis in a DE experiment using tools such as GSEA, fry (from limma) and camera (from limma).
 
 Alternatively, they can be used to perform single-sample gene-set analysis of individual transcriptomic profiles using approaches such as [singscore](https://doi.org/doi:10.18129/B9.bioc.singscore), ssGSEA and [GSVA](https://doi.org/doi:10.18129/B9.bioc.GSVA).
 
@@ -38,10 +38,9 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("msigdb")
 ```
 
-
 # Download data from the msigdb R package
 
-This ExperimentHub package processes the MSigDB database into R objects that can be queried using the [GSEABase](https://doi.org/doi:10.18129/B9.bioc.GSEABase) R/Bioconductor package. The entire database is stored in a `GeneSetCollection` object which in turn stores each signature as a `GeneSet` object. All empty gene expression signatures (i.e. no genes formed the signature) have been dropped. Data in this package can be downloaded using the `ExperimentHub` interface as shown below.
+This ExperimentHub package processes the latest version of the MSigDB database into R objects that can be queried using the [GSEABase](https://doi.org/doi:10.18129/B9.bioc.GSEABase) R/Bioconductor package. The entire database is stored in a `GeneSetCollection` object which in turn stores each signature as a `GeneSet` object. All empty gene expression signatures (i.e. no genes formed the signature) have been dropped. Data in this package can be downloaded using the `ExperimentHub` interface as shown below.
 
 To download the data, we first need to get a list of the data available in the `msigdb` package and determine the unique identifiers for each data. The `query()` function assists in getting this list.
 
@@ -52,6 +51,7 @@ library(ExperimentHub)
 eh = ExperimentHub()
 query(eh , 'msigdb')
 ```
+
 Data can then be downloaded using the unique identifier.
 
 ```{r download-msigdb-sym}
@@ -73,6 +73,15 @@ msigdb.hs.SYM(metadata = TRUE)
 msigdb.hs.SYM()
 #data are loaded
 msigdb.hs.EZID()
+```
+
+# Downloading and integrating KEGG gene sets
+
+KEGG gene sets cannot be integrated within this ExperimentHub package due to licensing limitations. However, users can download, process and integrate the data directly from the MSigDB when needed. This can be done using the code that follows.
+
+```{r append-kegg}
+msigdb.hs.SYM = appendKEGG(msigdb.hs.SYM)
+msigdb.hs.EZID = appendKEGG(msigdb.hs.EZID)
 ```
 
 # Accessing the GeneSet and GeneSetCollection objects
