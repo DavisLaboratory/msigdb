@@ -55,24 +55,24 @@ query(eh , 'msigdb')
 Data can then be downloaded using the unique identifier.
 
 ```{r download-msigdb-sym}
-msigdb.hs.v7.1.SYM = eh[['EH4697']]
-msigdb.hs.v7.1.SYM
+msigdb.hs.SYM = eh[['EH4697']]
+msigdb.hs.SYM
 ```
 
 ```{r download-msigdb-ezid}
-msigdb.hs.v7.1.EZID = eh[['EH4698']]
-msigdb.hs.v7.1.EZID
+msigdb.hs.EZID = eh[['EH4698']]
+msigdb.hs.EZID
 ```
 
 Alternatively, data can be downloaded using accessors in the `msigdb` package as below:
 
 ```{r alt-download}
 #metadata are displayed
-msigdb.hs.v7.1.SYM(metadata = TRUE)
+msigdb.hs.SYM(metadata = TRUE)
 #data are loaded
-msigdb.hs.v7.1.SYM()
+msigdb.hs.SYM()
 #data are loaded
-msigdb.hs.v7.1.EZID()
+msigdb.hs.EZID()
 ```
 
 # Accessing the GeneSet and GeneSetCollection objects
@@ -80,13 +80,13 @@ msigdb.hs.v7.1.EZID()
 A GeneSetCollection object is effectively a list therefore all list processing functions such as `length` and `lapply` can be used to process its constituents
 
 ```{r process-gsc}
-length(msigdb.hs.v7.1.SYM)
+length(msigdb.hs.SYM)
 ```
 
 Each signature is stored in a `GeneSet` object and can be processed using functions in the `GSEABase` R/Bioconductor package.
 
 ```{r access-gs}
-gs = msigdb.hs.v7.1.SYM[[1]]
+gs = msigdb.hs.SYM[[1]]
 gs
 #get genes in the signature
 geneIds(gs)
@@ -106,11 +106,11 @@ We can also summarise some of these values across the entire database. Descripti
 
 ```{r summarise-gsc}
 #calculate the number of signatures in each category
-table(sapply(lapply(msigdb.hs.v7.1.SYM, collectionType), bcCategory))
+table(sapply(lapply(msigdb.hs.SYM, collectionType), bcCategory))
 #calculate the number of signatures in each subcategory
-table(sapply(lapply(msigdb.hs.v7.1.SYM, collectionType), bcSubCategory))
+table(sapply(lapply(msigdb.hs.SYM, collectionType), bcSubCategory))
 #plot the distribution of sizes
-hist(sapply(lapply(msigdb.hs.v7.1.SYM, geneIds), length),
+hist(sapply(lapply(msigdb.hs.SYM, geneIds), length),
      main = 'MSigDB signature size distribution',
      xlab = 'Signature size')
 ```

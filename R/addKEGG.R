@@ -7,8 +7,6 @@
 #' @param gsc a GeneSetCollection object, storing GeneSets from the MSigDB
 #' @param id a character, either 'sym' or 'ezid' representing the gene
 #'   identifier to download (symbol or entrez id respectively).
-#' @param version a character, stating the version of msigdb to download
-#'   (>=7.1).
 #'
 #' @return a GeneSetCollection object, storing gene sets from the MSigDB
 #'   including the downloaded KEGG gene sets.
@@ -20,11 +18,11 @@
 #'
 #' gs1 <- GeneSet(setName = 'gs1', geneIdType = SymbolIdentifier())
 #' gsc <- GeneSetCollection(gs1)
-#' gsc <- appendKEGG(gsc, version = '7.1')
+#' gsc <- appendKEGG(gsc)
 #' gsc
 #' 
-appendKEGG <- function(gsc, version = c('7.1', '7.2')) {
-  version = match.arg(version)
+appendKEGG <- function(gsc) {
+  version = '7.2'
   
   #get IdType
   idType = sapply(gsc, function(gs) class(GSEABase::geneIdType(gs))[1])

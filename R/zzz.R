@@ -14,10 +14,10 @@
 #'
 #' The following datasets are included in this package:
 #'
-#' 1. msigdb.v7.1.SYM - The MSigDB v7.1 with gene expression signatures defined
+#' 1. msigdb.hs.SYM - The MSigDB v7.2 with gene expression signatures defined
 #' using gene symbols.
 #'
-#' 2. msigdb.v7.1.EZID - The MSigDB v7.1 with gene expression signatures defined
+#' 2. msigdb.hs.EZID - The MSigDB v7.2 with gene expression signatures defined
 #' using Entrez IDs.
 #'
 #' @format A GeneSetCollection object composed of GeneSet objects representing
@@ -58,13 +58,13 @@
 #'
 #' @name msigdb
 #' @aliases msigdb-package
-#'   
+#' 
 NULL
 
 .onLoad <- function(libname, pkgname) {
   fl = system.file("extdata", "metadata.csv", package = pkgname)
   titles = utils::read.csv(fl, stringsAsFactors = FALSE)$Title
   
-  ExperimentHub::createHubAccessors(pkgname, 'msigdb.hs.v7.1.SYM')
-  ExperimentHub::createHubAccessors(pkgname, 'msigdb.hs.v7.1.EZID')
+  ExperimentHub::createHubAccessors(pkgname, 'msigdb.hs.SYM')
+  ExperimentHub::createHubAccessors(pkgname, 'msigdb.hs.EZID')
 }

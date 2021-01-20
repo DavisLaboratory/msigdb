@@ -50,14 +50,8 @@ getMsigdbData <- function(version) {
   return(list(msigdb.sym, msigdb.ezid))
 }
 
-v7.1 = getMsigdbData('7.1')
-msigdb.hs.v7.1.SYM = v7.1[[1]]
-msigdb.hs.v7.1.EZID = v7.1[[2]]
-save(msigdb.hs.v7.1.SYM, file = 'msigdb.hs.v7.1.SYM.rda')
-save(msigdb.hs.v7.1.EZID, file = 'msigdb.hs.v7.1.EZID.rda')
-
-v7.2 = getMsigdbData('7.2')
-msigdb.hs.v7.2.SYM = v7.2[[1]]
-msigdb.hs.v7.2.EZID = v7.2[[2]]
-save(msigdb.hs.v7.2.SYM, file = 'msigdb.hs.v7.2.SYM.rda')
-save(msigdb.hs.v7.2.EZID, file = 'msigdb.hs.v7.2.EZID.rda')
+msigdb = getMsigdbData('7.2')
+msigdb.hs.SYM = msigdb[[1]]
+msigdb.hs.EZID = msigdb[[2]]
+save(msigdb.hs.SYM, file = 'msigdb.hs.SYM.rda')
+save(msigdb.hs.EZID, file = 'msigdb.hs.EZID.rda')
