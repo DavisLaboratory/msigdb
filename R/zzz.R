@@ -8,7 +8,9 @@
 #'
 #' All data in this package are stored in a GeneSetCollection objects from the
 #' GSEABase package. Each gene expression signature in the collection is stored
-#' in a GeneSet object from the GSEABase package.
+#' in a GeneSet object from the GSEABase package. This data does not include
+#' KEGG gene sets due to copyrights. Users can download this data using
+#' functions provided in the package (see Details).
 #'
 #' The following datasets are included in this package:
 #'
@@ -21,6 +23,10 @@
 #' @format A GeneSetCollection object composed of GeneSet objects representing
 #'   all non-empty gene expression signatures from the molecular signatures
 #'   database (MSigDB).
+#' @details Data in this package does not include gene sets from the KEGG
+#'   database due to licensing limitations. Users can use the [appendKEGG()]
+#'   function in this package to download KEGG gene sets directly from the
+#'   MSigDB and append to existing data objects.
 #' @references Subramanian, A., Tamayo, P., Mootha, V. K., Mukherjee, S., Ebert,
 #'   B. L., Gillette, M. A., ... & Mesirov, J. P. (2005). Gene set enrichment
 #'   analysis: a knowledge-based approach for interpreting genome-wide
@@ -34,7 +40,17 @@
 #'   Liberzon, A., Birger, C., Thorvaldsdóttir, H., Ghandi, M., Mesirov, J. P.,
 #'   & Tamayo, P. (2015). The molecular signatures database hallmark gene set
 #'   collection. Cell systems, 1(6), 417-425.
-#'   
+#' @section Acknowledgement: MSigDB is protected by copyright © 2004-2020 Broad
+#'   Institute, Inc., Massachusetts Institute of Technology, and Regents of the
+#'   University of California. Use of MSigDB is subject to the terms and
+#'   conditions of the Creative Commons Attribution 4.0 International License -
+#'   <https://creativecommons.org/licenses/by/4.0/>.
+#'
+#'   MSigDB gene sets derived from BioCarta pathways are the subject of
+#'   copyright © 2000-2017 BioCarta, and are subject to Biocarta's Disclaimer of
+#'   Liability and of Warranties -
+#'   <https://data.broadinstitute.org/gsea-msigdb/msigdb/biocarta/biocarta_disclaimer_of_liability_and_of_warranties.txt>
+#'
 #' @examples
 #' library(ExperimentHub)
 #' eh <- ExperimentHub()
@@ -42,7 +58,7 @@
 #'
 #' @name msigdb
 #' @aliases msigdb-package
-#' 
+#'   
 NULL
 
 .onLoad <- function(libname, pkgname) {

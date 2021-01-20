@@ -29,6 +29,19 @@ using gene symbols.
 using Entrez IDs.
 }
 }
+\section{Acknowledgement}{
+ MSigDB is protected by copyright © 2004-2020
+Broad Institute, Inc., Massachusetts Institute of Technology, and Regents
+of the University of California. Use of MSigDB is subject to the terms and
+conditions of the Creative Commons Attribution 4.0 International License -
+\url{https://creativecommons.org/licenses/by/4.0/}.
+
+MSigDB gene sets derived from BioCarta pathways are the subject of
+copyright © 2000-2017 BioCarta, and are subject to Biocarta's Disclaimer
+of Liability and of Warranties -
+\url{https://data.broadinstitute.org/gsea-msigdb/msigdb/biocarta/biocarta_disclaimer_of_liability_and_of_warranties.txt}
+}
+
 \examples{
 library(ExperimentHub)
 eh <- ExperimentHub()
