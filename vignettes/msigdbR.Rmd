@@ -55,12 +55,12 @@ query(eh , 'msigdb')
 Data can then be downloaded using the unique identifier.
 
 ```{r download-msigdb-sym}
-msigdb.hs.SYM = eh[['EH4697']]
+msigdb.hs.SYM = eh[['EH4734']]
 msigdb.hs.SYM
 ```
 
 ```{r download-msigdb-ezid}
-msigdb.hs.EZID = eh[['EH4698']]
+msigdb.hs.EZID = eh[['EH4735']]
 msigdb.hs.EZID
 ```
 

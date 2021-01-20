@@ -25,9 +25,9 @@ functions provided in the package (see Details).
 
 The following datasets are included in this package:
 \enumerate{
-\item msigdb.v7.1.SYM - The MSigDB v7.1 with gene expression signatures defined
+\item msigdb.hs.SYM - The MSigDB v7.2 with gene expression signatures defined
 using gene symbols.
-\item msigdb.v7.1.EZID - The MSigDB v7.1 with gene expression signatures defined
+\item msigdb.hs.EZID - The MSigDB v7.2 with gene expression signatures defined
 using Entrez IDs.
 }
 

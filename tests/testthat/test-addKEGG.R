@@ -1,3 +1,5 @@
+library(GSEABase)
+
 test_that("appendKEGG works", {
   gs1 = GeneSet(setName = 'gs1', geneIdType = SymbolIdentifier())
   gs2 = GeneSet(setName = 'gs2', geneIdType = EntrezIdentifier())

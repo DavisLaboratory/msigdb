@@ -4,13 +4,10 @@
 \alias{appendKEGG}
 \title{Add KEGG pathway derived gene sets to a collection}
 \usage{
-appendKEGG(gsc, version = c("7.1", "7.2"))
+appendKEGG(gsc)
 }
 \arguments{
 \item{gsc}{a GeneSetCollection object, storing GeneSets from the MSigDB}
-
-\item{version}{a character, stating the version of msigdb to download
-(>=7.1).}
 
 \item{id}{a character, either 'sym' or 'ezid' representing the gene
 identifier to download (symbol or entrez id respectively).}
@@ -30,7 +27,7 @@ library(GSEABase)
 
 gs1 <- GeneSet(setName = 'gs1', geneIdType = SymbolIdentifier())
 gsc <- GeneSetCollection(gs1)
-gsc <- appendKEGG(gsc, version = '7.1')
+gsc <- appendKEGG(gsc)
 gsc
 
 }

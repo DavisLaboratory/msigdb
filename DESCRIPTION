@@ -1,5 +1,5 @@
 Package: msigdb
-Title: An ExperimentHub Package for the Molecular Signatures Database (MSigDB).
+Title: An ExperimentHub Package for the Molecular Signatures Database (MSigDB)
 Version: 0.0.3
 Authors@R: 
     person(given = "Dharmesh D.",
@@ -14,8 +14,8 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
-URL: https://davislaboratory.github.io/msigdb
-BugReports: https://github.com/DavisLaboratory/msigdb/issues
+Depends: 
+    R (>= 4.0)
 Imports: 
     ExperimentHub,
     utils,
@@ -28,6 +28,8 @@ Suggests:
     BiocStyle,
     rmarkdown,
     testthat (>= 3.0.0)
+URL: https://davislaboratory.github.io/msigdb
+BugReports: https://github.com/DavisLaboratory/msigdb/issues
 NeedsCompilation: no
 VignetteBuilder: knitr
 Config/testthat/edition: 3
