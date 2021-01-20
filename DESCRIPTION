@@ -26,6 +26,8 @@ Suggests:
     knitr,
     prettydoc,
     BiocStyle,
-    rmarkdown
+    rmarkdown,
+    testthat (>= 3.0.0)
 NeedsCompilation: no
 VignetteBuilder: knitr
+Config/testthat/edition: 3
