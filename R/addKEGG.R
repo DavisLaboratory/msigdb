@@ -13,7 +13,6 @@
 #' @export
 #'
 #' @examples
-#' library(msigdb)
 #' library(GSEABase)
 #'
 #' gs1 <- GeneSet(setName = 'gs1', geneIdType = SymbolIdentifier())
@@ -47,9 +46,11 @@ appendKEGG <- function(gsc) {
   link = paste('https://data.broadinstitute.org/gsea-msigdb/msigdb/release', version, fname, sep = '/')
   
   #download and process KEGG genesets
-  gsc_kegg = getGmt(link,
-                    geneIdType = idtype,
-                    collectionType = GSEABase::BroadCollection('c2', 'CP:KEGG'))
+  gsc_kegg = GSEABase::getGmt(
+    link,
+    geneIdType = idtype,
+    collectionType = GSEABase::BroadCollection('c2', 'CP:KEGG')
+  )
   
   #remove empty gene sets
   gsc_kegg = GSEABase::GeneSetCollection(gsc_kegg[sapply(lapply(gsc_kegg, GSEABase::geneIds), length) > 0])
