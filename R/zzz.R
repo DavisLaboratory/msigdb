@@ -65,7 +65,6 @@ NULL
   fl = system.file("extdata", "metadata.csv", package = pkgname)
   titles = utils::read.csv(fl, stringsAsFactors = FALSE)$Title
   
-  ExperimentHub::createHubAccessors(pkgname, 'msigdb.v7.1.SYM')
-  ExperimentHub::createHubAccessors(pkgname, 'msigdb.v7.1.EZID')
+  ExperimentHub::createHubAccessors(pkgname, 'msigdb.hs.v7.1.SYM')
+  ExperimentHub::createHubAccessors(pkgname, 'msigdb.hs.v7.1.EZID')
 }
-
