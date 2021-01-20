@@ -42,6 +42,8 @@ appendKEGG <- function(gsc, id = c('sym', 'ezid'), version = '7.1') {
   gsc_kegg = getGmt(link,
                     geneIdType = idtype,
                     collectionType = BroadCollection('c2', 'CP:KEGG'))
+  #remove empty gene sets
+  gsc_kegg = gsc_kegg[sapply(lapply(gsc, geneIds), length) > 0]
   gsc = GSEABase::GeneSetCollection(c(gsc, gsc_kegg))
   
   return(gsc)
