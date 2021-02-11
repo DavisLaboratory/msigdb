@@ -1,9 +1,12 @@
 library(GSEABase)
 library(BiocFileCache)
+library(biomaRt)
 
+#file cache to download files to
 fpath = tempfile()
 bfc = BiocFileCache(fpath, ask = FALSE)
 
+#function to download any given version of MSigDB
 getMsigdbData <- function(version) {
   msigdb_url = 'https://data.broadinstitute.org/gsea-msigdb/msigdb/release/___/msigdb_v___.xml'
   msigdb_url = gsub('___', version, msigdb_url)
@@ -50,6 +53,23 @@ getMsigdbData <- function(version) {
   return(list(msigdb.sym, msigdb.ezid))
 }
 
+#function to conver the human MSigDB to mouse
+createMmMsigdbData <- function(hsmsigdb, geneid = c('symbol')) {
+  
+}
+
+## https://www.r-bloggers.com/converting-mouse-to-human-gene-names-with-biomart-package/
+# Basic function to convert human to mouse gene names
+convertMouseGeneList <- function(x){
+  human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+  mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+  
+  genesV2 = getLDS(attributes = c("mgi_symbol"), filters = "mgi_symbol", values = x , mart = mouse, attributesL = c("hgnc_symbol"), martL = human, uniqueRows=T)
+  
+  return(genesV2)
+}
+
+#----create human data----
 msigdb = getMsigdbData('7.2')
 msigdb.hs.SYM = msigdb[[1]]
 msigdb.hs.EZID = msigdb[[2]]
