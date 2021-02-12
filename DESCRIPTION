@@ -29,7 +29,10 @@ Suggests:
     rmarkdown,
     testthat (>= 3.0.0),
     biomaRt,
-    BiocFileCache
+    BiocFileCache,
+    GO.db,
+    org.Mm.eg.db,
+    stringr
 URL: https://davislaboratory.github.io/msigdb
 BugReports: https://github.com/DavisLaboratory/msigdb/issues
 NeedsCompilation: no

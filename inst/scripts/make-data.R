@@ -1,6 +1,9 @@
 library(GSEABase)
 library(BiocFileCache)
 library(biomaRt)
+library(org.Mm.eg.db)
+library(GO.db)
+library(stringr)
 
 #file cache to download files to
 fpath = tempfile()
@@ -53,9 +56,104 @@ getMsigdbData <- function(version) {
   return(list(msigdb.sym, msigdb.ezid))
 }
 
-#function to conver the human MSigDB to mouse
-createMmMsigdbData <- function(hsmsigdb, geneid = c('symbol')) {
+#function to convert the human MSigDB to mouse
+# hsdb needs to be the db formed of symbols, not EZIDs
+createMmMsigdbData <- function(hsdb, isSym = TRUE) {
+  #remove c1 and c5 genesets (these need to be replaced completely)
+  mmdb = hsdb[!sapply(lapply(hsdb, collectionType), bcCategory) %in% c('c1', 'c5')]
   
+  #convert IDs using MGI
+  allg = unique(unlist(lapply(mmdb, geneIds)))
+  allg = convertMouseGeneList(allg)
+  gmap = allg$MGI.symbol
+  names(gmap) = allg$HGNC.symbol
+  
+  mmdb = lapply(mmdb, function(gs) {
+    gids = na.omit(unique(gmap[geneIds(gs)]))
+    geneIds(gs) = gids
+    return(gs)
+  })
+  
+  #create c5 category
+  gomap = as.list(org.Mm.egGO2ALLEGS)
+  gomap = lapply(gomap, as.character)
+  
+  if (isSym) {
+    #convert to symbols
+    idmap = mapIds(org.Mm.eg.db, unique(unlist(gomap)), 'SYMBOL', keytype = 'ENTREZID')
+    gomap = lapply(gomap, function (x) {
+      x = as.character(na.omit(idmap[x]))
+      return(x)
+    })
+  }
+  
+  #create c5 genesets
+  c5 = mapply(
+    function(genes, gsname, gstype, gsdesc) {
+      gs = GeneSet(
+        unique(genes),
+        setName = paste0('GO_', gsub(' ', '_', str_to_upper(gsname))),
+        collectionType = BroadCollection(category = 'c5', subCategory = paste0('GO:', gstype)),
+        shortDescription = gsdesc,
+        organism = 'Mus musculus'
+      )
+      if (isSym) {
+        geneIdType(gs) = SymbolIdentifier()
+      } else {
+        geneIdType(gs) = EntrezIdentifier()
+      }
+      return(gs)
+    },
+    gomap,
+    mapIds(GO.db, names(gomap), column = 'TERM', keytype = 'GOID'),
+    mapIds(GO.db, names(gomap), column = 'ONTOLOGY', keytype = 'GOID'),
+    mapIds(GO.db, names(gomap), column = 'DEFINITION', keytype = 'GOID'),
+    SIMPLIFY = FALSE
+  )
+  
+  #create c1 category
+  mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+  mousechr = c(as.character(1:19), 'MT', 'X', 'Y')
+  idtype = ifelse(isSym, 'mgi_symbol', 'entrezgene_id')
+  posgenes = select(
+    mouse,
+    keys = mousechr,
+    columns = c('chromosome_name', 'band', idtype),
+    keytype = 'chromosome_name'
+  )
+  posgenes$band = gsub('\\..*', '', posgenes$band)
+  posgenes = posgenes[posgenes[, 3] != '' & !is.na(posgenes[, 3]), ]
+  posgenes$band = paste(posgenes$chromosome_name, posgenes$band, sep = 'q')
+  posgenes$band = paste0('chr', posgenes$band)
+  posgenes = split(posgenes, posgenes$band)
+  c1 = lapply(posgenes, function (x) {
+    gs = GeneSet(
+      unique(x[, 3]),
+      setName = x$band[1],
+      collectionType = BroadCollection(category = 'c1'),
+      shortDescription = paste('Ensembl Genes in Cytogenetic Band', x$band[1]),
+      organism = 'Mus musculus'
+    )
+    if (isSym) {
+      geneIdType(gs) = SymbolIdentifier()
+    } else {
+      geneIdType(gs) = EntrezIdentifier()
+    }
+    return(gs)
+  })
+  
+  #combine all and create Mm MSigDB
+  mmdb = c(mmdb, c1, c5)
+  mmdb = mmdb[order(sapply(mmdb, setName))]
+  mmdb = GeneSetCollection(mmdb)
+  
+  ####
+  ## What should we do about the Human Phenotype Ontology?
+  ##  1. Replace with mammalian phenotype ontology
+  ##  2. Translate to mouse
+  ####
+  
+  return(mmdb)
 }
 
 ## https://www.r-bloggers.com/converting-mouse-to-human-gene-names-with-biomart-package/
@@ -75,3 +173,10 @@ msigdb.hs.SYM = msigdb[[1]]
 msigdb.hs.EZID = msigdb[[2]]
 save(msigdb.hs.SYM, file = 'msigdb.hs.SYM.rda')
 save(msigdb.hs.EZID, file = 'msigdb.hs.EZID.rda')
+
+#----create mouse data----
+msigdb.mm.SYM = createMmMsigdbData(msigdb.hs.SYM)
+msigdb.mm.EZID = createMmMsigdbData(msigdb.hs.SYM, isSym = FALSE)
+
+
+
