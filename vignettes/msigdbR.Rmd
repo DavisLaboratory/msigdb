@@ -64,6 +64,16 @@ msigdb.hs.EZID = eh[['EH4735']]
 msigdb.hs.EZID
 ```
 
+```{r download-msigdb-sym}
+# msigdb.mm.SYM = eh[['EH4734']]
+# msigdb.mm.SYM
+```
+
+```{r download-msigdb-ezid}
+# msigdb.mm.EZID = eh[['EH4735']]
+# msigdb.mm.EZID
+```
+
 Alternatively, data can be downloaded using accessors in the `msigdb` package as below:
 
 ```{r alt-download}
@@ -73,6 +83,10 @@ msigdb.hs.SYM(metadata = TRUE)
 msigdb.hs.SYM()
 #data are loaded
 msigdb.hs.EZID()
+#data are loaded
+msigdb.mm.SYM()
+#data are loaded
+msigdb.mm.EZID()
 ```
 
 # Downloading and integrating KEGG gene sets
@@ -82,6 +96,8 @@ KEGG gene sets cannot be integrated within this ExperimentHub package due to lic
 ```{r append-kegg}
 msigdb.hs.SYM = appendKEGG(msigdb.hs.SYM)
 msigdb.hs.EZID = appendKEGG(msigdb.hs.EZID)
+msigdb.mm.SYM = appendKEGG(msigdb.mm.SYM)
+msigdb.mm.EZID = appendKEGG(msigdb.mm.EZID)
 ```
 
 # Accessing the GeneSet and GeneSetCollection objects
@@ -122,6 +138,17 @@ table(sapply(lapply(msigdb.hs.SYM, collectionType), bcSubCategory))
 hist(sapply(lapply(msigdb.hs.SYM, geneIds), length),
      main = 'MSigDB signature size distribution',
      xlab = 'Signature size')
+```
+
+# Preparing collections for limma::fry
+
+Any gene-set collection can be easily transformed for usage with `limma::fry` by first transforming it into a list of gene IDs and following that with a transformation to indices as shown below.
+
+```{r}
+library(limma)
+
+msigdb_ids = geneIds(msigdb.hs.SYM)
+# fry_indices = ids2indices(msigdb_ids, rownames(expr_matrix))
 ```
 
 # Session information

@@ -14,11 +14,17 @@
 #'
 #' The following datasets are included in this package:
 #'
-#' 1. msigdb.hs.SYM - The MSigDB v7.2 with gene expression signatures defined
-#' using gene symbols.
+#' 1. msigdb.hs.SYM - The MSigDB v7.2 for human with gene expression signatures
+#' defined using gene symbols.
 #'
-#' 2. msigdb.hs.EZID - The MSigDB v7.2 with gene expression signatures defined
-#' using Entrez IDs.
+#' 2. msigdb.hs.EZID - The MSigDB v7.2 for human with gene expression signatures
+#' defined using Entrez IDs.
+#'
+#' 3. msigdb.mm.SYM - The MSigDB v7.2 for mouse with gene expression signatures
+#' defined using gene symbols.
+#'
+#' 4. msigdb.mm.EZID - The MSigDB v7.2 for mouse with gene expression signatures
+#' defined using Entrez IDs.
 #'
 #' @format A GeneSetCollection object composed of GeneSet objects representing
 #'   all non-empty gene expression signatures from the molecular signatures
@@ -27,6 +33,14 @@
 #'   database due to licensing limitations. Users can use the [appendKEGG()]
 #'   function in this package to download KEGG gene sets directly from the
 #'   MSigDB and append to existing data objects.
+#'
+#'   The mouse MSigDB is created by translating human genes to mouse homologs
+#'   using annotations from the Mouse Genome Informatics (MGI) database for most
+#'   gene sets. Gene sets in the collections c1 (positional gene sets) and c5
+#'   (ontologies) are recreated as information in these gene sets is organism
+#'   specific. Positional gene sets are created using Ensembl 102 annotations
+#'   from biomaRt. Gene sets representing gene ontologies are derived from the
+#'   mouse R/Bioconductor organism database (org.Mm.eg.db).
 #' @references Subramanian, A., Tamayo, P., Mootha, V. K., Mukherjee, S., Ebert,
 #'   B. L., Gillette, M. A., ... & Mesirov, J. P. (2005). Gene set enrichment
 #'   analysis: a knowledge-based approach for interpreting genome-wide
@@ -58,7 +72,7 @@
 #'
 #' @name msigdb
 #' @aliases msigdb-package
-#' 
+#'   
 NULL
 
 .onLoad <- function(libname, pkgname) {
@@ -67,4 +81,6 @@ NULL
   
   ExperimentHub::createHubAccessors(pkgname, 'msigdb.hs.SYM')
   ExperimentHub::createHubAccessors(pkgname, 'msigdb.hs.EZID')
+  ExperimentHub::createHubAccessors(pkgname, 'msigdb.mm.SYM')
+  ExperimentHub::createHubAccessors(pkgname, 'msigdb.mm.EZID')
 }
