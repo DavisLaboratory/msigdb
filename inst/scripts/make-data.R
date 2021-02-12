@@ -4,6 +4,7 @@ library(biomaRt)
 library(org.Mm.eg.db)
 library(GO.db)
 library(stringr)
+library(reshape2)
 
 #file cache to download files to
 fpath = tempfile()
@@ -58,8 +59,10 @@ getMsigdbData <- function(version) {
 
 #function to convert the human MSigDB to mouse
 createMmMsigdbData <- function(hsdb) {
-  #remove c1 and c5 genesets (these need to be replaced completely)
-  mmdb = hsdb[!sapply(lapply(hsdb, collectionType), bcCategory) %in% c('c1', 'c5')]
+  #remove c1 and c5 genesets (these need to be replaced completely); except for HPO in c5
+  rmgs = sapply(lapply(hsdb, collectionType), bcCategory) %in% c('c1', 'c5')
+  rmgs[sapply(lapply(hsdb, collectionType), bcSubCategory) %in% 'HPO'] = FALSE
+  mmdb = hsdb[!rmgs]
   
   #convert IDs using MGI
   allg = unique(unlist(lapply(mmdb, geneIds)))
@@ -82,10 +85,10 @@ createMmMsigdbData <- function(hsdb) {
   })
   
   #create c5 category
-  c5 = createC5MmOrgDb(isSym = FALSE)
+  c5 = createC5MmOrgDb()
   
   #create c1 category
-  c1 = createC1MmbiomaRt(isSym = FALSE)
+  c1 = createC1MmbiomaRt()
   
   ####
   ## What should we do about the Human Phenotype Ontology?
@@ -106,7 +109,6 @@ createMmMsigdbData <- function(hsdb) {
   
   #remove empty genesets
   mmdb = mmdb[sapply(lapply(mmdb, geneIds), length) > 0]
-  
   mmdb = GeneSetCollection(mmdb)
   
   #convert to symbols
@@ -122,18 +124,15 @@ createMmMsigdbData <- function(hsdb) {
   return(list('sym' = mmdb.sym, 'ezid' = mmdb))
 }
 
-createC1MmbiomaRt <- function(isSym = TRUE) {
+createC1MmbiomaRt <- function() {
   mousechr = c(as.character(1:19), 'MT', 'X', 'Y')
   mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
-  
-  #select idtype
-  idtype = ifelse(isSym, 'mgi_symbol', 'entrezgene_id')
   
   #retrieve band information
   posgenes = select(
     mouse,
     keys = mousechr,
-    columns = c('chromosome_name', 'band', idtype),
+    columns = c('chromosome_name', 'band', 'entrezgene_id'),
     keytype = 'chromosome_name'
   )
   #discard sub-banding (decimals)
@@ -153,31 +152,18 @@ createC1MmbiomaRt <- function(isSym = TRUE) {
       shortDescription = paste('Ensembl Genes in Cytogenetic Band', x$band[1]),
       organism = 'Mus musculus'
     )
-    if (isSym) {
-      geneIdType(gs) = SymbolIdentifier()
-    } else {
-      geneIdType(gs) = EntrezIdentifier()
-    }
+    geneIdType(gs) = EntrezIdentifier()
     return(gs)
   })
   
   return(c1)
 }
 
-createC5MmOrgDb <- function(isSym = TRUE) {
+createC5MmOrgDb <- function() {
   gomap = as.list(org.Mm.egGO2ALLEGS)
   gomap = lapply(gomap, as.character)
   
-  if (isSym) {
-    #convert to symbols
-    idmap = mapIds(org.Mm.eg.db, unique(unlist(gomap)), 'SYMBOL', keytype = 'ENTREZID')
-    gomap = lapply(gomap, function (x) {
-      x = as.character(na.omit(idmap[x]))
-      return(x)
-    })
-  }
-  
-  #create c5 genesets using biomaRt
+  #create c5 genesets using OrgDb
   c5 = mapply(
     function(genes, gsname, gstype, gsdesc) {
       gs = GeneSet(
@@ -187,11 +173,7 @@ createC5MmOrgDb <- function(isSym = TRUE) {
         shortDescription = gsdesc,
         organism = 'Mus musculus'
       )
-      if (isSym) {
-        geneIdType(gs) = SymbolIdentifier()
-      } else {
-        geneIdType(gs) = EntrezIdentifier()
-      }
+      geneIdType(gs) = EntrezIdentifier()
       return(gs)
     },
     gomap,
@@ -223,8 +205,9 @@ save(msigdb.hs.SYM, file = 'msigdb.hs.SYM.rda')
 save(msigdb.hs.EZID, file = 'msigdb.hs.EZID.rda')
 
 #----create mouse data----
-msigdb.mm.SYM = createMmMsigdbData(msigdb.hs.SYM)
-msigdb.mm.EZID = createMmMsigdbData(msigdb.hs.SYM, isSym = FALSE)
+msigdb.mm = createMmMsigdbData(msigdb.hs.SYM)
+msigdb.mm.SYM = msigdb.mm[[1]]
+msigdb.mm.EZID = msigdb.mm[[2]]
 save(msigdb.mm.SYM, file = 'msigdb.mm.SYM.rda')
 save(msigdb.mm.EZID, file = 'msigdb.mm.EZID.rda')
 
