@@ -59,6 +59,8 @@ getMsigdbData <- function(version) {
 #function to convert the human MSigDB to mouse
 # hsdb needs to be the db formed of symbols, not EZIDs
 createMmMsigdbData <- function(hsdb, isSym = TRUE) {
+  mousechr = c(as.character(1:19), 'MT', 'X', 'Y')
+  
   #remove c1 and c5 genesets (these need to be replaced completely)
   mmdb = hsdb[!sapply(lapply(hsdb, collectionType), bcCategory) %in% c('c1', 'c5')]
   
@@ -113,7 +115,6 @@ createMmMsigdbData <- function(hsdb, isSym = TRUE) {
   
   #create c1 category
   mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
-  mousechr = c(as.character(1:19), 'MT', 'X', 'Y')
   idtype = ifelse(isSym, 'mgi_symbol', 'entrezgene_id')
   posgenes = select(
     mouse,
@@ -145,13 +146,27 @@ createMmMsigdbData <- function(hsdb, isSym = TRUE) {
   #combine all and create Mm MSigDB
   mmdb = c(mmdb, c1, c5)
   mmdb = mmdb[order(sapply(mmdb, setName))]
-  mmdb = GeneSetCollection(mmdb)
+  #only retain genes on the primary scaffold
+  allg = select(
+    mouse,
+    keys = mousechr,
+    columns = ifelse(isSym, 'mgi_symbol', 'entrezgene_id'),
+    keytype = 'chromosome_name'
+  )[, 1]
+  mmdb = lapply(mmdb, function(gs) {
+    geneIds(gs) = intersect(geneIds(gs), allg)
+    return(gs)
+  })
+  #remove empty genesets
+  mmdb = mmdb[sapply(lapply(mmdb, geneIds), length) > 0]
   
   ####
   ## What should we do about the Human Phenotype Ontology?
   ##  1. Replace with mammalian phenotype ontology
   ##  2. Translate to mouse
   ####
+  
+  mmdb = GeneSetCollection(mmdb)
   
   return(mmdb)
 }
