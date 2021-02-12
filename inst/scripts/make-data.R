@@ -53,14 +53,11 @@ getMsigdbData <- function(version) {
   msigdb = GeneSetCollection(msigdb[msigdb_lengths > 0])
   msigdb.ezid = msigdb
   
-  return(list(msigdb.sym, msigdb.ezid))
+  return(list('sym' = msigdb.sym, 'ezid' = msigdb.ezid))
 }
 
 #function to convert the human MSigDB to mouse
-# hsdb needs to be the db formed of symbols, not EZIDs
-createMmMsigdbData <- function(hsdb, isSym = TRUE) {
-  mousechr = c(as.character(1:19), 'MT', 'X', 'Y')
-  
+createMmMsigdbData <- function(hsdb) {
   #remove c1 and c5 genesets (these need to be replaced completely)
   mmdb = hsdb[!sapply(lapply(hsdb, collectionType), bcCategory) %in% c('c1', 'c5')]
   
@@ -76,7 +73,98 @@ createMmMsigdbData <- function(hsdb, isSym = TRUE) {
     return(gs)
   })
   
+  #convert to Entrez IDs
+  gmap = mapIds(org.Mm.eg.db, keys = gmap, column = 'ENTREZID', keytype = 'SYMBOL')
+  mmdb = lapply(mmdb, function(gs) {
+    geneIds(gs) = na.omit(unique(gmap[geneIds(gs)]))
+    gs@geneIdType = EntrezIdentifier()
+    return(gs)
+  })
+  
   #create c5 category
+  c5 = createC5MmOrgDb(isSym = FALSE)
+  
+  #create c1 category
+  c1 = createC1MmbiomaRt(isSym = FALSE)
+  
+  ####
+  ## What should we do about the Human Phenotype Ontology?
+  ##  1. Replace with mammalian phenotype ontology
+  ##  2. Translate to mouse
+  ####
+
+  #combine all and create Mm MSigDB
+  mmdb = c(mmdb, c1, c5)
+  mmdb = mmdb[order(sapply(mmdb, setName))]
+  
+  #only retain genes with ids in the OrgDb
+  allg = unique(keys(org.Mm.eg.db, 'ENTREZID'))
+  mmdb = lapply(mmdb, function(gs) {
+    geneIds(gs) = intersect(geneIds(gs), allg)
+    return(gs)
+  })
+  
+  #remove empty genesets
+  mmdb = mmdb[sapply(lapply(mmdb, geneIds), length) > 0]
+  
+  mmdb = GeneSetCollection(mmdb)
+  
+  #convert to symbols
+  gids = unique(unlist(geneIds(mmdb)))
+  gmap = mapIds(org.Mm.eg.db, keys = gids, column = 'SYMBOL', keytype = 'ENTREZID')
+  mmdb.sym = lapply(mmdb, function(gs) {
+    geneIds(gs) = na.omit(unique(gmap[geneIds(gs)]))
+    gs@geneIdType = SymbolIdentifier()
+    return(gs)
+  })
+  mmdb.sym = GeneSetCollection(mmdb.sym)
+  
+  return(list('sym' = mmdb.sym, 'ezid' = mmdb))
+}
+
+createC1MmbiomaRt <- function(isSym = TRUE) {
+  mousechr = c(as.character(1:19), 'MT', 'X', 'Y')
+  mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+  
+  #select idtype
+  idtype = ifelse(isSym, 'mgi_symbol', 'entrezgene_id')
+  
+  #retrieve band information
+  posgenes = select(
+    mouse,
+    keys = mousechr,
+    columns = c('chromosome_name', 'band', idtype),
+    keytype = 'chromosome_name'
+  )
+  #discard sub-banding (decimals)
+  posgenes$band = gsub('\\..*', '', posgenes$band)
+  #discard annotations where gene id missing
+  posgenes = posgenes[posgenes[, 3] != '' & !is.na(posgenes[, 3]), ]
+  #combine chr and band to create locus
+  posgenes$band = paste(posgenes$chromosome_name, posgenes$band, sep = 'q')
+  posgenes$band = paste0('chr', posgenes$band)
+  #create geneset
+  posgenes = split(posgenes, posgenes$band)
+  c1 = lapply(posgenes, function (x) {
+    gs = GeneSet(
+      as.character(unique(x[, 3])),
+      setName = x$band[1],
+      collectionType = BroadCollection(category = 'c1'),
+      shortDescription = paste('Ensembl Genes in Cytogenetic Band', x$band[1]),
+      organism = 'Mus musculus'
+    )
+    if (isSym) {
+      geneIdType(gs) = SymbolIdentifier()
+    } else {
+      geneIdType(gs) = EntrezIdentifier()
+    }
+    return(gs)
+  })
+  
+  return(c1)
+}
+
+createC5MmOrgDb <- function(isSym = TRUE) {
   gomap = as.list(org.Mm.egGO2ALLEGS)
   gomap = lapply(gomap, as.character)
   
@@ -89,11 +177,11 @@ createMmMsigdbData <- function(hsdb, isSym = TRUE) {
     })
   }
   
-  #create c5 genesets
+  #create c5 genesets using biomaRt
   c5 = mapply(
     function(genes, gsname, gstype, gsdesc) {
       gs = GeneSet(
-        unique(genes),
+        as.character(unique(genes)),
         setName = paste0('GO_', gsub(' ', '_', str_to_upper(gsname))),
         collectionType = BroadCollection(category = 'c5', subCategory = paste0('GO:', gstype)),
         shortDescription = gsdesc,
@@ -113,62 +201,7 @@ createMmMsigdbData <- function(hsdb, isSym = TRUE) {
     SIMPLIFY = FALSE
   )
   
-  #create c1 category
-  mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
-  idtype = ifelse(isSym, 'mgi_symbol', 'entrezgene_id')
-  posgenes = select(
-    mouse,
-    keys = mousechr,
-    columns = c('chromosome_name', 'band', idtype),
-    keytype = 'chromosome_name'
-  )
-  posgenes$band = gsub('\\..*', '', posgenes$band)
-  posgenes = posgenes[posgenes[, 3] != '' & !is.na(posgenes[, 3]), ]
-  posgenes$band = paste(posgenes$chromosome_name, posgenes$band, sep = 'q')
-  posgenes$band = paste0('chr', posgenes$band)
-  posgenes = split(posgenes, posgenes$band)
-  c1 = lapply(posgenes, function (x) {
-    gs = GeneSet(
-      unique(x[, 3]),
-      setName = x$band[1],
-      collectionType = BroadCollection(category = 'c1'),
-      shortDescription = paste('Ensembl Genes in Cytogenetic Band', x$band[1]),
-      organism = 'Mus musculus'
-    )
-    if (isSym) {
-      geneIdType(gs) = SymbolIdentifier()
-    } else {
-      geneIdType(gs) = EntrezIdentifier()
-    }
-    return(gs)
-  })
-  
-  #combine all and create Mm MSigDB
-  mmdb = c(mmdb, c1, c5)
-  mmdb = mmdb[order(sapply(mmdb, setName))]
-  #only retain genes on the primary scaffold
-  allg = select(
-    mouse,
-    keys = mousechr,
-    columns = ifelse(isSym, 'mgi_symbol', 'entrezgene_id'),
-    keytype = 'chromosome_name'
-  )[, 1]
-  mmdb = lapply(mmdb, function(gs) {
-    geneIds(gs) = intersect(geneIds(gs), allg)
-    return(gs)
-  })
-  #remove empty genesets
-  mmdb = mmdb[sapply(lapply(mmdb, geneIds), length) > 0]
-  
-  ####
-  ## What should we do about the Human Phenotype Ontology?
-  ##  1. Replace with mammalian phenotype ontology
-  ##  2. Translate to mouse
-  ####
-  
-  mmdb = GeneSetCollection(mmdb)
-  
-  return(mmdb)
+  return(c5)
 }
 
 ## https://www.r-bloggers.com/converting-mouse-to-human-gene-names-with-biomart-package/
@@ -192,6 +225,8 @@ save(msigdb.hs.EZID, file = 'msigdb.hs.EZID.rda')
 #----create mouse data----
 msigdb.mm.SYM = createMmMsigdbData(msigdb.hs.SYM)
 msigdb.mm.EZID = createMmMsigdbData(msigdb.hs.SYM, isSym = FALSE)
+save(msigdb.mm.SYM, file = 'msigdb.mm.SYM.rda')
+save(msigdb.mm.EZID, file = 'msigdb.mm.EZID.rda')
 
 
 
