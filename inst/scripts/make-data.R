@@ -66,9 +66,7 @@ createMmMsigdbData <- function(hsdb) {
   
   #convert IDs using MGI
   allg = unique(unlist(lapply(mmdb, geneIds)))
-  allg = convertMouseGeneList(allg)
-  gmap = allg$MGI.symbol
-  names(gmap) = allg$HGNC.symbol
+  gmap = convertMouseGeneList(allg)
   
   mmdb = lapply(mmdb, function(gs) {
     gids = na.omit(unique(gmap[geneIds(gs)]))
@@ -186,15 +184,26 @@ createC5MmOrgDb <- function() {
   return(c5)
 }
 
-## https://www.r-bloggers.com/converting-mouse-to-human-gene-names-with-biomart-package/
-# Basic function to convert human to mouse gene names
-convertMouseGeneList <- function(x){
+convertMouseGeneList <- function(genes){
   human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
   mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
   
-  genesV2 = getLDS(attributes = c("mgi_symbol"), filters = "mgi_symbol", values = x , mart = mouse, attributesL = c("hgnc_symbol"), martL = human, uniqueRows=T)
+  #convert symbols using homology
+  mgi_hgnc = getLDS(
+    attributes = c("mgi_symbol"),
+    filters = "mgi_symbol",
+    values = genes,
+    mart = mouse,
+    attributesL = c("hgnc_symbol"),
+    martL = human,
+    uniqueRows = TRUE
+  )
   
-  return(genesV2)
+  #create a named vector to simplify mapping
+  gmap = mgi_hgnc$MGI.symbol
+  names(gmap) = mgi_hgnc$HGNC.symbol
+  
+  return(gmap)
 }
 
 #----create human data----
