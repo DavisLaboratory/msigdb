@@ -64,21 +64,13 @@ createMmMsigdbData <- function(hsdb) {
   rmgs[sapply(lapply(hsdb, collectionType), bcSubCategory) %in% 'HPO'] = FALSE
   mmdb = hsdb[!rmgs]
   
-  #convert IDs using MGI
+  #convert IDs using Ensembl homology annotations
   allg = unique(unlist(lapply(mmdb, geneIds)))
-  gmap = convertMouseGeneList(allg)
+  gmap = msigdb:::convertMouseGeneList(allg)
   
   mmdb = lapply(mmdb, function(gs) {
     gids = na.omit(unique(gmap[geneIds(gs)]))
     geneIds(gs) = gids
-    return(gs)
-  })
-  
-  #convert to Entrez IDs
-  gmap = mapIds(org.Mm.eg.db, keys = gmap, column = 'ENTREZID', keytype = 'SYMBOL')
-  mmdb = lapply(mmdb, function(gs) {
-    geneIds(gs) = na.omit(unique(gmap[geneIds(gs)]))
-    gs@geneIdType = EntrezIdentifier()
     return(gs)
   })
   
@@ -184,28 +176,6 @@ createC5MmOrgDb <- function() {
   return(c5)
 }
 
-convertMouseGeneList <- function(genes){
-  human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-  mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
-  
-  #convert symbols using homology
-  mgi_hgnc = getLDS(
-    attributes = c("mgi_symbol"),
-    filters = "mgi_symbol",
-    values = genes,
-    mart = mouse,
-    attributesL = c("hgnc_symbol"),
-    martL = human,
-    uniqueRows = TRUE
-  )
-  
-  #create a named vector to simplify mapping
-  gmap = mgi_hgnc$MGI.symbol
-  names(gmap) = mgi_hgnc$HGNC.symbol
-  
-  return(gmap)
-}
-
 #----create human data----
 msigdb = getMsigdbData('7.2')
 msigdb.hs.SYM = msigdb[[1]]
@@ -214,7 +184,7 @@ save(msigdb.hs.SYM, file = 'msigdb.hs.SYM.rda')
 save(msigdb.hs.EZID, file = 'msigdb.hs.EZID.rda')
 
 #----create mouse data----
-msigdb.mm = createMmMsigdbData(msigdb.hs.SYM)
+msigdb.mm = createMmMsigdbData(msigdb.hs.EZID)
 msigdb.mm.SYM = msigdb.mm[[1]]
 msigdb.mm.EZID = msigdb.mm[[2]]
 save(msigdb.mm.SYM, file = 'msigdb.mm.SYM.rda')

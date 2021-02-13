@@ -1,6 +1,6 @@
 Package: msigdb
 Title: An ExperimentHub Package for the Molecular Signatures Database (MSigDB)
-Version: 0.0.4
+Version: 0.0.5
 Authors@R: 
     person(given = "Dharmesh D.",
            family = "Bhuva",
@@ -19,7 +19,11 @@ Depends:
 Imports: 
     ExperimentHub,
     utils,
-    GSEABase
+    GSEABase,
+    org.Mm.eg.db,
+    org.Hs.eg.db,
+    AnnotationDbi,
+    biomaRt
 Suggests: 
     singscore,
     enrichnets,
@@ -28,10 +32,8 @@ Suggests:
     BiocStyle,
     rmarkdown,
     testthat (>= 3.0.0),
-    biomaRt,
     BiocFileCache,
     GO.db,
-    org.Mm.eg.db,
     stringr
 URL: https://davislaboratory.github.io/msigdb
 BugReports: https://github.com/DavisLaboratory/msigdb/issues
