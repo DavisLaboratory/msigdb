@@ -1,5 +1,5 @@
-#' @import org.Hs.eg.db
-#' @import org.Mm.eg.db
+#' @importFrom  org.Hs.eg.db org.Hs.eg.db
+#' @importFrom org.Mm.eg.db org.Mm.eg.db
 NULL
 
 #' Add KEGG pathway derived gene sets to a collection
