@@ -25,16 +25,28 @@ functions provided in the package (see Details).
 
 The following datasets are included in this package:
 \enumerate{
-\item msigdb.hs.SYM - The MSigDB v7.2 with gene expression signatures defined
-using gene symbols.
-\item msigdb.hs.EZID - The MSigDB v7.2 with gene expression signatures defined
-using Entrez IDs.
+\item msigdb.hs.SYM - The MSigDB v7.2 for human with gene expression signatures
+defined using gene symbols.
+\item msigdb.hs.EZID - The MSigDB v7.2 for human with gene expression signatures
+defined using Entrez IDs.
+\item msigdb.mm.SYM - The MSigDB v7.2 for mouse with gene expression signatures
+defined using gene symbols.
+\item msigdb.mm.EZID - The MSigDB v7.2 for mouse with gene expression signatures
+defined using Entrez IDs.
 }
 
 Data in this package does not include gene sets from the KEGG
 database due to licensing limitations. Users can use the \code{\link[=appendKEGG]{appendKEGG()}}
 function in this package to download KEGG gene sets directly from the
 MSigDB and append to existing data objects.
+
+The mouse MSigDB is created by translating human genes to mouse homologs
+using annotations from the Mouse Genome Informatics (MGI) database for most
+gene sets. Gene sets in the collections c1 (positional gene sets) and c5
+(ontologies) are recreated as information in these gene sets is organism
+specific. Positional gene sets are created using Ensembl 102 annotations
+from biomaRt. Gene sets representing gene ontologies are derived from the
+mouse R/Bioconductor organism database (org.Mm.eg.db).
 }
 \section{Acknowledgement}{
  MSigDB is protected by copyright © 2004-2020 Broad

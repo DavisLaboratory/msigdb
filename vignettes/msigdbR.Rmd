@@ -64,12 +64,12 @@ msigdb.hs.EZID = eh[['EH4735']]
 msigdb.hs.EZID
 ```
 
-```{r download-msigdb-sym}
+```{r download-msigdb-sym-mm}
 # msigdb.mm.SYM = eh[['EH4734']]
 # msigdb.mm.SYM
 ```
 
-```{r download-msigdb-ezid}
+```{r download-msigdb-ezid-mm}
 # msigdb.mm.EZID = eh[['EH4735']]
 # msigdb.mm.EZID
 ```

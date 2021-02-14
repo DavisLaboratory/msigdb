@@ -22,7 +22,6 @@ stored in this package. Direct user-end download from the MSigDB is required
 to ensure KEGG licenses are adhered to.
 }
 \examples{
-library(msigdb)
 library(GSEABase)
 
 gs1 <- GeneSet(setName = 'gs1', geneIdType = SymbolIdentifier())
