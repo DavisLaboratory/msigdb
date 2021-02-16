@@ -1,7 +1,3 @@
-#' @importFrom  org.Hs.eg.db org.Hs.eg.db
-#' @importFrom org.Mm.eg.db org.Mm.eg.db
-NULL
-
 #' Add KEGG pathway derived gene sets to a collection
 #'
 #' This function adds gene sets derived from KEGG pathways to the MSigDB data
@@ -99,14 +95,14 @@ getOrganism <- function(gsc, idType) {
   #check gene IDs against organism databases
   allg = unique(unlist(GSEABase::geneIds(gsc)))
   
-  if (all(allg %in% AnnotationDbi::keys(org.Hs.eg.db, keytype))) {
+  if (all(allg %in% AnnotationDbi::keys(org.Hs.eg.db::org.Hs.eg.db, keytype))) {
     return(c('hs'))
-  } else if (mean(allg %in% AnnotationDbi::keys(org.Hs.eg.db, keytype)) > 0.5) {
+  } else if (mean(allg %in% AnnotationDbi::keys(org.Hs.eg.db::org.Hs.eg.db, keytype)) > 0.5) {
     warning('Assuming the organism to be human.')
     return(c('hs'))
-  } else if (all(allg %in% AnnotationDbi::keys(org.Mm.eg.db, keytype))) {
+  } else if (all(allg %in% AnnotationDbi::keys(org.Mm.eg.db::org.Mm.eg.db, keytype))) {
     return(c('mm'))
-  } else if (mean(allg %in% AnnotationDbi::keys(org.Mm.eg.db, keytype)) > 0.5) {
+  } else if (mean(allg %in% AnnotationDbi::keys(org.Mm.eg.db::org.Mm.eg.db, keytype)) > 0.5) {
     warning('Assuming the organism to be mouse.')
     return(c('mm'))
   } else {
