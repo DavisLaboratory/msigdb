@@ -10,8 +10,9 @@ getMsigIdType(gsc)
 \item{gsc}{a GeneSetCollection object, containing GeneSet objects.}
 }
 \value{
-a character, specifying the gene identifier type ("SymbolIdentifier"
-for gene symbols and "EntrezIdentifier" for Entrez IDs).
+a GSEABase::SymbolIdentifier or GSEABASE::EntrezIdentifier object,
+specifying the gene identifier type (gene symbols or Entrez IDs
+respectively).
 }
 \description{
 The gene identifier (Symbol or Entrez ID) of a gene set collection is

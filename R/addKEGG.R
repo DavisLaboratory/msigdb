@@ -97,9 +97,9 @@ appendKEGG <- function(gsc) {
 #' same organism, the organism with more than 50% gene IDs present in the
 #' collection is returned. In any other case, the function returns an error.
 #'
-#' @param idType a character, representing the ID type inferred from the
-#'   [getMsigIdType()] function (either "SymbolIdentifier" or "EntrezIdentifier").
-#'   Avoid providing this manually and instead use the [getMsigIdType()] function.
+#' @param idType a GSEABase::SymbolIdentifier or GSEABASE::EntrezIdentifier
+#'   object, representing the ID type inferred from the [getMsigIdType()]
+#'   function. Avoid providing this manually.
 #' @inheritParams getMsigIdType
 #'
 #' @return a character, either "mm" (representing Mus musculus - mouse) or "hs"
@@ -143,8 +143,9 @@ getMsigOrganism <- function(gsc, idType) {
 #'
 #' @param gsc a GeneSetCollection object, containing GeneSet objects.
 #'
-#' @return a character, specifying the gene identifier type ("SymbolIdentifier"
-#'   for gene symbols and "EntrezIdentifier" for Entrez IDs).
+#' @return a GSEABase::SymbolIdentifier or GSEABASE::EntrezIdentifier object,
+#'   specifying the gene identifier type (gene symbols or Entrez IDs
+#'   respectively).
 #' @export
 #'
 #' @examples

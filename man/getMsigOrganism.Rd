@@ -9,9 +9,9 @@ getMsigOrganism(gsc, idType)
 \arguments{
 \item{gsc}{a GeneSetCollection object, containing GeneSet objects.}
 
-\item{idType}{a character, representing the ID type inferred from the
-\code{\link[=getMsigIdType]{getMsigIdType()}} function (either "SymbolIdentifier" or "EntrezIdentifier").
-Avoid providing this manually and instead use the \code{\link[=getMsigIdType]{getMsigIdType()}} function.}
+\item{idType}{a GSEABase::SymbolIdentifier or GSEABASE::EntrezIdentifier
+object, representing the ID type inferred from the \code{\link[=getMsigIdType]{getMsigIdType()}}
+function. Avoid providing this manually.}
 }
 \value{
 a character, either "mm" (representing Mus musculus - mouse) or "hs"
