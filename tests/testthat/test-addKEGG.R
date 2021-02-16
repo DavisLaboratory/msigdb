@@ -15,16 +15,16 @@ test_that("ID type inference works", {
   gs2 = GeneSet(setName = 'gs2', geneIdType = EntrezIdentifier())
   gsc = GeneSetCollection(c(gs1, gs2))
   
-  expect_s4_class(getIdType(GeneSetCollection(gs1)), 'SymbolIdentifier')
-  expect_s4_class(getIdType(GeneSetCollection(gs2)), 'EntrezIdentifier')
-  expect_error(getIdType(gsc), 'identifiers should be the same')
-  expect_error(getIdType(gs1))
+  expect_s4_class(getMsigIdType(GeneSetCollection(gs1)), 'SymbolIdentifier')
+  expect_s4_class(getMsigIdType(GeneSetCollection(gs2)), 'EntrezIdentifier')
+  expect_error(getMsigIdType(gsc), 'identifiers should be the same')
+  expect_error(getMsigIdType(gs1))
   
   gs1 = GeneSet(setName = 'gs1', geneIdType = NullIdentifier())
   gs2 = GeneSet(setName = 'gs2', geneIdType = NullIdentifier())
   gsc = GeneSetCollection(c(gs1, gs2))
   
-  expect_error(getIdType(gsc), 'identifiers supported')
+  expect_error(getMsigIdType(gsc), 'identifiers supported')
 })
 
 test_that("Organism inference works", {
@@ -37,10 +37,10 @@ test_that("Organism inference works", {
   setName(gshs_e) = 'gshs_e'
   geneIdType(gshs_e) = EntrezIdentifier('org.Hs.eg.db')
   
-  expect_equal(getOrganism(GeneSetCollection(gshs), getIdType(GeneSetCollection(gshs))), 'hs')
-  expect_equal(getOrganism(GeneSetCollection(gshs_e), getIdType(GeneSetCollection(gshs_e))), 'hs')
-  expect_equal(getOrganism(GeneSetCollection(gsmm), getIdType(GeneSetCollection(gsmm))), 'mm')
-  expect_equal(getOrganism(GeneSetCollection(gsmm_e), getIdType(GeneSetCollection(gsmm_e))), 'mm')
+  expect_equal(getMsigOrganism(GeneSetCollection(gshs), getMsigIdType(GeneSetCollection(gshs))), 'hs')
+  expect_equal(getMsigOrganism(GeneSetCollection(gshs_e), getMsigIdType(GeneSetCollection(gshs_e))), 'hs')
+  expect_equal(getMsigOrganism(GeneSetCollection(gsmm), getMsigIdType(GeneSetCollection(gsmm))), 'mm')
+  expect_equal(getMsigOrganism(GeneSetCollection(gsmm_e), getMsigIdType(GeneSetCollection(gsmm_e))), 'mm')
   
-  expect_error(getOrganism(GeneSetCollection(gshs, gsmm), getIdType(GeneSetCollection(gsmm))))
+  expect_error(getMsigOrganism(GeneSetCollection(gshs, gsmm), getMsigIdType(GeneSetCollection(gsmm))))
 })

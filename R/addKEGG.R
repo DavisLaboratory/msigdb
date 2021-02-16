@@ -24,8 +24,8 @@ appendKEGG <- function(gsc) {
   version = '7.2'
   
   #get GeneSetCollection information
-  idType = getIdType(gsc)
-  org = getOrganism(gsc, idType)
+  idType = getMsigIdType(gsc)
+  org = getMsigOrganism(gsc, idType)
   id = ifelse(class(idType) %in% 'SymbolIdentifier' & org %in% 'hs', 'symbols', 'entrez')
   
   #create URL
@@ -88,7 +88,30 @@ appendKEGG <- function(gsc) {
   return(gsc)
 }
 
-getOrganism <- function(gsc, idType) {
+
+#' Infer organism type for the gene set collection
+#'
+#' Since both Human and Mouse MSigDB collections are hosted in this package,
+#' this function infers the type of organism represented in a gene set
+#' collection based on the gene IDs present. If not all gene IDs belong to the
+#' same organism, the organism with more than 50% gene IDs present in the
+#' collection is returned. In any other case, the function returns an error.
+#'
+#' @param idType a character, representing the ID type inferred from the
+#'   [getMsigIdType()] function (either "SymbolIdentifier" or "EntrezIdentifier").
+#'   Avoid providing this manually and instead use the [getMsigIdType()] function.
+#' @inheritParams getMsigIdType
+#'
+#' @return a character, either "mm" (representing Mus musculus - mouse) or "hs"
+#'   (representing Homo sapiens - human).
+#' @export
+#'
+#' @examples
+#' msigdb.hs.SYM <- msigdb.hs.SYM()
+#' id <- getMsigIdType(msigdb.hs.SYM)
+#' getMsigOrganism(msigdb.hs.SYM(), id)
+#' 
+getMsigOrganism <- function(gsc, idType) {
   #ensure ID types are the same in the collection
   keytype = ifelse(class(idType) %in% 'SymbolIdentifier', 'SYMBOL', 'ENTREZID')
   
@@ -110,7 +133,25 @@ getOrganism <- function(gsc, idType) {
   }
 }
 
-getIdType <- function(gsc) {
+#' Infer gene identifier type for the gene set collection
+#'
+#' The gene identifier (Symbol or Entrez ID) of a gene set collection is
+#' inferred from the IDs present in the data. A collection should ideally store
+#' gene sets using a single identifier type. This function returns the
+#' identifier type (either SymbolIdentifier or EntrezIdentifier) of the
+#' collection. It returns an error if the identifier is neither of these.
+#'
+#' @param gsc a GeneSetCollection object, containing GeneSet objects.
+#'
+#' @return a character, specifying the gene identifier type ("SymbolIdentifier"
+#'   for gene symbols and "EntrezIdentifier" for Entrez IDs).
+#' @export
+#'
+#' @examples
+#' msigdb.hs.SYM <- msigdb.hs.SYM()
+#' id <- getMsigIdType(msigdb.hs.SYM)
+#' 
+getMsigIdType <- function(gsc) {
   idType = sapply(gsc, function(gs) class(GSEABase::geneIdType(gs)))
   idType = unique(idType)
   if (length(idType) != 1) {
