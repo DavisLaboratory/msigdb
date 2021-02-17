@@ -26,7 +26,7 @@ appendKEGG <- function(gsc) {
   #get GeneSetCollection information
   idType = getMsigIdType(gsc)
   org = getMsigOrganism(gsc, idType)
-  id = ifelse(class(idType) %in% 'SymbolIdentifier' & org %in% 'hs', 'symbols', 'entrez')
+  id = ifelse(is(idType, 'SymbolIdentifier') & org %in% 'hs', 'symbols', 'entrez')
   
   #create URL
   fname = paste0('c2.cp.kegg.v', version, '.', id, '.gmt')
@@ -39,7 +39,7 @@ appendKEGG <- function(gsc) {
     collectionType = GSEABase::BroadCollection('c2', 'CP:KEGG')
   )
   
-  if (class(idType) %in% 'EntrezIdentifier') {
+  if (is(idType, 'EntrezIdentifier')) {
     gsc_kegg = lapply(gsc_kegg, function(gs) {
       gs@geneIdType = idType
       return(gs)
@@ -60,7 +60,7 @@ appendKEGG <- function(gsc) {
     })
     
     #convert to symbols if needed
-    if (class(idType) %in% 'SymbolIdentifier') {
+    if (is(idType, 'SymbolIdentifier')) {
       gmap = AnnotationDbi::mapIds(org.Mm.eg.db,
                                    keys = gmap,
                                    column = 'SYMBOL',
@@ -113,7 +113,7 @@ appendKEGG <- function(gsc) {
 #' 
 getMsigOrganism <- function(gsc, idType) {
   #ensure ID types are the same in the collection
-  keytype = ifelse(class(idType) %in% 'SymbolIdentifier', 'SYMBOL', 'ENTREZID')
+  keytype = ifelse(is(idType, 'SymbolIdentifier'), 'SYMBOL', 'ENTREZID')
   
   #check gene IDs against organism databases
   allg = unique(unlist(GSEABase::geneIds(gsc)))
