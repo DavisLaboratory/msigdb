@@ -244,20 +244,20 @@ createHCOPmap <- function() {
 
 #----create human data----
 msigdb = getMsigdbData('7.2')
-msigdb.hs.SYM = msigdb[[1]]
-msigdb.hs.EZID = msigdb[[2]]
-save(msigdb.hs.SYM, file = 'msigdb.v7.2.hs.SYM.rda')
-save(msigdb.hs.EZID, file = 'msigdb.v7.2.hs.EZID.rda')
+msigdb.v7.2.hs.SYM = msigdb[[1]]
+msigdb.v7.2.hs.EZID = msigdb[[2]]
+save(msigdb.v7.2.hs.SYM, file = 'msigdb.v7.2.hs.SYM.rda')
+save(msigdb.v7.2.hs.EZID, file = 'msigdb.v7.2.hs.EZID.rda')
 
 #----create mouse data----
 hcop = createHCOPmap()
 usethis::use_data(hcop, internal = TRUE, overwrite = TRUE)
 
 msigdb.mm = createMmMsigdbData(msigdb.hs.EZID)
-msigdb.mm.SYM = msigdb.mm[[1]]
-msigdb.mm.EZID = msigdb.mm[[2]]
-save(msigdb.mm.SYM, file = 'msigdb.v7.2.mm.SYM.rda')
-save(msigdb.mm.EZID, file = 'msigdb.v7.2.mm.EZID.rda')
+msigdb.v7.2.mm.SYM = msigdb.mm[[1]]
+msigdb.v7.2.mm.EZID = msigdb.mm[[2]]
+save(msigdb.v7.2.mm.SYM, file = 'msigdb.v7.2.mm.SYM.rda')
+save(msigdb.v7.2.mm.EZID, file = 'msigdb.v7.2.mm.EZID.rda')
 
 
 
