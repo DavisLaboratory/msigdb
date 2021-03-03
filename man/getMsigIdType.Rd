@@ -7,7 +7,7 @@
 getMsigIdType(gsc)
 }
 \arguments{
-\item{gsc}{a GeneSetCollection object, containing GeneSet objects.}
+\item{gsc}{a GeneSetCollection object, storing GeneSets from the MSigDB}
 }
 \value{
 a GSEABase::SymbolIdentifier or GSEABASE::EntrezIdentifier object,

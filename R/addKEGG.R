@@ -4,10 +4,8 @@
 #' stored in this package. Direct user-end download from the MSigDB is required
 #' to ensure KEGG licenses are adhered to.
 #'
-#' @param gsc a GeneSetCollection object, storing GeneSets from the MSigDB
-#' @param id a character, either 'sym' or 'ezid' representing the gene
-#'   identifier to download (symbol or entrez id respectively).
-#'
+#' @inheritParams subsetCollection
+#' 
 #' @return a GeneSetCollection object, storing gene sets from the MSigDB
 #'   including the downloaded KEGG gene sets.
 #' @export
@@ -143,7 +141,7 @@ getMsigOrganism <- function(gsc, idType) {
 #' identifier type (either SymbolIdentifier or EntrezIdentifier) of the
 #' collection. It returns an error if the identifier is neither of these.
 #'
-#' @param gsc a GeneSetCollection object, containing GeneSet objects.
+#' @inheritParams subsetCollection
 #'
 #' @return a GSEABase::SymbolIdentifier or GSEABASE::EntrezIdentifier object,
 #'   specifying the gene identifier type (gene symbols or Entrez IDs

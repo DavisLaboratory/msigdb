@@ -7,7 +7,7 @@
 getMsigOrganism(gsc, idType)
 }
 \arguments{
-\item{gsc}{a GeneSetCollection object, containing GeneSet objects.}
+\item{gsc}{a GeneSetCollection object, storing GeneSets from the MSigDB}
 
 \item{idType}{a GSEABase::SymbolIdentifier or GSEABASE::EntrezIdentifier
 object, representing the ID type inferred from the \code{\link[=getMsigIdType]{getMsigIdType()}}

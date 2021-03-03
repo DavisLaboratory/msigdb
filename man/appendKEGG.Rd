@@ -8,9 +8,6 @@ appendKEGG(gsc)
 }
 \arguments{
 \item{gsc}{a GeneSetCollection object, storing GeneSets from the MSigDB}
-
-\item{id}{a character, either 'sym' or 'ezid' representing the gene
-identifier to download (symbol or entrez id respectively).}
 }
 \value{
 a GeneSetCollection object, storing gene sets from the MSigDB
