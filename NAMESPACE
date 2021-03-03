@@ -3,3 +3,6 @@
 export(appendKEGG)
 export(getMsigIdType)
 export(getMsigOrganism)
+export(listCollections)
+export(listSubCollections)
+export(subsetCollection)
