@@ -7,9 +7,9 @@ Authors@R:
            role = c("aut", "cre"),
            email = "bhuva.d@wehi.edu.au",
            comment = c(ORCID = "0000-0002-6398-9157"))
-Description: This package provides the Molecular Signatures Database (MSigDB) in a R accessible objects. Signatures are stored in GeneSet class objects form the GSEABase package and the entire database is stored in a GeneSetCollection object. These data are then hosted on the ExperimentHub.
+Description: This package provides the Molecular Signatures Database (MSigDB) in a R accessible objects. Signatures are stored in GeneSet class objects form the GSEABase package and the entire database is stored in a GeneSetCollection object. These data are then hosted on the ExperimentHub. Data used in this package was obtained from the MSigDB of the Broad Institute.
 biocViews: ExperimentHub, Homo_sapiens_Data, Mus_musculus_Data
-License: GPL-3
+License: CC BY 4.0
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
