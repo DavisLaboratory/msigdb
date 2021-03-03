@@ -54,7 +54,9 @@ appendKEGG <- function(gsc) {
     gmap = convertMouseGeneList(allg)
     
     gsc_kegg = lapply(gsc_kegg, function(gs) {
-      gids = na.omit(unique(gmap[GSEABase::geneIds(gs)]))
+      gids = geneIds(gs)
+      gids = hcop$mouse_entrez_gene[hcop$human_entrez_gene %in% gids]
+      gids = na.omit(unique(gids))
       GSEABase::geneIds(gs) = gids
       return(gs)
     })
@@ -169,26 +171,4 @@ getMsigIdType <- function(gsc) {
   }
   
   return(idType)
-}
-
-convertMouseGeneList <- function(genes){
-  human = biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-  mouse = biomaRt::useMart("ensembl", dataset = "mmusculus_gene_ensembl")
-  
-  #convert symbols using homology
-  mgi_hgnc = biomaRt::getLDS(
-    attributes = c("entrezgene_id"),
-    filters = "entrezgene_id",
-    values = genes,
-    mart = human,
-    attributesL = c("entrezgene_id"),
-    martL = mouse,
-    uniqueRows = TRUE
-  )
-  
-  #create a named vector to simplify mapping
-  gmap = as.character(mgi_hgnc[, 2])
-  names(gmap) = as.character(mgi_hgnc[, 1])
-  
-  return(gmap)
 }

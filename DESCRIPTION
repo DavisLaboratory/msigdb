@@ -1,13 +1,28 @@
 Package: msigdb
 Title: An ExperimentHub Package for the Molecular Signatures Database (MSigDB)
 Version: 0.0.5
-Authors@R: 
-    person(given = "Dharmesh D.",
-           family = "Bhuva",
-           role = c("aut", "cre"),
-           email = "bhuva.d@wehi.edu.au",
-           comment = c(ORCID = "0000-0002-6398-9157"))
-Description: This package provides the Molecular Signatures Database (MSigDB) in a R accessible objects. Signatures are stored in GeneSet class objects form the GSEABase package and the entire database is stored in a GeneSetCollection object. These data are then hosted on the ExperimentHub. Data used in this package was obtained from the MSigDB of the Broad Institute.
+Authors@R: c(
+            person(given = "Dharmesh D.",
+                   family = "Bhuva",
+                   role = c("aut", "cre"),
+                   email = "bhuva.d@wehi.edu.au",
+                   comment = c(ORCID = "0000-0002-6398-9157")),
+            person(given = "Gordon K.",
+                   family = "Smyth",
+                   role = c("aut"),
+                   email = "smyth@wehi.edu.au",
+                   comment = c(ORCID = "0000-0001-9221-2892")),
+            person(given = "Alexandra",
+                   family = "Garnham",
+                   role = c("aut"),
+                   email = "garnham.a@wehi.edu.au",
+                   comment = c(ORCID = "0000-0002-8312-8450"))
+            )
+Description: This package provides the Molecular Signatures Database (MSigDB) in
+    a R accessible objects. Signatures are stored in GeneSet class objects form
+    the GSEABase package and the entire database is stored in a GeneSetCollection
+    object. These data are then hosted on the ExperimentHub. Data used in this 
+    package was obtained from the MSigDB of the Broad Institute.
 biocViews: ExperimentHub, Homo_sapiens_Data, Mus_musculus_Data
 License: CC BY 4.0
 Encoding: UTF-8
@@ -22,8 +37,7 @@ Imports:
     GSEABase,
     org.Mm.eg.db,
     org.Hs.eg.db,
-    AnnotationDbi,
-    biomaRt
+    AnnotationDbi
 Suggests: 
     singscore,
     enrichnets,

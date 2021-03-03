@@ -1,5 +1,5 @@
 meta = data.frame(
-  Title = c('msigdb.hs.SYM', 'msigdb.hs.EZID'),
+  Title = c('msigdb.v7.2.hs.SYM', 'msigdb.v7.2.hs.EZID', 'msigdb.v7.2.mm.SYM', 'msigdb.v7.2.mm.EZID'),
   Description = c(
     'Gene expression signatures (human) from the Molecular Signatures Database (v7.2) excluding KEGG gene sets. Signatures are represented using gene symbols.',
     'Gene expression signatures (human) from the Molecular Signatures Database (v7.2) excluding KEGG gene sets. Signatures are represented using Entrez IDs.',
@@ -24,10 +24,10 @@ meta = data.frame(
   RDataClass = 'GSEABase::GeneSetCollection',
   DispatchClass = 'Rda',
   RDataPath = c(
-    'msigdb/msigdb.hs.SYM.rda',
-    'msigdb/msigdb.hs.EZID.rda',
-    'msigdb/msigdb.mm.SYM.rda',
-    'msigdb/msigdb.mm.EZID.rda'
+    'msigdb/msigdb.v7.2.hs.SYM.rda',
+    'msigdb/msigdb.v7.2.hs.EZID.rda',
+    'msigdb/msigdb.v7.2.mm.SYM.rda',
+    'msigdb/msigdb.v7.2.mm.EZID.rda'
   )
 )
 
