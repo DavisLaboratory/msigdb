@@ -2,20 +2,34 @@
 % Please edit documentation in R/accessMSigDB.R
 \name{subsetCollection}
 \alias{subsetCollection}
-\title{Title}
+\title{Subset collections and sub-collections of MSigDB}
 \usage{
 subsetCollection(gsc, collection, subcollection = NULL)
 }
 \arguments{
 \item{gsc}{a GeneSetCollection object, storing GeneSets from the MSigDB}
 
-\item{collection}{}
+\item{collection}{a character, stating the collection(s) to be retrieved. The
+collection(s) must be one from the \code{\link[=listCollections]{listCollections()}} function.}
 
-\item{subcollection}{}
+\item{subcollection}{a character, stating the sub-collection(s) to be
+retrieved. The sub-collection(s) must be one from the
+\code{\link[=listSubCollections]{listSubCollections()}} function. If NULL, all sub-collections are
+retrieved.}
 }
 \value{
-
+a GeneSetCollection object, containing gene sets belonging to the
+queries collection and/or sub-collection.
 }
 \description{
-Title
+The molecular signatures database (MSigDB) is composed of collections and
+sub-collection. Many analyses (e.g. gene-set enrichment using limma::fry) are
+best carried out within specific collections rather than across the entire
+database of signatures. This function allows subsetting of MSigDB data
+objects within this package using collection and sub-collection types.
+}
+\examples{
+msigdb.hs.SYM <- msigdb.hs.SYM()
+subsetCollection(msigdb.hs.SYM, collection = "h")
+
 }
