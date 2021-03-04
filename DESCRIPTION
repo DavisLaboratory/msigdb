@@ -10,12 +10,10 @@ Authors@R: c(
             person(given = "Gordon K.",
                    family = "Smyth",
                    role = c("aut"),
-                   email = "smyth@wehi.edu.au",
                    comment = c(ORCID = "0000-0001-9221-2892")),
             person(given = "Alexandra",
                    family = "Garnham",
                    role = c("aut"),
-                   email = "garnham.a@wehi.edu.au",
                    comment = c(ORCID = "0000-0002-8312-8450"))
             )
 Description: This package provides the Molecular Signatures Database (MSigDB) in
