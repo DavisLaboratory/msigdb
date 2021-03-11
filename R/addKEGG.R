@@ -61,7 +61,7 @@ appendKEGG <- function(gsc) {
     
     #convert to symbols if needed
     if (is(idType, 'SymbolIdentifier')) {
-      gmap = AnnotationDbi::mapIds(org.Mm.eg.db,
+      gmap = AnnotationDbi::mapIds(org.Mm.eg.db::org.Mm.eg.db,
                                    keys = gmap,
                                    column = 'SYMBOL',
                                    keytype = 'ENTREZID')
