@@ -48,9 +48,6 @@ appendKEGG <- function(gsc) {
   #conversions for mouse
   if (org %in% 'mm') {
     #convert Hs to Mm (Entrez IDs)
-    allg = unique(unlist(GSEABase::geneIds(gsc_kegg)))
-    gmap = convertMouseGeneList(allg)
-    
     gsc_kegg = lapply(gsc_kegg, function(gs) {
       gids = geneIds(gs)
       gids = hcop$mouse_entrez_gene[hcop$human_entrez_gene %in% gids]
@@ -60,9 +57,10 @@ appendKEGG <- function(gsc) {
     })
     
     #convert to symbols if needed
+    allg = unique(unlist(lapply(gsc_kegg, GSEABase::geneIds)))
     if (is(idType, 'SymbolIdentifier')) {
       gmap = AnnotationDbi::mapIds(org.Mm.eg.db::org.Mm.eg.db,
-                                   keys = gmap,
+                                   keys = allg,
                                    column = 'SYMBOL',
                                    keytype = 'ENTREZID')
       gsc_kegg = lapply(gsc_kegg, function(gs) {

@@ -5,6 +5,7 @@ library(org.Mm.eg.db)
 library(GO.db)
 library(stringr)
 library(reshape2)
+library(limma)
 
 #file cache to download files to
 fpath = tempfile()
@@ -253,7 +254,7 @@ save(msigdb.v7.2.hs.EZID, file = 'msigdb.v7.2.hs.EZID.rda')
 hcop = createHCOPmap()
 usethis::use_data(hcop, internal = TRUE, overwrite = TRUE)
 
-msigdb.mm = createMmMsigdbData(msigdb.hs.EZID)
+msigdb.mm = createMmMsigdbData(msigdb.v7.2.hs.EZID)
 msigdb.v7.2.mm.SYM = msigdb.mm[[1]]
 msigdb.v7.2.mm.EZID = msigdb.mm[[2]]
 save(msigdb.v7.2.mm.SYM, file = 'msigdb.v7.2.mm.SYM.rda')
