@@ -243,17 +243,19 @@ createHCOPmap <- function() {
   return(hcop)
 }
 
-#----create human data----
+#----human-mouse homologs----
+hcop = createHCOPmap()
+usethis::use_data(hcop, internal = TRUE, overwrite = TRUE)
+
+#----Version 7.2----
+#create human data
 msigdb = getMsigdbData('7.2')
 msigdb.v7.2.hs.SYM = msigdb[[1]]
 msigdb.v7.2.hs.EZID = msigdb[[2]]
 save(msigdb.v7.2.hs.SYM, file = 'msigdb.v7.2.hs.SYM.rda')
 save(msigdb.v7.2.hs.EZID, file = 'msigdb.v7.2.hs.EZID.rda')
 
-#----create mouse data----
-hcop = createHCOPmap()
-usethis::use_data(hcop, internal = TRUE, overwrite = TRUE)
-
+#create mouse data
 msigdb.mm = createMmMsigdbData(msigdb.v7.2.hs.EZID)
 msigdb.v7.2.mm.SYM = msigdb.mm[[1]]
 msigdb.v7.2.mm.EZID = msigdb.mm[[2]]
