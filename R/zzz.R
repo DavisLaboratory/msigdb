@@ -69,9 +69,18 @@
 #' library(ExperimentHub)
 #' eh <- ExperimentHub()
 #' msigdb_datasets <- query(eh, "msigdb")
+#' 
+#' #load data using different approaches
+#' msigdb <- msigdb.v7.2.hs.SYM()
+#' msigdb <- eh[["EH5421"]]
+#' msigdb <- getMsigdb('hs', 'SYM')
 #'
 #' @name msigdb
 #' @aliases msigdb-package
+#' @aliases msigdb.v7.2.hs.SYM
+#' @aliases msigdb.v7.2.hs.EZID
+#' @aliases msigdb.v7.2.mm.SYM
+#' @aliases msigdb.v7.2.mm.EZID
 #'   
 NULL
 

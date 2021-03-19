@@ -24,7 +24,7 @@ appendKEGG <- function(gsc) {
   #get GeneSetCollection information
   idType = getMsigIdType(gsc)
   org = getMsigOrganism(gsc, idType)
-  id = ifelse(is(idType, 'SymbolIdentifier') & org %in% 'hs', 'symbols', 'entrez')
+  id = ifelse(methods::is(idType, 'SymbolIdentifier') & org %in% 'hs', 'symbols', 'entrez')
   
   #create URL
   fname = paste0('c2.cp.kegg.v', version, '.', id, '.gmt')
@@ -37,7 +37,7 @@ appendKEGG <- function(gsc) {
     collectionType = GSEABase::BroadCollection('c2', 'CP:KEGG')
   )
   
-  if (is(idType, 'EntrezIdentifier')) {
+  if (methods::is(idType, 'EntrezIdentifier')) {
     gsc_kegg = lapply(gsc_kegg, function(gs) {
       gs@geneIdType = idType
       return(gs)

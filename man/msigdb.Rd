@@ -3,6 +3,10 @@
 \name{msigdb}
 \alias{msigdb}
 \alias{msigdb-package}
+\alias{msigdb.v7.2.hs.SYM}
+\alias{msigdb.v7.2.hs.EZID}
+\alias{msigdb.v7.2.mm.SYM}
+\alias{msigdb.v7.2.mm.EZID}
 \title{The Molecular Signatures Database (MSigDB)}
 \format{
 A GeneSetCollection object composed of GeneSet objects representing
@@ -65,6 +69,11 @@ Liability and of Warranties -
 library(ExperimentHub)
 eh <- ExperimentHub()
 msigdb_datasets <- query(eh, "msigdb")
+
+#load data using different approaches
+msigdb <- msigdb.v7.2.hs.SYM()
+msigdb <- eh[["EH5421"]]
+msigdb <- getMsigdb('hs', 'SYM')
 
 }
 \references{
