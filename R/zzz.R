@@ -14,16 +14,16 @@
 #'
 #' The following datasets are included in this package:
 #'
-#' 1. msigdb.hs.SYM - The MSigDB v7.2 for human with gene expression signatures
+#' 1. msigdb.v7.2.hs.SYM - The MSigDB v7.2 for human with gene expression signatures
 #' defined using gene symbols.
 #'
-#' 2. msigdb.hs.EZID - The MSigDB v7.2 for human with gene expression signatures
+#' 2. msigdb.v7.2.hs.EZID - The MSigDB v7.2 for human with gene expression signatures
 #' defined using Entrez IDs.
 #'
-#' 3. msigdb.mm.SYM - The MSigDB v7.2 for mouse with gene expression signatures
+#' 3. msigdb.v7.2.mm.SYM - The MSigDB v7.2 for mouse with gene expression signatures
 #' defined using gene symbols.
 #'
-#' 4. msigdb.mm.EZID - The MSigDB v7.2 for mouse with gene expression signatures
+#' 4. msigdb.v7.2.mm.EZID - The MSigDB v7.2 for mouse with gene expression signatures
 #' defined using Entrez IDs.
 #'
 #' @format A GeneSetCollection object composed of GeneSet objects representing
@@ -79,8 +79,8 @@ NULL
   fl = system.file("extdata", "metadata.csv", package = pkgname)
   titles = utils::read.csv(fl, stringsAsFactors = FALSE)$Title
   
-  # ExperimentHub::createHubAccessors(pkgname, 'msigdb.hs.SYM')
-  # ExperimentHub::createHubAccessors(pkgname, 'msigdb.hs.EZID')
-  # ExperimentHub::createHubAccessors(pkgname, 'msigdb.mm.SYM')
-  # ExperimentHub::createHubAccessors(pkgname, 'msigdb.mm.EZID')
+  ExperimentHub::createHubAccessors(pkgname, 'msigdb.v7.2.hs.SYM')
+  ExperimentHub::createHubAccessors(pkgname, 'msigdb.v7.2.hs.EZID')
+  ExperimentHub::createHubAccessors(pkgname, 'msigdb.v7.2.mm.SYM')
+  ExperimentHub::createHubAccessors(pkgname, 'msigdb.v7.2.mm.EZID')
 }

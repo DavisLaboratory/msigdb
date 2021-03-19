@@ -25,13 +25,13 @@ functions provided in the package (see Details).
 
 The following datasets are included in this package:
 \enumerate{
-\item msigdb.hs.SYM - The MSigDB v7.2 for human with gene expression signatures
+\item msigdb.v7.2.hs.SYM - The MSigDB v7.2 for human with gene expression signatures
 defined using gene symbols.
-\item msigdb.hs.EZID - The MSigDB v7.2 for human with gene expression signatures
+\item msigdb.v7.2.hs.EZID - The MSigDB v7.2 for human with gene expression signatures
 defined using Entrez IDs.
-\item msigdb.mm.SYM - The MSigDB v7.2 for mouse with gene expression signatures
+\item msigdb.v7.2.mm.SYM - The MSigDB v7.2 for mouse with gene expression signatures
 defined using gene symbols.
-\item msigdb.mm.EZID - The MSigDB v7.2 for mouse with gene expression signatures
+\item msigdb.v7.2.mm.EZID - The MSigDB v7.2 for mouse with gene expression signatures
 defined using Entrez IDs.
 }
 
