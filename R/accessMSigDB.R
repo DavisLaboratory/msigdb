@@ -9,7 +9,7 @@
 #'   needs to be retrieved ("hs" for human and "mm" for mouse).
 #' @param id a character, representing the ID type to use ("SYM" for gene
 #'   symbols and "EZID" for Entrez IDs).
-#' @param version a numeric, stating the version of MSigDB to be retrieved
+#' @param version a character, stating the version of MSigDB to be retrieved
 #'   (should be >= 7.2).
 #'
 #' @return a GeneSetCollection, containing GeneSet objects from the specified
@@ -19,7 +19,7 @@
 #' @examples
 #' gsc = getMsigdb('hs', 'SYM')
 #' 
-getMsigdb <- function(org = c('hs', 'mm'), id = c('SYM', 'EZID'), version = c(7.2)) {
+getMsigdb <- function(org = c('hs', 'mm'), id = c('SYM', 'EZID'), version = c('7.2')) {
   org = match.arg(org)
   id = match.arg(id)
   version = match.arg(version)
