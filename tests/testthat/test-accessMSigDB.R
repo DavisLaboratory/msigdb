@@ -1,7 +1,7 @@
 library(GSEABase)
 
 test_that("list collections and sub-collections works", {
-  msigdb = msigdb.v7.2.hs.SYM
+  msigdb = msigdb.v7.2.hs.SYM()
   
   #test empty
   expect_length(listCollections(GeneSetCollection(list())), 0)
@@ -28,7 +28,7 @@ test_that("list collections and sub-collections works", {
 })
 
 test_that("subset collections works", {
-  msigdb = msigdb.v7.2.hs.SYM
+  msigdb = msigdb.v7.2.hs.SYM()
   
   #test empty
   expect_error(subsetCollection(GeneSetCollection(list()), 'c1'))

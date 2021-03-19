@@ -25,8 +25,8 @@ same organism, the organism with more than 50\% gene IDs present in the
 collection is returned. In any other case, the function returns an error.
 }
 \examples{
-msigdb.hs.SYM <- msigdb.hs.SYM()
-id <- getMsigIdType(msigdb.hs.SYM)
-getMsigOrganism(msigdb.hs.SYM(), id)
+msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
+id <- getMsigIdType(msigdb.v7.2.hs.SYM)
+getMsigOrganism(msigdb.v7.2.hs.SYM(), id)
 
 }

@@ -22,7 +22,7 @@ identifier type (either SymbolIdentifier or EntrezIdentifier) of the
 collection. It returns an error if the identifier is neither of these.
 }
 \examples{
-msigdb.hs.SYM <- msigdb.hs.SYM()
-id <- getMsigIdType(msigdb.hs.SYM)
+msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
+id <- getMsigIdType(msigdb.v7.2.hs.SYM)
 
 }

@@ -49,9 +49,9 @@ appendKEGG <- function(gsc) {
   if (org %in% 'mm') {
     #convert Hs to Mm (Entrez IDs)
     gsc_kegg = lapply(gsc_kegg, function(gs) {
-      gids = geneIds(gs)
+      gids = GSEABase::geneIds(gs)
       gids = hcop$mouse_entrez_gene[hcop$human_entrez_gene %in% gids]
-      gids = na.omit(unique(gids))
+      gids = stats::na.omit(unique(gids))
       GSEABase::geneIds(gs) = gids
       return(gs)
     })
@@ -64,7 +64,7 @@ appendKEGG <- function(gsc) {
                                    column = 'SYMBOL',
                                    keytype = 'ENTREZID')
       gsc_kegg = lapply(gsc_kegg, function(gs) {
-        GSEABase::geneIds(gs) = na.omit(unique(gmap[GSEABase::geneIds(gs)]))
+        GSEABase::geneIds(gs) = stats::na.omit(unique(gmap[GSEABase::geneIds(gs)]))
         gs@geneIdType = GSEABase::SymbolIdentifier()
         return(gs)
       })
@@ -105,13 +105,13 @@ appendKEGG <- function(gsc) {
 #' @export
 #'
 #' @examples
-#' msigdb.hs.SYM <- msigdb.hs.SYM()
-#' id <- getMsigIdType(msigdb.hs.SYM)
-#' getMsigOrganism(msigdb.hs.SYM(), id)
+#' msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
+#' id <- getMsigIdType(msigdb.v7.2.hs.SYM)
+#' getMsigOrganism(msigdb.v7.2.hs.SYM(), id)
 #' 
 getMsigOrganism <- function(gsc, idType) {
   #ensure ID types are the same in the collection
-  keytype = ifelse(is(idType, 'SymbolIdentifier'), 'SYMBOL', 'ENTREZID')
+  keytype = ifelse(methods::is(idType, 'SymbolIdentifier'), 'SYMBOL', 'ENTREZID')
   
   #check gene IDs against organism databases
   allg = unique(unlist(GSEABase::geneIds(gsc)))
@@ -147,8 +147,8 @@ getMsigOrganism <- function(gsc, idType) {
 #' @export
 #'
 #' @examples
-#' msigdb.hs.SYM <- msigdb.hs.SYM()
-#' id <- getMsigIdType(msigdb.hs.SYM)
+#' msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
+#' id <- getMsigIdType(msigdb.v7.2.hs.SYM)
 #' 
 getMsigIdType <- function(gsc) {
   idType = sapply(gsc, function(gs) class(GSEABase::geneIdType(gs)))

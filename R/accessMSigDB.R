@@ -86,7 +86,7 @@ subsetCollection <- function(gsc, collection, subcollection = NULL) {
 #' 
 listCollections <- function(gsc) {
   cat = unique(sapply(lapply(gsc, GSEABase::collectionType), GSEABase::bcCategory))
-  cat = as.character(na.omit(cat))
+  cat = as.character(stats::na.omit(cat))
   return(cat)
 }
 
@@ -108,7 +108,7 @@ listCollections <- function(gsc) {
 #' 
 listSubCollections <- function(gsc) {
   subcat = unique(sapply(lapply(gsc, GSEABase::collectionType), GSEABase::bcSubCategory))
-  subcat = as.character(na.omit(subcat))
+  subcat = as.character(stats::na.omit(subcat))
   return(subcat)
 }
 
