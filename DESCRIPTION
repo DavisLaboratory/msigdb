@@ -35,7 +35,9 @@ Imports:
     GSEABase,
     org.Mm.eg.db,
     org.Hs.eg.db,
-    AnnotationDbi
+    AnnotationDbi,
+    methods,
+    stats
 Suggests: 
     singscore,
     enrichnets,
