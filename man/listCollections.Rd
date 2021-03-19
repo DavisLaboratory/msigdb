@@ -18,7 +18,7 @@ This function lists all the collection types present in a MSigDB gene set
 collection. Descriptions of collections can be found at the MSigDB website.
 }
 \examples{
-msigdb.hs.SYM <- msigdb.hs.SYM()
-listCollections(msigdb.hs.SYM)
+msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
+listCollections(msigdb.v7.2.hs.SYM)
 
 }

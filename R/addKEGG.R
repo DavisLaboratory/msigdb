@@ -58,7 +58,7 @@ appendKEGG <- function(gsc) {
     
     #convert to symbols if needed
     allg = unique(unlist(lapply(gsc_kegg, GSEABase::geneIds)))
-    if (is(idType, 'SymbolIdentifier')) {
+    if (methods::is(idType, 'SymbolIdentifier')) {
       gmap = AnnotationDbi::mapIds(org.Mm.eg.db::org.Mm.eg.db,
                                    keys = allg,
                                    column = 'SYMBOL',

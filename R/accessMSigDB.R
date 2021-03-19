@@ -50,8 +50,8 @@ getMsigdb <- function(org = c('hs', 'mm'), id = c('SYM', 'EZID'), version = c('7
 #' @export
 #'
 #' @examples
-#' msigdb.hs.SYM <- msigdb.hs.SYM()
-#' subsetCollection(msigdb.hs.SYM, collection = "h")
+#' msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
+#' subsetCollection(msigdb.v7.2.hs.SYM, collection = "h")
 #' 
 subsetCollection <- function(gsc, collection, subcollection = NULL) {
   stopifnot(length(gsc) > 0)
@@ -81,8 +81,8 @@ subsetCollection <- function(gsc, collection, subcollection = NULL) {
 #' @export
 #'
 #' @examples
-#' msigdb.hs.SYM <- msigdb.hs.SYM()
-#' listCollections(msigdb.hs.SYM)
+#' msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
+#' listCollections(msigdb.v7.2.hs.SYM)
 #' 
 listCollections <- function(gsc) {
   cat = unique(sapply(lapply(gsc, GSEABase::collectionType), GSEABase::bcCategory))
@@ -103,8 +103,8 @@ listCollections <- function(gsc) {
 #' @export
 #'
 #' @examples
-#' msigdb.hs.SYM <- msigdb.hs.SYM()
-#' listSubCollections(msigdb.hs.SYM)
+#' msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
+#' listSubCollections(msigdb.v7.2.hs.SYM)
 #' 
 listSubCollections <- function(gsc) {
   subcat = unique(sapply(lapply(gsc, GSEABase::collectionType), GSEABase::bcSubCategory))
