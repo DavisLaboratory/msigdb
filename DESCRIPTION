@@ -20,7 +20,8 @@ Description: This package provides the Molecular Signatures Database (MSigDB) in
     a R accessible objects. Signatures are stored in GeneSet class objects form
     the GSEABase package and the entire database is stored in a GeneSetCollection
     object. These data are then hosted on the ExperimentHub. Data used in this 
-    package was obtained from the MSigDB of the Broad Institute.
+    package was obtained from the MSigDB of the Broad Institute. Metadata for each
+    gene set is stored along with the gene set in the GeneSet class object.
 biocViews: ExperimentHub, Homo_sapiens_Data, Mus_musculus_Data
 License: CC BY 4.0
 Encoding: UTF-8
