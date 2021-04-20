@@ -41,7 +41,7 @@ Imports:
     stats
 Suggests: 
     singscore,
-    enrichnets,
+    vissE,
     knitr,
     prettydoc,
     BiocStyle,
