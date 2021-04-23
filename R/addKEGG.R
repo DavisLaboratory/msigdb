@@ -56,6 +56,13 @@ appendKEGG <- function(gsc) {
       return(gs)
     })
     
+    #only retain genes with ids in the OrgDb
+    allg = unique(AnnotationDbi::keys(org.Mm.eg.db::org.Mm.eg.db, 'ENTREZID'))
+    gsc_kegg = lapply(gsc_kegg, function(gs) {
+      GSEABase::geneIds(gs) = intersect(GSEABase::geneIds(gs), allg)
+      return(gs)
+    })
+    
     #convert to symbols if needed
     allg = unique(unlist(lapply(gsc_kegg, GSEABase::geneIds)))
     if (methods::is(idType, 'SymbolIdentifier')) {
