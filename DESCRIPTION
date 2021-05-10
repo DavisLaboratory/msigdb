@@ -25,7 +25,6 @@ Description: This package provides the Molecular Signatures Database (MSigDB) in
 biocViews: ExperimentHub, Homo_sapiens_Data, Mus_musculus_Data
 License: CC BY 4.0
 Encoding: UTF-8
-LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Depends: 
