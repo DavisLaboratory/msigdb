@@ -19,6 +19,8 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
   comment = "#>"
 )
 ```
@@ -31,7 +33,7 @@ This package provides the gene sets in the MSigDB in the form of `GeneSet` objec
 
 This package can be installed using the code below:
 
-```{r install}
+```{r install, eval=FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
