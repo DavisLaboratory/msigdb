@@ -22,7 +22,10 @@ getMsigdbData <- function(version) {
   #----Symbols----
   #read genesets into a geneset collection
   msigdb = getBroadSets(msigpath, membersId = 'MEMBERS_SYMBOLIZED')
+  #remove KEGG (due to licenses)
   msigdb = GeneSetCollection(msigdb[!sapply(lapply(msigdb, collectionType), bcSubCategory) %in% 'CP:KEGG'])
+  #remove archived
+  msigdb = GeneSetCollection(msigdb[!sapply(lapply(msigdb, collectionType), bcCategory) %in% 'archived'])
   
   #gene set modifications
   msigdb = GeneSetCollection(lapply(msigdb, function(gs) {
@@ -59,7 +62,7 @@ getMsigdbData <- function(version) {
 }
 
 #function to convert the human MSigDB to mouse
-createMmMsigdbData <- function(hsdb) {
+createMmMsigdbData <- function(hsdb, old = FALSE) {
   #remove c1 and c5 genesets (these need to be replaced completely); except for HPO in c5
   rmgs = sapply(lapply(hsdb, collectionType), bcCategory) %in% c('c1', 'c5')
   rmgs[sapply(lapply(hsdb, collectionType), bcSubCategory) %in% 'HPO'] = FALSE
@@ -75,7 +78,7 @@ createMmMsigdbData <- function(hsdb) {
   })
   
   #create c5 category
-  c5 = createC5MmOrgDb()
+  c5 = createC5MmOrgDb(old)
   
   #create c1 category
   c1 = createC1MmNCBI()
@@ -169,51 +172,17 @@ createC1MmNCBI <- function() {
   return(c1)
 }
 
-createC1MmbiomaRt <- function() {
-  mousechr = c(as.character(1:19), 'MT', 'X', 'Y')
-  mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
-  
-  #retrieve band information
-  posgenes = select(
-    mouse,
-    keys = mousechr,
-    columns = c('chromosome_name', 'band', 'entrezgene_id'),
-    keytype = 'chromosome_name'
-  )
-  #discard sub-banding (decimals)
-  posgenes$band = gsub('\\..*', '', posgenes$band)
-  #discard annotations where gene id missing
-  posgenes = posgenes[posgenes[, 3] != '' & !is.na(posgenes[, 3]), ]
-  #combine chr and band to create locus
-  posgenes$band = paste(posgenes$chromosome_name, posgenes$band, sep = 'q')
-  posgenes$band = paste0('chr', posgenes$band)
-  #create geneset
-  posgenes = split(posgenes, posgenes$band)
-  c1 = lapply(posgenes, function (x) {
-    gs = GeneSet(
-      as.character(unique(x[, 3])),
-      setName = x$band[1],
-      collectionType = BroadCollection(category = 'c1'),
-      shortDescription = paste('Ensembl Genes in Cytogenetic Band', x$band[1]),
-      organism = 'Mus musculus'
-    )
-    geneIdType(gs) = EntrezIdentifier()
-    return(gs)
-  })
-  
-  return(c1)
-}
-
-createC5MmOrgDb <- function() {
+createC5MmOrgDb <- function(old) {
   gomap = as.list(org.Mm.egGO2ALLEGS)
   gomap = lapply(gomap, as.character)
   
   #create c5 genesets using OrgDb
   c5 = mapply(
     function(genes, gsname, gstype, gsdesc) {
+      go_prefix = ifelse(old, 'GO_', paste0('GO', gstype, '_'))
       gs = GeneSet(
         as.character(unique(genes)),
-        setName = paste0('GO_', gsub(' ', '_', str_to_upper(gsname))),
+        setName = paste0(go_prefix, gsub(' ', '_', str_to_upper(gsname))),
         collectionType = BroadCollection(category = 'c5', subCategory = paste0('GO:', gstype)),
         shortDescription = gsdesc,
         organism = 'Mus musculus'
@@ -256,11 +225,26 @@ save(msigdb.v7.2.hs.SYM, file = 'msigdb.v7.2.hs.SYM.rda')
 save(msigdb.v7.2.hs.EZID, file = 'msigdb.v7.2.hs.EZID.rda')
 
 #create mouse data
-msigdb.mm = createMmMsigdbData(msigdb.v7.2.hs.EZID)
+msigdb.mm = createMmMsigdbData(msigdb.v7.2.hs.EZID, old = TRUE)
 msigdb.v7.2.mm.SYM = msigdb.mm[[1]]
 msigdb.v7.2.mm.EZID = msigdb.mm[[2]]
 save(msigdb.v7.2.mm.SYM, file = 'msigdb.v7.2.mm.SYM.rda')
 save(msigdb.v7.2.mm.EZID, file = 'msigdb.v7.2.mm.EZID.rda')
+
+#----Version 7.4----
+#create human data
+msigdb = getMsigdbData('7.4')
+msigdb.v7.4.hs.SYM = msigdb[[1]]
+msigdb.v7.4.hs.EZID = msigdb[[2]]
+save(msigdb.v7.4.hs.SYM, file = 'msigdb.v7.4.hs.SYM.rda')
+save(msigdb.v7.4.hs.EZID, file = 'msigdb.v7.4.hs.EZID.rda')
+
+#create mouse data
+msigdb.mm = createMmMsigdbData(msigdb.v7.4.hs.EZID)
+msigdb.v7.4.mm.SYM = msigdb.mm[[1]]
+msigdb.v7.4.mm.EZID = msigdb.mm[[2]]
+save(msigdb.v7.4.mm.SYM, file = 'msigdb.v7.4.mm.SYM.rda')
+save(msigdb.v7.4.mm.EZID, file = 'msigdb.v7.4.mm.EZID.rda')
 
 
 
