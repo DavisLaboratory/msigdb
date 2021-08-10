@@ -6,17 +6,24 @@ library(reshape2)
 library(limma)
 library(org.Hs.eg.db)
 library(org.Mm.eg.db)
+library(foreach)
+library(doSNOW)
+library(iterators)
 
 #file cache to download files to
 bfc = BiocFileCache()
 
 #function to download any given version of MSigDB
-getMsigdbData <- function(version) {
+getMsigdbData <- function(msigdb_ver, old = FALSE) {
   msigdb_url = 'https://data.broadinstitute.org/gsea-msigdb/msigdb/release/___/msigdb_v___.xml'
-  msigdb_url = gsub('___', version, msigdb_url)
+  msigdb_url = gsub('___', msigdb_ver, msigdb_url)
   
   #download file
   msigpath = bfcrpath(bfc, msigdb_url)
+  
+  #replace C5:GO
+  c5 = createC5OrgDb(org.Hs.egGO2ALLEGS, 'Homo sapiens', old)
+  c5 = ez2symMsigdb(c5, org.Hs.eg.db)
   
   #----Symbols----
   #read genesets into a geneset collection
@@ -25,6 +32,9 @@ getMsigdbData <- function(version) {
   msigdb = GeneSetCollection(msigdb[!sapply(lapply(msigdb, collectionType), bcSubCategory) %in% 'CP:KEGG'])
   #remove archived
   msigdb = GeneSetCollection(msigdb[!sapply(lapply(msigdb, collectionType), bcCategory) %in% 'archived'])
+  #remove GO
+  gosubcat = c('GO:BP', 'GO:MF', 'GO:CC')
+  msigdb = GeneSetCollection(msigdb[!sapply(lapply(msigdb, collectionType), bcSubCategory) %in% gosubcat])
   
   #gene set modifications
   msigdb = GeneSetCollection(lapply(msigdb, function(gs) {
@@ -32,6 +42,9 @@ getMsigdbData <- function(version) {
     urls(gs) = msigdb_url
     return(gs)
   }))
+  
+  #add GO
+  msigdb = c(msigdb, c5$sym)
   
   #remove empty gene sets
   msigdb_lengths = sapply(lapply(msigdb, geneIds), length)
@@ -41,7 +54,13 @@ getMsigdbData <- function(version) {
   #----Entrez IDs----
   #read genesets into a geneset collection
   msigdb = getBroadSets(msigpath, membersId = 'MEMBERS_EZID')
+  #remove KEGG (due to licenses)
   msigdb = GeneSetCollection(msigdb[!sapply(lapply(msigdb, collectionType), bcSubCategory) %in% 'CP:KEGG'])
+  #remove archived
+  msigdb = GeneSetCollection(msigdb[!sapply(lapply(msigdb, collectionType), bcCategory) %in% 'archived'])
+  #remove GO
+  gosubcat = c('GO:BP', 'GO:MF', 'GO:CC')
+  msigdb = GeneSetCollection(msigdb[!sapply(lapply(msigdb, collectionType), bcSubCategory) %in% gosubcat])
   
   #gene set modifications
   msigdb = GeneSetCollection(lapply(msigdb, function(gs) {
@@ -51,6 +70,9 @@ getMsigdbData <- function(version) {
     urls(gs) = msigdb_url
     return(gs)
   }))
+  
+  #add GO
+  msigdb = c(msigdb, c5$ezid)
   
   #remove empty gene sets
   msigdb_lengths = sapply(lapply(msigdb, geneIds), length)
@@ -77,43 +99,42 @@ createMmMsigdbData <- function(hsdb, old = FALSE) {
   })
   
   #create c5 category
-  c5 = createC5MmOrgDb(old)
+  c5 = createC5OrgDb(org.Mm.egGO2ALLEGS, 'Mus musculus', old)
   
   #create c1 category
   c1 = createC1MmNCBI()
-  
-  ####
-  ## What should we do about the Human Phenotype Ontology?
-  ##  1. Replace with mammalian phenotype ontology
-  ##  2. Translate to mouse
-  ####
 
   #combine all and create Mm MSigDB
   mmdb = c(mmdb, c1, c5)
   mmdb = mmdb[order(sapply(mmdb, setName))]
+  mmdb.all = ez2symMsigdb(mmdb, org.Mm.eg.db)
   
+  return(mmdb.all)
+}
+
+ez2symMsigdb <- function(sigdb, orgdb) {
   #only retain genes with ids in the OrgDb
-  allg = unique(keys(org.Mm.eg.db, 'ENTREZID'))
-  mmdb = lapply(mmdb, function(gs) {
+  allg = unique(keys(orgdb, 'ENTREZID'))
+  sigdb = lapply(sigdb, function(gs) {
     geneIds(gs) = intersect(geneIds(gs), allg)
     return(gs)
   })
   
   #remove empty genesets
-  mmdb = mmdb[sapply(lapply(mmdb, geneIds), length) > 0]
-  mmdb = GeneSetCollection(mmdb)
+  sigdb = sigdb[sapply(lapply(sigdb, geneIds), length) > 0]
+  sigdb = GeneSetCollection(sigdb)
   
   #convert to symbols
-  gids = unique(unlist(geneIds(mmdb)))
-  gmap = mapIds(org.Mm.eg.db, keys = gids, column = 'SYMBOL', keytype = 'ENTREZID')
-  mmdb.sym = lapply(mmdb, function(gs) {
+  gids = unique(unlist(geneIds(sigdb)))
+  gmap = mapIds(orgdb, keys = gids, column = 'SYMBOL', keytype = 'ENTREZID')
+  sigdb.sym = lapply(sigdb, function(gs) {
     geneIds(gs) = na.omit(unique(gmap[geneIds(gs)]))
     gs@geneIdType = SymbolIdentifier()
     return(gs)
   })
-  mmdb.sym = GeneSetCollection(mmdb.sym)
+  sigdb.sym = GeneSetCollection(sigdb.sym)
   
-  return(list('sym' = mmdb.sym, 'ezid' = mmdb))
+  return(list('sym' = sigdb.sym, 'ezid' = sigdb))
 }
 
 #code adapted from Gordon K. Smyth and Alexandra Garnham (WEHI)
@@ -171,8 +192,8 @@ createC1MmNCBI <- function() {
   return(c1)
 }
 
-createC5MmOrgDb <- function(old) {
-  gomap = as.list(org.Mm.egGO2ALLEGS)
+createC5OrgDb <- function(db, org, old) {
+  gomap = as.list(db)
   gomap = lapply(gomap, as.character)
   
   #create c5 genesets using OrgDb
@@ -184,7 +205,7 @@ createC5MmOrgDb <- function(old) {
         setName = paste0(go_prefix, gsub(' ', '_', str_to_upper(gsname))),
         collectionType = BroadCollection(category = 'c5', subCategory = paste0('GO:', gstype)),
         shortDescription = gsdesc,
-        organism = 'Mus musculus'
+        organism = org
       )
       geneIdType(gs) = EntrezIdentifier()
       return(gs)
@@ -212,30 +233,18 @@ createHCOPmap <- function() {
 }
 
 computeMemMatrix <- function(msigGsc) {
-  x = geneIds(msigGsc)
-  vals = unique(unlist(x))
+  gsc = geneIds(msigGsc)
+  genes = unique(unlist(gsc))
   
-  # #create membership matrix for x - on desktop
-  # matx = Matrix::Matrix(
-  #   0,
-  #   nrow = length(x),
-  #   ncol = length(vals),
-  #   dimnames = list(names(x), vals),
-  #   sparse = TRUE
-  # )
-  # for (i in 1:length(x)) {
-  #   matx[i, ] = as.numeric(vals %in% x[[i]])
-  # }
+  #split into multiple lists to parallelise
+  parlist = split(gsc, ceiling(1:length(gsc) / 5e2))
   
-  #create membership matrix for x - on servers
-  matx = plyr::laply(x, function(gs) {
-    as.numeric(vals %in% gs)
-  })
-  matx = Matrix::Matrix(
-    matx,
-    dimnames = list(names(x), vals),
-    sparse = TRUE
-  )
+  #compute membership
+  matx = foreach(gslist = iter(parlist), .combine = 'rbind', .packages = 'Matrix') %dopar% {
+    x = sapply(gslist, function(gs) as.numeric(genes %in% gs))
+    Matrix::Matrix(t(x))
+  }
+  colnames(matx) = genes
   
   return(matx)
 }
@@ -293,11 +302,11 @@ computeIdf <- function(msigGsc) {
   return(idfs)
 }
 
-processMsigdbData <- function(version, old = FALSE) {
-  bname = paste0('msigdb.v', version)
+processMsigdbData <- function(msigdb_ver, old = FALSE) {
+  bname = paste0('msigdb.v', msigdb_ver)
   
   #download data
-  msigdb = getMsigdbData(version)
+  msigdb = getMsigdbData(msigdb_ver, old)
   
   #create human data
   msigdb.hs.SYM = msigdb[[1]]
@@ -332,9 +341,12 @@ hcop = createHCOPmap()
 usethis::use_data(hcop, internal = TRUE, overwrite = TRUE)
 
 #----prepare MSigDB for the package----
+cl = makeSOCKcluster(10, outfile = '')
+registerDoSNOW(cl)
+
 processMsigdbData('7.2', old = TRUE)
 processMsigdbData('7.3')
 processMsigdbData('7.4')
 
-
+stopCluster(cl)
 

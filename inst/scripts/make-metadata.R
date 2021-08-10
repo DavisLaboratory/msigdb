@@ -1,41 +1,58 @@
-meta = data.frame(
-  Title = c(
-    'msigdb.v7.2.hs.SYM',
-    'msigdb.v7.2.hs.EZID',
-    'msigdb.v7.2.mm.SYM',
-    'msigdb.v7.2.mm.EZID'
-  ),
-  Description = c(
-    'Gene expression signatures (human) from the Molecular Signatures Database (v7.2) excluding KEGG gene sets. Signatures are represented using gene symbols.',
-    'Gene expression signatures (human) from the Molecular Signatures Database (v7.2) excluding KEGG gene sets. Signatures are represented using Entrez IDs.',
-    'Gene expression signatures (mouse) from the Molecular Signatures Database (v7.2) excluding KEGG gene sets. Signatures are represented using gene symbols.',
-    'Gene expression signatures (mouse) from the Molecular Signatures Database (v7.2) excluding KEGG gene sets. Signatures are represented using Entrez IDs.'
-  ),
-  BiocVersion = 3.13,
-  Genome = NA,
-  SourceType = c('XML'),
-  SourceUrl = rep(
+#params
+org_name = c('hs' = 'Homo sapiens', 'mm' = 'Mus musculus')
+org_taxid = c('hs' = 9606, 'mm' = 10090)
+
+#build description for each file
+buildDescription <- function(ver, org, type) {
+  if (type %in% 'SYM') {
+    sprintf('Gene expression signatures (%s) from the Molecular Signatures Database (v%s) excluding KEGG gene sets. Signatures are represented using gene symbols.', org_name[org], ver)
+  } else if (type %in% 'EZID') {
+    sprintf('Gene expression signatures (%s) from the Molecular Signatures Database (v%s) excluding KEGG gene sets. Signatures are represented using Entrez IDs.', org_name[org], ver)
+  } else if (type %in% 'adj') {
+    sprintf('This data is for internal use within vissE. Adjacency matrix representation of gene expression signatures (%s) from the Molecular Signatures Database (v%s) excluding KEGG gene sets. Signatures are represented using Entrez IDs.', org_name[org], ver)
+  } else {
+    sprintf('This data is for internal use within vissE. Inverse document frequencies of words from gene expression signatures (%s) from the Molecular Signatures Database (v%s) excluding KEGG gene sets.', org_name[org], ver)
+  }
+}
+
+#retrieve file list that need to be updated
+allfiles = list.files(pattern = '.rds$')
+old_meta = read.csv('inst/extdata/metadata.csv')
+allfiles = setdiff(allfiles, basename(old_meta$RDataPath))
+
+if (length(allfiles) > 0) {
+  meta = plyr::ldply(allfiles, function(x) {
+    #create regex
+    fregex = 'msigdb.v([0-9]\\.[0-9])\\.([a-z]+)\\.(.*).rds$'
+    
+    #extract file info
+    ver = gsub(fregex, '\\1', x)
+    org = gsub(fregex, '\\2', x)
+    type = gsub(fregex, '\\3', x)
+    
+    #build record
     c(
-      'https://data.broadinstitute.org/gsea-msigdb/msigdb/release/7.2/msigdb_v7.2.xml'
-    ),
-    each = 4
-  ),
-  SourceVersion = rep(c('7.2'), each = 4),
-  Species = rep(c('Homo sapiens', 'Homo sapiens', 'Mus musculus', 'Mus musculus'), 1),
-  TaxonomyId = rep(c(9606, 9606, 10090, 10090), 1),
-  Coordinate_1_based = TRUE,
-  DataProvider = 'Broad Institute',
-  Maintainer = 'Dharmesh D. Bhuva <bhuva.d@wehi.edu.au>',
-  RDataClass = 'GSEABase::GeneSetCollection',
-  DispatchClass = 'Rda',
-  RDataPath = c(
-    'msigdb/msigdb.v7.2.hs.SYM.rda',
-    'msigdb/msigdb.v7.2.hs.EZID.rda',
-    'msigdb/msigdb.v7.2.mm.SYM.rda',
-    'msigdb/msigdb.v7.2.mm.EZID.rda'
-  )
-)
+      Title = gsub('.rds$', '', x),
+      Description = buildDescription(ver, org, type),
+      BiocVersion = as.numeric(as.character(BiocManager::version())) + 0.01,
+      Genome = NA,
+      SourceType = 'XML',
+      SourceUrl = sprintf('https://data.broadinstitute.org/gsea-msigdb/msigdb/release/%s/msigdb_v%s.xml', ver, ver),
+      SourceVersion = ver,
+      Species = as.character(org_name[org]),
+      TaxonomyId = as.numeric(org_taxid[org]),
+      Coordinate_1_based = TRUE,
+      DataProvider = 'Broad Institute',
+      Maintainer = 'Dharmesh D. Bhuva <bhuva.d@wehi.edu.au>',
+      RDataClass = 'GSEABase::GeneSetCollection',
+      DispatchClass = 'Rds',
+      RDataPath = file.path('msigdb', x)
+    )
+  })
+  
+  meta = rbind(meta, old_meta)
+  write.csv(meta, file = 'inst/extdata/metadata.csv', row.names = FALSE)
+}
 
-write.csv(meta, file = 'inst/extdata/metadata.csv', row.names = FALSE)
-
+#test metadata file
 ExperimentHubData::makeExperimentHubMetadata('../msigdb')
