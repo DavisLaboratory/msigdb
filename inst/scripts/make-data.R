@@ -1,15 +1,14 @@
 library(GSEABase)
 library(BiocFileCache)
-library(biomaRt)
-library(org.Mm.eg.db)
 library(GO.db)
 library(stringr)
 library(reshape2)
 library(limma)
+library(org.Hs.eg.db)
+library(org.Mm.eg.db)
 
 #file cache to download files to
-fpath = tempfile()
-bfc = BiocFileCache(fpath, ask = FALSE)
+bfc = BiocFileCache()
 
 #function to download any given version of MSigDB
 getMsigdbData <- function(version) {
@@ -212,39 +211,130 @@ createHCOPmap <- function() {
   return(hcop)
 }
 
+computeMemMatrix <- function(msigGsc) {
+  x = geneIds(msigGsc)
+  vals = unique(unlist(x))
+  
+  # #create membership matrix for x - on desktop
+  # matx = Matrix::Matrix(
+  #   0,
+  #   nrow = length(x),
+  #   ncol = length(vals),
+  #   dimnames = list(names(x), vals),
+  #   sparse = TRUE
+  # )
+  # for (i in 1:length(x)) {
+  #   matx[i, ] = as.numeric(vals %in% x[[i]])
+  # }
+  
+  #create membership matrix for x - on servers
+  matx = plyr::laply(x, function(gs) {
+    as.numeric(vals %in% gs)
+  })
+  matx = Matrix::Matrix(
+    matx,
+    dimnames = list(names(x), vals),
+    sparse = TRUE
+  )
+  
+  return(matx)
+}
+
+computeIdf <- function(msigGsc) {
+  rmwords = vissE:::getMsigBlacklist()
+  
+  signames = sapply(msigGsc, GSEABase::setName)
+  sigdesc_s = sapply(msigGsc, GSEABase::description)
+  docs = list('Name' = signames, 'Short' = sigdesc_s)
+  docs = lapply(docs, unique)
+  
+  #text-mining
+  docs = lapply(docs, function(d) tm::Corpus(tm::VectorSource(d)))
+  toSpace <- tm::content_transformer(function (x, pattern) gsub(pattern, " ", x))
+  docs = lapply(docs, function(d) tm::tm_map(d, toSpace, "_"))
+  docs = lapply(docs, function(d) tm::tm_map(d, toSpace, "/"))
+  docs = lapply(docs, function(d) tm::tm_map(d, toSpace, "@"))
+  docs = lapply(docs, function(d) tm::tm_map(d, toSpace, "\\|"))
+  docs = lapply(docs, function(d) tm::tm_map(d, toSpace, "\\("))
+  docs = lapply(docs, function(d) tm::tm_map(d, toSpace, "\\)"))
+  
+  # Convert the text to lower case
+  docs = lapply(docs, function(d) tm::tm_map(d, tm::content_transformer(tolower)))
+  # Remove numbers
+  # docs = lapply(docs, function(d) tm_map(d, removeNumbers))
+  # Remove english common stopwords
+  docs = lapply(docs, function(d) tm::tm_map(d, tm::removeWords, tm::stopwords('english')))
+  # Remove your own stop word
+  # specify your stopwords as a character vector
+  docs = lapply(docs, function(d) tm::tm_map(d, tm::removeWords, rmwords))
+  # Remove punctuations
+  docs = lapply(docs, function(d) tm::tm_map(d, tm::removePunctuation))
+  # Eliminate extra white spaces
+  docs = lapply(docs, function(d) tm::tm_map(d, tm::stripWhitespace))
+  # Remove full numbers
+  docs = lapply(docs, function(d) tm::tm_filter(d, function(x) !grepl('\\b[0-9]+\\b', x)))
+  # Text lemmatisation
+  docs = lapply(docs, function(d) tm::tm_map(d, textstem::lemmatize_strings))
+  
+  #compute idf
+  dtms = lapply(docs, tm::TermDocumentMatrix)
+  dtms = lapply(dtms, as.matrix)
+  
+  #compute IDF
+  idfs = lapply(dtms, function(x) {
+    idf = log(ncol(x) / rowSums(x != 0))
+    return(idf)
+  })
+  #sort names to quicken searches
+  idfs = lapply(idfs, function(x) {
+    x[sort(names(x))]
+  })
+  
+  return(idfs)
+}
+
+processMsigdbData <- function(version, old = FALSE) {
+  bname = paste0('msigdb.v', version)
+  
+  #download data
+  msigdb = getMsigdbData(version)
+  
+  #create human data
+  msigdb.hs.SYM = msigdb[[1]]
+  msigdb.hs.EZID = msigdb[[2]]
+  saveRDS(msigdb.hs.SYM, file = paste0(bname, '.hs.SYM.rds'))
+  saveRDS(msigdb.hs.EZID, file = paste0(bname, '.hs.EZID.rds'))
+  
+  #create mouse data
+  msigdb.mm = createMmMsigdbData(msigdb.hs.EZID, old)
+  msigdb.mm.SYM = msigdb.mm[[1]]
+  msigdb.mm.EZID = msigdb.mm[[2]]
+  saveRDS(msigdb.mm.SYM, file = paste0(bname, '.mm.SYM.rds'))
+  saveRDS(msigdb.mm.EZID, file = paste0(bname, '.mm.EZID.rds'))
+  
+  #create binary matrices
+  mem_mat_hs = computeMemMatrix(msigdb.hs.EZID)
+  mem_mat_mm = computeMemMatrix(msigdb.mm.EZID)
+  attr(mem_mat_hs, 'Symbols') = unique(unlist(geneIds(msigdb.hs.SYM)))
+  attr(mem_mat_mm, 'Symbols') = unique(unlist(geneIds(msigdb.mm.SYM)))
+  saveRDS(mem_mat_hs, file = paste0(bname, '.hs.adj.rds'))
+  saveRDS(mem_mat_mm, file = paste0(bname, '.mm.adj.rds'))
+  
+  #compute IDF
+  idf_hs = computeIdf(msigdb.hs.EZID)
+  idf_mm = computeIdf(msigdb.mm.EZID)
+  saveRDS(idf_hs, file = paste0(bname, '.hs.idf.rds'))
+  saveRDS(idf_mm, file = paste0(bname, '.mm.idf.rds'))
+}
+
 #----human-mouse homologs----
 hcop = createHCOPmap()
 usethis::use_data(hcop, internal = TRUE, overwrite = TRUE)
 
-#----Version 7.2----
-#create human data
-msigdb = getMsigdbData('7.2')
-msigdb.v7.2.hs.SYM = msigdb[[1]]
-msigdb.v7.2.hs.EZID = msigdb[[2]]
-save(msigdb.v7.2.hs.SYM, file = 'msigdb.v7.2.hs.SYM.rda')
-save(msigdb.v7.2.hs.EZID, file = 'msigdb.v7.2.hs.EZID.rda')
-
-#create mouse data
-msigdb.mm = createMmMsigdbData(msigdb.v7.2.hs.EZID, old = TRUE)
-msigdb.v7.2.mm.SYM = msigdb.mm[[1]]
-msigdb.v7.2.mm.EZID = msigdb.mm[[2]]
-save(msigdb.v7.2.mm.SYM, file = 'msigdb.v7.2.mm.SYM.rda')
-save(msigdb.v7.2.mm.EZID, file = 'msigdb.v7.2.mm.EZID.rda')
-
-#----Version 7.4----
-#create human data
-msigdb = getMsigdbData('7.4')
-msigdb.v7.4.hs.SYM = msigdb[[1]]
-msigdb.v7.4.hs.EZID = msigdb[[2]]
-save(msigdb.v7.4.hs.SYM, file = 'msigdb.v7.4.hs.SYM.rda')
-save(msigdb.v7.4.hs.EZID, file = 'msigdb.v7.4.hs.EZID.rda')
-
-#create mouse data
-msigdb.mm = createMmMsigdbData(msigdb.v7.4.hs.EZID)
-msigdb.v7.4.mm.SYM = msigdb.mm[[1]]
-msigdb.v7.4.mm.EZID = msigdb.mm[[2]]
-save(msigdb.v7.4.mm.SYM, file = 'msigdb.v7.4.mm.SYM.rda')
-save(msigdb.v7.4.mm.EZID, file = 'msigdb.v7.4.mm.EZID.rda')
+#----prepare MSigDB for the package----
+processMsigdbData('7.2', old = TRUE)
+processMsigdbData('7.3')
+processMsigdbData('7.4')
 
 
 
