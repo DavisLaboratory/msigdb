@@ -8,8 +8,6 @@ buildDescription <- function(ver, org, type) {
     sprintf('Gene expression signatures (%s) from the Molecular Signatures Database (v%s) excluding KEGG gene sets. Signatures are represented using gene symbols.', org_name[org], ver)
   } else if (type %in% 'EZID') {
     sprintf('Gene expression signatures (%s) from the Molecular Signatures Database (v%s) excluding KEGG gene sets. Signatures are represented using Entrez IDs.', org_name[org], ver)
-  } else if (type %in% 'imat') {
-    sprintf('This data is for internal use within vissE. Incidence matrix representation of gene expression signatures (%s) from the Molecular Signatures Database (v%s) excluding KEGG gene sets. Signatures are represented using Entrez IDs.', org_name[org], ver)
   } else {
     sprintf('This data is for internal use within vissE. Inverse document frequencies of words from gene expression signatures (%s) from the Molecular Signatures Database (v%s) excluding KEGG gene sets.', org_name[org], ver)
   }

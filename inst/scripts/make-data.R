@@ -40,6 +40,7 @@ getMsigdbData <- function(msigdb_ver, old = FALSE) {
   msigdb = GeneSetCollection(lapply(msigdb, function(gs) {
     #add URLs
     urls(gs) = msigdb_url
+    setVersion(gs) = new('Versions', msigdb_ver)
     return(gs)
   }))
   
@@ -68,6 +69,7 @@ getMsigdbData <- function(msigdb_ver, old = FALSE) {
     gs@geneIdType = EntrezIdentifier()
     #add URLs
     urls(gs) = msigdb_url
+    setVersion(gs) = new('Versions', msigdb_ver)
     return(gs)
   }))
   
@@ -232,23 +234,6 @@ createHCOPmap <- function() {
   return(hcop)
 }
 
-computeMemMatrix <- function(msigGsc) {
-  gsc = geneIds(msigGsc)
-  genes = unique(unlist(gsc))
-  
-  #split into multiple lists to parallelise
-  parlist = split(gsc, ceiling(1:length(gsc) / 5e2))
-  
-  #compute membership
-  matx = foreach(gslist = iter(parlist), .combine = 'rbind', .packages = 'Matrix') %dopar% {
-    x = sapply(gslist, function(gs) as.numeric(genes %in% gs))
-    Matrix::Matrix(t(x))
-  }
-  colnames(matx) = genes
-  
-  return(matx)
-}
-
 computeIdf <- function(msigGsc) {
   rmwords = vissE:::getMsigBlacklist()
   
@@ -320,14 +305,6 @@ processMsigdbData <- function(msigdb_ver, old = FALSE) {
   msigdb.mm.EZID = msigdb.mm[[2]]
   saveRDS(msigdb.mm.SYM, file = paste0(bname, '.mm.SYM.rds'))
   saveRDS(msigdb.mm.EZID, file = paste0(bname, '.mm.EZID.rds'))
-  
-  #create binary matrices
-  mem_mat_hs = computeMemMatrix(msigdb.hs.EZID)
-  mem_mat_mm = computeMemMatrix(msigdb.mm.EZID)
-  attr(mem_mat_hs, 'Symbols') = unique(unlist(geneIds(msigdb.hs.SYM)))
-  attr(mem_mat_mm, 'Symbols') = unique(unlist(geneIds(msigdb.mm.SYM)))
-  saveRDS(mem_mat_hs, file = paste0(bname, '.hs.imat.rds'))
-  saveRDS(mem_mat_mm, file = paste0(bname, '.mm.imat.rds'))
   
   #compute IDF
   idf_hs = computeIdf(msigdb.hs.EZID)
