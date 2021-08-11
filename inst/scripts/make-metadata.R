@@ -50,7 +50,7 @@ if (length(allfiles) > 0) {
     )
   })
   
-  meta = rbind(meta, old_meta)
+  meta = rbind(old_meta, meta)
   write.csv(meta, file = 'inst/extdata/metadata.csv', row.names = FALSE)
 }
 
