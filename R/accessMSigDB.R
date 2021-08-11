@@ -10,7 +10,7 @@
 #' @param id a character, representing the ID type to use ("SYM" for gene
 #'   symbols and "EZID" for Entrez IDs).
 #' @param version a character, stating the version of MSigDB to be retrieved
-#'   (should be >= 7.2).
+#'   (should be >= 7.2). See `getVersions()`.
 #'
 #' @return a GeneSetCollection, containing GeneSet objects from the specified
 #'   version of the molecular signatures database (MSigDB).
@@ -19,10 +19,11 @@
 #' @examples
 #' gsc = getMsigdb('hs', 'SYM')
 #' 
-getMsigdb <- function(org = c('hs', 'mm'), id = c('SYM', 'EZID'), version = c('7.2')) {
+getMsigdb <- function(org = c('hs', 'mm'), id = c('SYM', 'EZID'), version = getVersions()) {
   org = match.arg(org)
   id = match.arg(id)
   version = match.arg(version)
+  checkVersion(version)
   
   obj_name = paste0('msigdb.v', version, '.', org, '.', id)
   gsc = do.call(obj_name, list())
@@ -112,3 +113,6 @@ listSubCollections <- function(gsc) {
   return(subcat)
 }
 
+checkVersion <- function(version) {
+  stopifnot(version %in% getVersions())
+}
