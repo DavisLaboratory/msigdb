@@ -326,8 +326,8 @@ processMsigdbData <- function(msigdb_ver, old = FALSE) {
   mem_mat_mm = computeMemMatrix(msigdb.mm.EZID)
   attr(mem_mat_hs, 'Symbols') = unique(unlist(geneIds(msigdb.hs.SYM)))
   attr(mem_mat_mm, 'Symbols') = unique(unlist(geneIds(msigdb.mm.SYM)))
-  saveRDS(mem_mat_hs, file = paste0(bname, '.hs.adj.rds'))
-  saveRDS(mem_mat_mm, file = paste0(bname, '.mm.adj.rds'))
+  saveRDS(mem_mat_hs, file = paste0(bname, '.hs.imat.rds'))
+  saveRDS(mem_mat_mm, file = paste0(bname, '.mm.imat.rds'))
   
   #compute IDF
   idf_hs = computeIdf(msigdb.hs.EZID)
