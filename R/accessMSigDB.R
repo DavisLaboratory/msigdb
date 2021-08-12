@@ -51,13 +51,14 @@ getMSigdbObject <- function(obj_name) {
 #' database of signatures. This function allows subsetting of MSigDB data
 #' objects within this package using collection and sub-collection types.
 #'
-#' @param gsc a GeneSetCollection object, storing GeneSets from the MSigDB
 #' @param collection a character, stating the collection(s) to be retrieved. The
 #'   collection(s) must be one from the [listCollections()] function.
 #' @param subcollection a character, stating the sub-collection(s) to be
 #'   retrieved. The sub-collection(s) must be one from the
 #'   [listSubCollections()] function. If NULL, all sub-collections are
 #'   retrieved.
+#' 
+#' @inheritParams getMsigdb
 #'
 #' @return a GeneSetCollection object, containing gene sets belonging to the
 #'   queries collection and/or sub-collection.
@@ -88,7 +89,7 @@ subsetCollection <- function(gsc, collection, subcollection = NULL) {
 #' This function lists all the collection types present in a MSigDB gene set
 #' collection. Descriptions of collections can be found at the MSigDB website.
 #'
-#' @inheritParams subsetCollection
+#' @inheritParams getMsigdb
 #'
 #' @return a character vector, containing character codes for all collections
 #'   present in the GeneSetCollection object.
@@ -110,7 +111,7 @@ listCollections <- function(gsc) {
 #' collection. Descriptions of sub-collections can be found at the MSigDB
 #' website.
 #'
-#' @inheritParams subsetCollection
+#' @inheritParams getMsigdb
 #'
 #' @return a character vector, containing character codes for all
 #'   sub-collections present in the GeneSetCollection object.

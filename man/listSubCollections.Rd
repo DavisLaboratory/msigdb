@@ -6,9 +6,6 @@
 \usage{
 listSubCollections(gsc)
 }
-\arguments{
-\item{gsc}{a GeneSetCollection object, storing GeneSets from the MSigDB}
-}
 \value{
 a character vector, containing character codes for all
 sub-collections present in the GeneSetCollection object.

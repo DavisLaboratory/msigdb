@@ -7,8 +7,6 @@
 subsetCollection(gsc, collection, subcollection = NULL)
 }
 \arguments{
-\item{gsc}{a GeneSetCollection object, storing GeneSets from the MSigDB}
-
 \item{collection}{a character, stating the collection(s) to be retrieved. The
 collection(s) must be one from the \code{\link[=listCollections]{listCollections()}} function.}
 
