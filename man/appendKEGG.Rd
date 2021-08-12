@@ -4,10 +4,11 @@
 \alias{appendKEGG}
 \title{Add KEGG pathway derived gene sets to a collection}
 \usage{
-appendKEGG(gsc)
+appendKEGG(gsc, version = getMsigdbVersions())
 }
 \arguments{
-\item{gsc}{a GeneSetCollection object, storing GeneSets from the MSigDB}
+\item{version}{a character, stating the version of MSigDB to be retrieved
+(should be >= 7.2). See \code{getMsigdbVersions()}.}
 }
 \value{
 a GeneSetCollection object, storing gene sets from the MSigDB
@@ -17,13 +18,4 @@ including the downloaded KEGG gene sets.
 This function adds gene sets derived from KEGG pathways to the MSigDB data
 stored in this package. Direct user-end download from the MSigDB is required
 to ensure KEGG licenses are adhered to.
-}
-\examples{
-library(GSEABase)
-
-gs1 <- GeneSet(setName = 'gs1', geneIdType = SymbolIdentifier())
-gsc <- GeneSetCollection(gs1)
-gsc <- appendKEGG(gsc)
-gsc
-
 }

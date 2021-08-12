@@ -5,6 +5,7 @@
 #' to ensure KEGG licenses are adhered to.
 #'
 #' @inheritParams subsetCollection
+#' @inheritParams getMsigdb
 #' 
 #' @return a GeneSetCollection object, storing gene sets from the MSigDB
 #'   including the downloaded KEGG gene sets.
@@ -15,11 +16,12 @@
 #'
 #' gs1 <- GeneSet(setName = 'gs1', geneIdType = SymbolIdentifier())
 #' gsc <- GeneSetCollection(gs1)
-#' gsc <- appendKEGG(gsc)
+#' gsc <- appendKEGG(gsc, version = '7.4)
 #' gsc
 #' 
-appendKEGG <- function(gsc) {
-  version = '7.2'
+appendKEGG <- function(gsc, version = getMsigdbVersions()) {
+  version = match.arg(version)
+  checkMsigdbVersion(version)
   
   #get GeneSetCollection information
   idType = getMsigIdType(gsc)
