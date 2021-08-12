@@ -37,7 +37,8 @@ Imports:
     org.Hs.eg.db,
     AnnotationDbi,
     methods,
-    stats
+    stats,
+    AnnotationHub
 Suggests: 
     singscore,
     vissE,

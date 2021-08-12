@@ -3,10 +3,6 @@
 \name{msigdb}
 \alias{msigdb}
 \alias{msigdb-package}
-\alias{msigdb.v7.2.hs.SYM}
-\alias{msigdb.v7.2.hs.EZID}
-\alias{msigdb.v7.2.mm.SYM}
-\alias{msigdb.v7.2.mm.EZID}
 \title{The Molecular Signatures Database (MSigDB)}
 \format{
 A GeneSetCollection object composed of GeneSet objects representing
@@ -15,29 +11,22 @@ database (MSigDB).
 }
 \description{
 This ExperimentHub package contains gene expression signatures from the
-molecular signatures database (MSigDB). The molecular signatures database
-(MSigDB) is a collection of over 25000 gene expression signatures that are
-grouped into collections and sub-collections. Metadata associated with
-signatures is collected and stored in the data in this package.
+molecular signatures database (MSigDB) for versions >= 7.2. Collections for
+human and mouse are currently supported in this package. The mouse version
+was developed in conjunction with Gordon K Smyth and Alexandra Garnham, and
+reflects the collections available from WEHI.
 }
 \details{
-All data in this package are stored in a GeneSetCollection objects from the
-GSEABase package. Each gene expression signature in the collection is stored
-in a GeneSet object from the GSEABase package. This data does not include
-KEGG gene sets due to copyrights. Users can download this data using
-functions provided in the package (see Details).
+The molecular signatures database (MSigDB) is a collection of over 25000 gene
+expression signatures that are grouped into collections and sub-collections.
+Metadata associated with signatures is collected and stored in the data in
+this package.
 
-The following datasets are included in this package:
-\enumerate{
-\item msigdb.v7.2.hs.SYM - The MSigDB v7.2 for human with gene expression signatures
-defined using gene symbols.
-\item msigdb.v7.2.hs.EZID - The MSigDB v7.2 for human with gene expression signatures
-defined using Entrez IDs.
-\item msigdb.v7.2.mm.SYM - The MSigDB v7.2 for mouse with gene expression signatures
-defined using gene symbols.
-\item msigdb.v7.2.mm.EZID - The MSigDB v7.2 for mouse with gene expression signatures
-defined using Entrez IDs.
-}
+All data in this package are stored in a \code{GeneSetCollection} object from the
+\code{GSEABase} package. Each gene expression signature in the collection is
+stored in a \code{GeneSet} object from the \code{GSEABase} package. This data does not
+include KEGG gene sets due to copyrights. Users can download this data using
+functions provided in the package (see Details).
 
 Data in this package does not include gene sets from the KEGG
 database due to licensing limitations. Users can use the \code{\link[=appendKEGG]{appendKEGG()}}
@@ -48,9 +37,9 @@ The mouse MSigDB is created by translating human genes to mouse homologs
 using annotations from the Mouse Genome Informatics (MGI) database for most
 gene sets. Gene sets in the collections c1 (positional gene sets) and c5
 (ontologies) are recreated as information in these gene sets is organism
-specific. Positional gene sets are created using Ensembl 102 annotations
-from biomaRt. Gene sets representing gene ontologies are derived from the
-mouse R/Bioconductor organism database (org.Mm.eg.db).
+specific. Positional gene sets are created using gene information from
+NCBI. Gene sets representing gene ontologies are derived from the mouse
+R/Bioconductor organism database (org.Mm.eg.db).
 }
 \section{Acknowledgement}{
  MSigDB is protected by copyright © 2004-2020 Broad
@@ -71,9 +60,8 @@ eh <- ExperimentHub()
 msigdb_datasets <- query(eh, "msigdb")
 
 #load data using different approaches
-msigdb <- msigdb.v7.2.hs.SYM()
-msigdb <- eh[["EH5421"]]
 msigdb <- getMsigdb('hs', 'SYM')
+msigdb <- eh[["EH5421"]]
 
 }
 \references{

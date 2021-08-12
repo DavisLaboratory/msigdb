@@ -29,7 +29,7 @@ database of signatures. This function allows subsetting of MSigDB data
 objects within this package using collection and sub-collection types.
 }
 \examples{
-msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
-subsetCollection(msigdb.v7.2.hs.SYM, collection = "h")
+gsc = getMsigdb('hs', 'SYM')
+subsetCollection(gsc, collection = "h")
 
 }

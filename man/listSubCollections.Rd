@@ -19,7 +19,7 @@ collection. Descriptions of sub-collections can be found at the MSigDB
 website.
 }
 \examples{
-msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
-listSubCollections(msigdb.v7.2.hs.SYM)
+gsc = getMsigdb('hs', 'SYM')
+listSubCollections(gsc)
 
 }

@@ -4,7 +4,11 @@
 \alias{getMsigdb}
 \title{Retrieve MSigDB data hosted on the hub}
 \usage{
-getMsigdb(org = c("hs", "mm"), id = c("SYM", "EZID"), version = c("7.2"))
+getMsigdb(
+  org = c("hs", "mm"),
+  id = c("SYM", "EZID"),
+  version = getMsigdbVersions()
+)
 }
 \arguments{
 \item{org}{a character, representing the organism whose signature database
@@ -14,7 +18,7 @@ needs to be retrieved ("hs" for human and "mm" for mouse).}
 symbols and "EZID" for Entrez IDs).}
 
 \item{version}{a character, stating the version of MSigDB to be retrieved
-(should be >= 7.2).}
+(should be >= 7.2). See \code{getMsigdbVersions()}.}
 }
 \value{
 a GeneSetCollection, containing GeneSet objects from the specified

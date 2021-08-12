@@ -1,30 +1,21 @@
 #' The Molecular Signatures Database (MSigDB)
 #'
 #' This ExperimentHub package contains gene expression signatures from the
-#' molecular signatures database (MSigDB). The molecular signatures database
-#' (MSigDB) is a collection of over 25000 gene expression signatures that are
-#' grouped into collections and sub-collections. Metadata associated with
-#' signatures is collected and stored in the data in this package.
+#' molecular signatures database (MSigDB) for versions >= 7.2. Collections for
+#' human and mouse are currently supported in this package. The mouse version
+#' was developed in conjunction with Gordon K Smyth and Alexandra Garnham, and
+#' reflects the collections available from WEHI.
 #'
-#' All data in this package are stored in a GeneSetCollection objects from the
-#' GSEABase package. Each gene expression signature in the collection is stored
-#' in a GeneSet object from the GSEABase package. This data does not include
-#' KEGG gene sets due to copyrights. Users can download this data using
+#' The molecular signatures database (MSigDB) is a collection of over 25000 gene
+#' expression signatures that are grouped into collections and sub-collections.
+#' Metadata associated with signatures is collected and stored in the data in
+#' this package.
+#'
+#' All data in this package are stored in a `GeneSetCollection` object from the
+#' `GSEABase` package. Each gene expression signature in the collection is
+#' stored in a `GeneSet` object from the `GSEABase` package. This data does not
+#' include KEGG gene sets due to copyrights. Users can download this data using
 #' functions provided in the package (see Details).
-#'
-#' The following datasets are included in this package:
-#'
-#' 1. msigdb.v7.2.hs.SYM - The MSigDB v7.2 for human with gene expression signatures
-#' defined using gene symbols.
-#'
-#' 2. msigdb.v7.2.hs.EZID - The MSigDB v7.2 for human with gene expression signatures
-#' defined using Entrez IDs.
-#'
-#' 3. msigdb.v7.2.mm.SYM - The MSigDB v7.2 for mouse with gene expression signatures
-#' defined using gene symbols.
-#'
-#' 4. msigdb.v7.2.mm.EZID - The MSigDB v7.2 for mouse with gene expression signatures
-#' defined using Entrez IDs.
 #'
 #' @format A GeneSetCollection object composed of GeneSet objects representing
 #'   all non-empty gene expression signatures from the molecular signatures
@@ -38,9 +29,9 @@
 #'   using annotations from the Mouse Genome Informatics (MGI) database for most
 #'   gene sets. Gene sets in the collections c1 (positional gene sets) and c5
 #'   (ontologies) are recreated as information in these gene sets is organism
-#'   specific. Positional gene sets are created using Ensembl 102 annotations
-#'   from biomaRt. Gene sets representing gene ontologies are derived from the
-#'   mouse R/Bioconductor organism database (org.Mm.eg.db).
+#'   specific. Positional gene sets are created using gene information from
+#'   NCBI. Gene sets representing gene ontologies are derived from the mouse
+#'   R/Bioconductor organism database (org.Mm.eg.db).
 #' @references Subramanian, A., Tamayo, P., Mootha, V. K., Mukherjee, S., Ebert,
 #'   B. L., Gillette, M. A., ... & Mesirov, J. P. (2005). Gene set enrichment
 #'   analysis: a knowledge-based approach for interpreting genome-wide
@@ -69,31 +60,27 @@
 #' library(ExperimentHub)
 #' eh <- ExperimentHub()
 #' msigdb_datasets <- query(eh, "msigdb")
-#' 
+#'
 #' #load data using different approaches
-#' msigdb <- msigdb.v7.2.hs.SYM()
-#' msigdb <- eh[["EH5421"]]
 #' msigdb <- getMsigdb('hs', 'SYM')
+#' msigdb <- eh[["EH5421"]]
 #'
 #' @name msigdb
 #' @aliases msigdb-package
-#' @aliases msigdb.v7.2.hs.SYM
-#' @aliases msigdb.v7.2.hs.EZID
-#' @aliases msigdb.v7.2.mm.SYM
-#' @aliases msigdb.v7.2.mm.EZID
 #'   
 NULL
 
-getVersions <- function() {
-  c('7.4', '7.3', '7.2')
-}
-
-.onLoad <- function(libname, pkgname) {
-  fl = system.file("extdata", "metadata.csv", package = pkgname)
-  titles = utils::read.csv(fl, stringsAsFactors = FALSE)$Title
+#' Get MSigDB versions included in the msigdb package
+#'
+#' @return a character, stating the versions available in this package.
+#' @export
+#'
+#' @examples
+#' getMsigdbVersions()
+#' 
+getMsigdbVersions <- function() {
+  fl = system.file("extdata", "metadata.csv", package = 'msigdb')
+  versions = utils::read.csv(fl, stringsAsFactors = FALSE)$SourceVersion
   
-  ExperimentHub::createHubAccessors(pkgname, 'msigdb.v7.2.hs.SYM')
-  ExperimentHub::createHubAccessors(pkgname, 'msigdb.v7.2.hs.EZID')
-  ExperimentHub::createHubAccessors(pkgname, 'msigdb.v7.2.mm.SYM')
-  ExperimentHub::createHubAccessors(pkgname, 'msigdb.v7.2.mm.EZID')
+  return(as.character(unique(versions)))
 }

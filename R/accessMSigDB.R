@@ -10,7 +10,7 @@
 #' @param id a character, representing the ID type to use ("SYM" for gene
 #'   symbols and "EZID" for Entrez IDs).
 #' @param version a character, stating the version of MSigDB to be retrieved
-#'   (should be >= 7.2). See `getVersions()`.
+#'   (should be >= 7.2). See `getMsigdbVersions()`.
 #'
 #' @return a GeneSetCollection, containing GeneSet objects from the specified
 #'   version of the molecular signatures database (MSigDB).
@@ -19,15 +19,28 @@
 #' @examples
 #' gsc = getMsigdb('hs', 'SYM')
 #' 
-getMsigdb <- function(org = c('hs', 'mm'), id = c('SYM', 'EZID'), version = getVersions()) {
+getMsigdb <- function(org = c('hs', 'mm'), id = c('SYM', 'EZID'), version = getMsigdbVersions()) {
   org = match.arg(org)
   id = match.arg(id)
   version = match.arg(version)
-  checkVersion(version)
+  checkMsigdbVersion(version)
   
+  #create object name
   obj_name = paste0('msigdb.v', version, '.', org, '.', id)
-  gsc = do.call(obj_name, list())
+  gsc = getMSigdbObject(obj_name)
+  
   return(gsc)
+}
+
+getMSigdbObject <- function(obj_name) {
+  #load object
+  eh = ExperimentHub::ExperimentHub()
+  info = AnnotationHub::mcols(AnnotationHub::query(eh, 'msigdb'))
+  id = rownames(info)[info$title %in% obj_name]
+  if (length(id) != 1)
+    stop('Data not found')
+  
+  return(suppressWarnings(eh[[id]]))
 }
 
 #' Subset collections and sub-collections of MSigDB
@@ -51,8 +64,8 @@ getMsigdb <- function(org = c('hs', 'mm'), id = c('SYM', 'EZID'), version = getV
 #' @export
 #'
 #' @examples
-#' msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
-#' subsetCollection(msigdb.v7.2.hs.SYM, collection = "h")
+#' gsc = getMsigdb('hs', 'SYM')
+#' subsetCollection(gsc, collection = "h")
 #' 
 subsetCollection <- function(gsc, collection, subcollection = NULL) {
   stopifnot(length(gsc) > 0)
@@ -82,8 +95,8 @@ subsetCollection <- function(gsc, collection, subcollection = NULL) {
 #' @export
 #'
 #' @examples
-#' msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
-#' listCollections(msigdb.v7.2.hs.SYM)
+#' gsc = getMsigdb('hs', 'SYM')
+#' listCollections(gsc)
 #' 
 listCollections <- function(gsc) {
   cat = unique(sapply(lapply(gsc, GSEABase::collectionType), GSEABase::bcCategory))
@@ -104,8 +117,8 @@ listCollections <- function(gsc) {
 #' @export
 #'
 #' @examples
-#' msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
-#' listSubCollections(msigdb.v7.2.hs.SYM)
+#' gsc = getMsigdb('hs', 'SYM')
+#' listSubCollections(gsc)
 #' 
 listSubCollections <- function(gsc) {
   subcat = unique(sapply(lapply(gsc, GSEABase::collectionType), GSEABase::bcSubCategory))
@@ -113,6 +126,6 @@ listSubCollections <- function(gsc) {
   return(subcat)
 }
 
-checkVersion <- function(version) {
-  stopifnot(version %in% getVersions())
+checkMsigdbVersion <- function(version) {
+  stopifnot(version %in% getMsigdbVersions())
 }
