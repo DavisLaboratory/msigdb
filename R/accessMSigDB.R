@@ -32,6 +32,18 @@ getMsigdb <- function(org = c('hs', 'mm'), id = c('SYM', 'EZID'), version = getM
   return(gsc)
 }
 
+getMsigdbIDF <- function(org = c('hs', 'mm'), version = getMsigdbVersions()) {
+  org = match.arg(org)
+  version = match.arg(version)
+  checkMsigdbVersion(version)
+  
+  #create object name
+  obj_name = paste0('msigdb.v', version, '.', org, '.idf')
+  idf = getMSigdbObject(obj_name)
+  
+  return(idf)
+}
+
 getMSigdbObject <- function(obj_name) {
   #load object
   eh = ExperimentHub::ExperimentHub()
