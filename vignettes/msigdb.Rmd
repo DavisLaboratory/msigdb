@@ -63,21 +63,12 @@ Data can then be downloaded using the unique identifier.
 eh[['EH5421']]
 ```
 
-Alternatively, data can be downloaded using object name accessors in the `msigdb` package as below:
-
-```{r download-msigdb-sym-accessor}
-#metadata are displayed
-msigdb.v7.2.hs.SYM(metadata = TRUE)
-#data are loaded
-msigdb.v7.2.hs.SYM()
-```
-
 Data can also be downloaded using the custom accessor \`msigdb::getMsigdb()\`:
 
 ```{r download-msigdb-sym-getMsigdb}
 #use the custom accessor to select a specific version of MSigDB
-msigdb.v7.2.hs.SYM = getMsigdb('hs', 'SYM')
-msigdb.v7.2.hs.SYM
+msigdb.hs = getMsigdb(org = 'hs', id = 'SYM', version = '7.4')
+msigdb.hs
 ```
 
 # Downloading and integrating KEGG gene sets
@@ -85,8 +76,8 @@ msigdb.v7.2.hs.SYM
 KEGG gene sets cannot be integrated within this ExperimentHub package due to licensing limitations. However, users can download, process and integrate the data directly from the MSigDB when needed. This can be done using the code that follows.
 
 ```{r append-kegg}
-msigdb.v7.2.hs.SYM = appendKEGG(msigdb.v7.2.hs.SYM)
-msigdb.v7.2.hs.SYM
+msigdb.hs = appendKEGG(msigdb.hs)
+msigdb.hs
 ```
 
 # Accessing the GeneSet and GeneSetCollection objects
@@ -94,13 +85,13 @@ msigdb.v7.2.hs.SYM
 A GeneSetCollection object is effectively a list therefore all list processing functions such as `length` and `lapply` can be used to process its constituents
 
 ```{r process-gsc}
-length(msigdb.v7.2.hs.SYM)
+length(msigdb.hs)
 ```
 
 Each signature is stored in a `GeneSet` object and can be processed using functions in the `GSEABase` R/Bioconductor package.
 
 ```{r access-gs}
-gs = msigdb.v7.2.hs.SYM[[1000]]
+gs = msigdb.hs[[1000]]
 gs
 #get genes in the signature
 geneIds(gs)
@@ -120,11 +111,11 @@ We can also summarise some of these values across the entire database. Descripti
 
 ```{r summarise-gsc}
 #calculate the number of signatures in each category
-table(sapply(lapply(msigdb.v7.2.hs.SYM, collectionType), bcCategory))
+table(sapply(lapply(msigdb.hs, collectionType), bcCategory))
 #calculate the number of signatures in each subcategory
-table(sapply(lapply(msigdb.v7.2.hs.SYM, collectionType), bcSubCategory))
+table(sapply(lapply(msigdb.hs, collectionType), bcSubCategory))
 #plot the distribution of sizes
-hist(sapply(lapply(msigdb.v7.2.hs.SYM, geneIds), length),
+hist(sapply(lapply(msigdb.hs, geneIds), length),
      main = 'MSigDB signature size distribution',
      xlab = 'Signature size')
 ```
@@ -134,17 +125,17 @@ hist(sapply(lapply(msigdb.v7.2.hs.SYM, geneIds), length),
 Most gene set analysis is performed within specific collections rather than across the entire database. This package comes with functions to subset specific collections. The list of all collections and sub-collections present within a GeneSetCollection object can be listed using the functions below:
 
 ```{r list-collections}
-listCollections(msigdb.v7.2.hs.SYM)
-listSubCollections(msigdb.v7.2.hs.SYM)
+listCollections(msigdb.hs)
+listSubCollections(msigdb.hs)
 ```
 
 Specific collections can be retrieved using the code below:
 
 ```{r}
 #retrieeve the hallmarks gene sets
-subsetCollection(msigdb.v7.2.hs.SYM, 'h')
+subsetCollection(msigdb.hs, 'h')
 #retrieve the biological processes category of gene ontology
-subsetCollection(msigdb.v7.2.hs.SYM, 'c5', 'GO:BP')
+subsetCollection(msigdb.hs, 'c5', 'GO:BP')
 ```
 
 # Preparing collections for limma::fry
@@ -155,7 +146,7 @@ Any gene-set collection can be easily transformed for usage with `limma::fry` by
 library(limma)
 
 #create expression data
-allg = unique(unlist(geneIds(msigdb.v7.2.hs.SYM)))
+allg = unique(unlist(geneIds(msigdb.hs)))
 emat = matrix(0, nrow = length(allg), ncol = 6)
 rownames(emat) = allg
 colnames(emat) = paste0('sample', 1:6)
@@ -164,7 +155,7 @@ head(emat)
 
 ```{r subset-msigdb}
 #retrieve collections
-hallmarks = subsetCollection(msigdb.v7.2.hs.SYM, 'h')
+hallmarks = subsetCollection(msigdb.hs, 'h')
 msigdb_ids = geneIds(hallmarks)
 
 #convert gene sets into a list of gene indices
@@ -179,8 +170,8 @@ The mouse MSigDB has been created in collaboration with Gordon K. Smyth and Alex
 All the above functions apply to the mouse MSigDB and can be used to interact with the collection.
 
 ```{r download-msig-sym-id-mouse}
-msigdb.v7.2.mm.SYM = msigdb.v7.2.mm.SYM()
-msigdb.v7.2.mm.SYM
+msigdb.mm = getMsigdb(org = 'mm', id = 'SYM', version = '7.4')
+msigdb.mm
 ```
 
 # Session information
