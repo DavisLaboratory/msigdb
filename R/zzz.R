@@ -72,7 +72,7 @@ NULL
 
 #' Get MSigDB versions included in the msigdb package
 #'
-#' @return a character, stating the versions available in this package.
+#' @return a character, stating the MSigDB versions available in this package.
 #' @export
 #'
 #' @examples
@@ -80,7 +80,26 @@ NULL
 #' 
 getMsigdbVersions <- function() {
   fl = system.file("extdata", "metadata.csv", package = 'msigdb')
-  versions = utils::read.csv(fl, stringsAsFactors = FALSE)$SourceVersion
+  meta = utils::read.csv(fl, stringsAsFactors = FALSE)
+  versions = meta[grepl('^msigdb', meta$Title), 'SourceVersion']
+  versions = as.character(sort(unique(versions), decreasing = TRUE))
+  
+  return(versions)
+}
+
+#' Get IMEX versions included in the msigdb package
+#'
+#' @return a character, stating the IMEX versions available in this package.
+#' @export
+#'
+#' @examples
+#' getIMEXVersions()
+#' 
+getIMEXVersions <- function() {
+  fl = system.file("extdata", "metadata.csv", package = 'msigdb')
+  meta = utils::read.csv(fl, stringsAsFactors = FALSE)
+  versions = meta[grepl('^imex', meta$Title), 'SourceVersion']
+  versions = as.Date(versions)
   versions = as.character(sort(unique(versions), decreasing = TRUE))
   
   return(versions)

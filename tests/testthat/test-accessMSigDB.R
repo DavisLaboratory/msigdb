@@ -13,8 +13,8 @@ test_that("list collections and sub-collections works", {
   expect_error(listSubCollections(nullgsc))
   
   #test all
-  expect_length(listCollections(msigdb), 10)
-  expect_length(listSubCollections(msigdb), 23)
+  expect_length(listCollections(msigdb), 9)
+  expect_length(listSubCollections(msigdb), 18)
   
   #test Hallmarks
   hgsc = msigdb[grepl('HALLMARK', sapply(msigdb, setName))]
@@ -22,7 +22,7 @@ test_that("list collections and sub-collections works", {
   expect_length(listSubCollections(hgsc), 0)
   
   #test GO
-  gogsc = msigdb[grepl('^GO_', sapply(msigdb, setName))]
+  gogsc = msigdb[grepl('^GO.._', sapply(msigdb, setName))]
   expect_length(listCollections(gogsc), 1)
   expect_length(listSubCollections(gogsc), 3)
 })

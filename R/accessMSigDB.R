@@ -23,13 +23,47 @@ getMsigdb <- function(org = c('hs', 'mm'), id = c('SYM', 'EZID'), version = getM
   org = match.arg(org)
   id = match.arg(id)
   version = match.arg(version)
-  checkMsigdbVersion(version)
   
   #create object name
   obj_name = paste0('msigdb.v', version, '.', org, '.', id)
   gsc = getMSigdbObject(obj_name)
   
   return(gsc)
+}
+
+#' Retrieve IMEx PPI hosted on the hub
+#'
+#' Download International Molecular Exchange (IMEx) protein-protein interaction
+#' (PPI) hosted on the ExperimentHub or retrieve pre-downloaded version from
+#' cache. This package currently hosts versions for human and mouse with both
+#' symbol and Entrez identifiers.
+#'
+#' @param org a character, representing the organism whose PPI database needs to
+#'   be retrieved ("hs" for human and "mm" for mouse).
+#' @param inferred a logical, indicating whether inference from other organisms
+#'   should be included in the PPI.
+#' @param version a character, stating the version of IMEX to be retrieved. See
+#'   `getMsigdbVersions()`.
+#'
+#' @return a data.frame, containing the IMEx PPI.
+#' @export
+#'
+#' @examples
+#' imex = getIMEX('hs')
+#' 
+getIMEX <- function(org = c('hs', 'mm'), inferred = FALSE, version = getIMEXVersions()) {
+  org = match.arg(org)
+  version = match.arg(version)
+  org = c('hs' = '9606', 'mm' = '10090')[org]
+  
+  #create object name
+  version = as.Date(version)
+  obj_name = paste0('imex_hsmm_', format(version, '%m'), format(version, '%y'))
+  imex = getMSigdbObject(obj_name)
+  imex = imex[imex$Taxid %in% org & (imex$Inferred | inferred), ]
+  imex = as.data.frame(imex)
+  
+  return(imex)
 }
 
 getMsigdbIDF <- function(org = c('hs', 'mm'), version = getMsigdbVersions()) {
@@ -137,8 +171,4 @@ listSubCollections <- function(gsc) {
   subcat = unique(sapply(lapply(gsc, GSEABase::collectionType), GSEABase::bcSubCategory))
   subcat = as.character(stats::na.omit(subcat))
   return(subcat)
-}
-
-checkMsigdbVersion <- function(version) {
-  stopifnot(version %in% getMsigdbVersions())
 }

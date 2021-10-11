@@ -7,7 +7,7 @@
 getMsigdbVersions()
 }
 \value{
-a character, stating the versions available in this package.
+a character, stating the MSigDB versions available in this package.
 }
 \description{
 Get MSigDB versions included in the msigdb package
