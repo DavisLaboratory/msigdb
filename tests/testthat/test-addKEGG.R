@@ -6,7 +6,7 @@ test_that("appendKEGG works", {
   gs1 = GeneSet(setName = 'gs1', geneIdType = SymbolIdentifier())
   gs2 = GeneSet(setName = 'gs2', geneIdType = SymbolIdentifier())
   gsc = GeneSetCollection(c(gs1, gs2))
-  expect_length(appendKEGG(gsc), 188)
+  expect_length(appendKEGG(gsc, '7.2'), 188)
 })
 
 test_that("ID type inference works", {

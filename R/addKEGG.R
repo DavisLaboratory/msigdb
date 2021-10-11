@@ -21,7 +21,6 @@
 #' 
 appendKEGG <- function(gsc, version = getMsigdbVersions()) {
   version = match.arg(version)
-  checkMsigdbVersion(version)
   
   #get GeneSetCollection information
   idType = getMsigIdType(gsc)
