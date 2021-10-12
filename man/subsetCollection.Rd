@@ -4,7 +4,7 @@
 \alias{subsetCollection}
 \title{Subset collections and sub-collections of MSigDB}
 \usage{
-subsetCollection(gsc, collection, subcollection = NULL)
+subsetCollection(gsc, collection = c(), subcollection = c())
 }
 \arguments{
 \item{collection}{a character, stating the collection(s) to be retrieved. The
@@ -12,8 +12,7 @@ collection(s) must be one from the \code{\link[=listCollections]{listCollections
 
 \item{subcollection}{a character, stating the sub-collection(s) to be
 retrieved. The sub-collection(s) must be one from the
-\code{\link[=listSubCollections]{listSubCollections()}} function. If NULL, all sub-collections are
-retrieved.}
+\code{\link[=listSubCollections]{listSubCollections()}} function.}
 }
 \value{
 a GeneSetCollection object, containing gene sets belonging to the

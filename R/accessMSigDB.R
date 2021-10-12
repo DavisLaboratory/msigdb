@@ -101,9 +101,8 @@ getMSigdbObject <- function(obj_name) {
 #'   collection(s) must be one from the [listCollections()] function.
 #' @param subcollection a character, stating the sub-collection(s) to be
 #'   retrieved. The sub-collection(s) must be one from the
-#'   [listSubCollections()] function. If NULL, all sub-collections are
-#'   retrieved.
-#' 
+#'   [listSubCollections()] function.
+#'
 #' @inheritParams getMsigdb
 #'
 #' @return a GeneSetCollection object, containing gene sets belonging to the
@@ -114,17 +113,14 @@ getMSigdbObject <- function(obj_name) {
 #' gsc = getMsigdb('hs', 'SYM')
 #' subsetCollection(gsc, collection = "h")
 #' 
-subsetCollection <- function(gsc, collection, subcollection = NULL) {
+subsetCollection <- function(gsc, collection = c(), subcollection = c()) {
   stopifnot(length(gsc) > 0)
-  stopifnot(collection %in% listCollections(gsc))
-  stopifnot(is.null(subcollection) | subcollection %in% listSubCollections(gsc))
-  
-  if (is.null(subcollection))
-    subcollection = c(listSubCollections(gsc), NA)
+  stopifnot(all(collection %in% listCollections(gsc)))
+  stopifnot(all(subcollection %in% listSubCollections(gsc)))
   
   #filter collection & sub-collection
   ctype = lapply(gsc, GSEABase::collectionType)
-  gsc = gsc[sapply(ctype, GSEABase::bcCategory) %in% collection &
+  gsc = gsc[sapply(ctype, GSEABase::bcCategory) %in% collection |
               sapply(ctype, GSEABase::bcSubCategory) %in% subcollection]
   
   return(gsc)

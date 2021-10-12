@@ -113,9 +113,9 @@ appendKEGG <- function(gsc, version = getMsigdbVersions()) {
 #' @export
 #'
 #' @examples
-#' msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
-#' id <- getMsigIdType(msigdb.v7.2.hs.SYM)
-#' getMsigOrganism(msigdb.v7.2.hs.SYM(), id)
+#' gsc <- getMsigdb()
+#' id <- getMsigIdType(gsc)
+#' getMsigOrganism(gsc, id)
 #' 
 getMsigOrganism <- function(gsc, idType) {
   #ensure ID types are the same in the collection
@@ -155,8 +155,8 @@ getMsigOrganism <- function(gsc, idType) {
 #' @export
 #'
 #' @examples
-#' msigdb.v7.2.hs.SYM <- msigdb.v7.2.hs.SYM()
-#' id <- getMsigIdType(msigdb.v7.2.hs.SYM)
+#' gsc <- getMsigdb()
+#' id <- getMsigIdType(gsc)
 #' 
 getMsigIdType <- function(gsc) {
   idType = sapply(gsc, function(gs) class(GSEABase::geneIdType(gs)))
