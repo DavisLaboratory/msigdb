@@ -97,6 +97,8 @@ getMSigdbObject <- function(obj_name) {
 #' database of signatures. This function allows subsetting of MSigDB data
 #' objects within this package using collection and sub-collection types.
 #'
+#' @param gsc a GeneSetCollection object, containing MSigDB genesets in the form
+#'   of GeneSet objects.
 #' @param collection a character, stating the collection(s) to be retrieved. The
 #'   collection(s) must be one from the [listCollections()] function.
 #' @param subcollection a character, stating the sub-collection(s) to be

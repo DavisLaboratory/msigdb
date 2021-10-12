@@ -7,6 +7,9 @@
 appendKEGG(gsc, version = getMsigdbVersions())
 }
 \arguments{
+\item{gsc}{a GeneSetCollection object, containing MSigDB genesets in the form
+of GeneSet objects.}
+
 \item{version}{a character, stating the version of MSigDB to be retrieved
 (should be >= 7.2). See \code{getMsigdbVersions()}.}
 }

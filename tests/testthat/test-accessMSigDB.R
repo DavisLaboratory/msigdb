@@ -40,4 +40,5 @@ test_that("subset collections works", {
   expect_length(subsetCollection(msigdb, 'h'), 50)
   expect_length(subsetCollection(msigdb, 'c5'), sum(sapply(lapply(msigdb, collectionType), bcCategory) %in% 'c5'))
   expect_length(subsetCollection(msigdb, subcollection = 'GO:BP'), sum(sapply(lapply(msigdb, collectionType), bcSubCategory) %in% 'GO:BP'))
+  expect_length(subsetCollection(msigdb, 'h', 'GO:BP'), sum(sapply(lapply(msigdb, collectionType), bcSubCategory) %in% 'GO:BP') + 50)
 })

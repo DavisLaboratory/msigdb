@@ -6,6 +6,10 @@
 \usage{
 getMsigIdType(gsc)
 }
+\arguments{
+\item{gsc}{a GeneSetCollection object, containing MSigDB genesets in the form
+of GeneSet objects.}
+}
 \value{
 a GSEABase::SymbolIdentifier or GSEABASE::EntrezIdentifier object,
 specifying the gene identifier type (gene symbols or Entrez IDs
