@@ -1,6 +1,6 @@
 Package: msigdb
 Title: An ExperimentHub Package for the Molecular Signatures Database (MSigDB)
-Version: 1.1.5
+Version: 1.2.0
 Authors@R: c(
             person(given = "Dharmesh D.",
                    family = "Bhuva",
