@@ -165,7 +165,7 @@ fry_indices[1:2]
 
 # Accessing the mouse MSigDB
 
-The mouse MSigDB has been created in collaboration with Gordon K. Smyth and Alex Garnham from the Walter and Eliza Hall Institute of Medical Research (WEHI). The code they use to generate the mouse MSigDB has been used in this package. Detailed description of the steps conducted to convert human gene expression signatures to mouse can be found at <http://bioinf.wehi.edu.au/MSigDB/index.html>. Mouse homologs for human genes were obtained using the HCOP database (as of 18/03/2021).
+The mouse MSigDB has been created in collaboration with Gordon K. Smyth and Alex Garnham from WEHI. The code they use to generate the mouse MSigDB has been used in this package. Detailed description of the steps conducted to convert human gene expression signatures to mouse can be found at <http://bioinf.wehi.edu.au/MSigDB>. Mouse homologs for human genes were obtained using the HCOP database (as of 18/03/2021).
 
 All the above functions apply to the mouse MSigDB and can be used to interact with the collection.
 

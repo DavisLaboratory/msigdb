@@ -4,7 +4,7 @@
 #' molecular signatures database (MSigDB) for versions >= 7.2. Collections for
 #' human and mouse are currently supported in this package. The mouse version
 #' was developed in conjunction with Gordon K Smyth and Alexandra Garnham, and
-#' reflects the collections available from WEHI.
+#' reflects the collections available from WEHI (<https://bioinf.wehi.edu.au/MSigDB/>).
 #'
 #' The molecular signatures database (MSigDB) is a collection of over 25000 gene
 #' expression signatures that are grouped into collections and sub-collections.

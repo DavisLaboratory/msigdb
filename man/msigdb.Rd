@@ -14,7 +14,7 @@ This ExperimentHub package contains gene expression signatures from the
 molecular signatures database (MSigDB) for versions >= 7.2. Collections for
 human and mouse are currently supported in this package. The mouse version
 was developed in conjunction with Gordon K Smyth and Alexandra Garnham, and
-reflects the collections available from WEHI.
+reflects the collections available from WEHI (\url{https://bioinf.wehi.edu.au/MSigDB/}).
 }
 \details{
 The molecular signatures database (MSigDB) is a collection of over 25000 gene
