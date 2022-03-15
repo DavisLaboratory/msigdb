@@ -13,6 +13,37 @@ library(iterators)
 #file cache to download files to
 bfc = BiocFileCache()
 
+#getBroadSets that can deal with duplicate geneset names
+getBroadSets2 <- function (uri, ..., membersId = c("MEMBERS_SYMBOLIZED", "MEMBERS_EZID")) 
+{
+  membersId <- match.arg(membersId)
+  factories <- sapply(uri, GSEABase:::.BroadXMLNodeToGeneSet_factory, 
+                      membersId = membersId)
+  tryCatch({
+    geneSets <- unlist(mapply(GSEABase:::.fromXML, uri, "//GENESET", 
+                              factories, SIMPLIFY = FALSE, USE.NAMES = FALSE))
+  }, error = function(err) {
+    stop("'getBroadSets' failed to create gene sets:\n  ", 
+         conditionMessage(err), call. = FALSE)
+  })
+  
+  snames = sapply(geneSets, setName)
+  if (any(duplicated(snames))) {
+    #identify dups
+    dups = snames[duplicated(snames)]
+    uq = geneSets[!snames %in% dups]
+    #merge dups
+    dupmerged = lapply(dups, function(x) {
+      x = geneSets[snames %in% x]
+      geneIds(x[[1]]) = do.call(union, lapply(x, geneIds))
+      return(x[[1]])
+    })
+    geneSets = c(uq, dupmerged)
+  }
+  
+  GeneSetCollection(geneSets)
+}
+
 #function to download any given version of MSigDB
 getMsigdbData <- function(msigdb_ver, old = FALSE) {
   msigdb_url = 'https://data.broadinstitute.org/gsea-msigdb/msigdb/release/___/msigdb_v___.xml'
@@ -27,7 +58,7 @@ getMsigdbData <- function(msigdb_ver, old = FALSE) {
   
   #----Symbols----
   #read genesets into a geneset collection
-  msigdb = getBroadSets(msigpath, membersId = 'MEMBERS_SYMBOLIZED')
+  msigdb = getBroadSets2(msigpath, membersId = 'MEMBERS_SYMBOLIZED')
   #remove KEGG (due to licenses)
   msigdb = GeneSetCollection(msigdb[!sapply(lapply(msigdb, collectionType), bcSubCategory) %in% 'CP:KEGG'])
   #remove archived
@@ -54,7 +85,7 @@ getMsigdbData <- function(msigdb_ver, old = FALSE) {
   
   #----Entrez IDs----
   #read genesets into a geneset collection
-  msigdb = getBroadSets(msigpath, membersId = 'MEMBERS_EZID')
+  msigdb = getBroadSets2(msigpath, membersId = 'MEMBERS_EZID')
   #remove KEGG (due to licenses)
   msigdb = GeneSetCollection(msigdb[!sapply(lapply(msigdb, collectionType), bcSubCategory) %in% 'CP:KEGG'])
   #remove archived
@@ -105,7 +136,7 @@ createMmMsigdbData <- function(hsdb, old = FALSE) {
   
   #create c1 category
   c1 = createC1MmNCBI()
-
+  
   #combine all and create Mm MSigDB
   mmdb = c(mmdb, c1, c5)
   mmdb = mmdb[order(sapply(mmdb, setName))]
@@ -324,6 +355,7 @@ registerDoSNOW(cl)
 processMsigdbData('7.2', old = TRUE)
 processMsigdbData('7.3')
 processMsigdbData('7.4')
+processMsigdbData('7.5')
 
 stopCluster(cl)
 

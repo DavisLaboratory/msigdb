@@ -58,13 +58,13 @@ if (length(msigdb_files) > 0) {
 #----IMEX metadata----
 ##build record
 meta = rbind(meta, c(
-  Title = 'imex_hsmm_0721',
-  Description = 'Protein-protein interaction (PPI) network for human and mouse obtained from the international molecular exchange (IMEX) in July 2021.',
+  Title = 'imex_hsmm_0222',
+  Description = 'Protein-protein interaction (PPI) network for human and mouse obtained from the international molecular exchange (IMEX) in February 2022.',
   BiocVersion = as.numeric(as.character(BiocManager::version())) + 0.01,
   Genome = NA,
   SourceType = 'TXT',
   SourceUrl = 'ftp://ftp.ebi.ac.uk/pub/databases/intact/2021-07-06/psimitab/intact-micluster.txt',
-  SourceVersion = '2021-07-06',
+  SourceVersion = '2022-02-03',
   Species = 'Homo sapiens',
   TaxonomyId = '9606',
   Coordinate_1_based = TRUE,
@@ -72,7 +72,7 @@ meta = rbind(meta, c(
   Maintainer = 'Dharmesh D. Bhuva <bhuva.d@wehi.edu.au>',
   RDataClass = 'data.frame',
   DispatchClass = 'Rds',
-  RDataPath = file.path('msigdb', 'IMEx', 'imex_hsmm_0721.rds')
+  RDataPath = file.path('msigdb', 'IMEx', 'imex_hsmm_0222.rds')
 ))
 
 #write and test metadata file
