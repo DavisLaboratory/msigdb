@@ -27,9 +27,10 @@ appendKEGG <- function(gsc, version = getMsigdbVersions()) {
   org = getMsigOrganism(gsc, idType)
   id = ifelse(methods::is(idType, 'SymbolIdentifier') & org %in% 'hs', 'symbols', 'entrez')
   
-  #create URL
-  fname = paste0('c2.cp.kegg.v', version, '.', id, '.gmt')
-  link = paste('https://data.broadinstitute.org/gsea-msigdb/msigdb/release', version, fname, sep = '/')
+  # create URL
+  link_ver = ifelse(grepl('^20', version), paste0(version, ".Hs"), version)
+  fname = paste0("c2.cp.kegg.v", link_ver, ".", id, ".gmt")
+  link = paste("https://data.broadinstitute.org/gsea-msigdb/msigdb/release", link_ver, fname, sep = "/")
   
   #download and process KEGG genesets
   gsc_kegg = GSEABase::getGmt(
