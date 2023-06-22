@@ -82,7 +82,8 @@ getMsigdbVersions <- function() {
   fl = system.file("extdata", "metadata.csv", package = 'msigdb')
   meta = utils::read.csv(fl, stringsAsFactors = FALSE)
   versions = meta[grepl('^msigdb', meta$Title), 'SourceVersion']
-  versions = as.character(sort(unique(versions), decreasing = TRUE))
+  versions = as.character(unique(versions))
+  versions = versions[order(-as.numeric(gsub('\\.', '', versions)))]
   
   return(versions)
 }

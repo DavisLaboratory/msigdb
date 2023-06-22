@@ -45,12 +45,14 @@ getBroadSets2 <- function (uri, ..., membersId = c("MEMBERS_SYMBOLIZED", "MEMBER
 }
 
 #function to download any given version of MSigDB
-getMsigdbData <- function(msigdb_ver, old = FALSE) {
-  msigdb_url = 'https://data.broadinstitute.org/gsea-msigdb/msigdb/release/___/msigdb_v___.xml'
+getMsigdbData <- function(msigdb_ver, old = FALSE, is.zip = TRUE) {
+  msigdb_url = 'https://data.broadinstitute.org/gsea-msigdb/msigdb/release/___.Hs/msigdb_v___.Hs.xml'
   msigdb_url = gsub('___', msigdb_ver, msigdb_url)
+  msigdb_url = ifelse(is.zip, paste0(msigdb_url, '.zip'), msigdb_url)
   
   #download file
   msigpath = bfcrpath(bfc, msigdb_url)
+  msigpath = ifelse(is.zip, unzip(msigpath, exdir = tempdir()), msigpath)
   
   #replace C5:GO
   c5 = createC5OrgDb(org.Hs.egGO2ALLEGS, 'Homo sapiens', old)
@@ -318,11 +320,11 @@ computeIdf <- function(msigGsc) {
   return(idfs)
 }
 
-processMsigdbData <- function(msigdb_ver, old = FALSE) {
+processMsigdbData <- function(msigdb_ver, old = FALSE, is.zip = TRUE) {
   bname = paste0('msigdb.v', msigdb_ver)
   
   #download data
-  msigdb = getMsigdbData(msigdb_ver, old)
+  msigdb = getMsigdbData(msigdb_ver, old, is.zip)
   
   #create human data
   msigdb.hs.SYM = msigdb[[1]]
@@ -352,10 +354,8 @@ usethis::use_data(hcop, internal = TRUE, overwrite = TRUE)
 cl = makeSOCKcluster(10, outfile = '')
 registerDoSNOW(cl)
 
-processMsigdbData('7.2', old = TRUE)
-processMsigdbData('7.3')
-processMsigdbData('7.4')
-processMsigdbData('7.5')
+processMsigdbData('2022.1', is.zip = FALSE)
+processMsigdbData('2023.1')
 
 stopCluster(cl)
 

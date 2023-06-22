@@ -5,7 +5,7 @@ library(org.Mm.eg.db)
 library(tidyverse)
 library(BiocFileCache)
 
-imex_date = '2022-02-03'
+imex_date = '2022-07-11'
 bfc = BiocFileCache()
 imex_path = bfcrpath(bfc, sprintf('ftp://ftp.ebi.ac.uk/pub/databases/intact/%s/psimitab/intact-micluster.txt', imex_date))
 

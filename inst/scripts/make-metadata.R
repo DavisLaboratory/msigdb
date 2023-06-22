@@ -1,7 +1,7 @@
 #retrieve file list that need to be updated
 allfiles = list.files(pattern = '.rds$', recursive = TRUE)
-allfiles = setdiff(allfiles, basename(old_meta$RDataPath))
 old_meta = read.csv('inst/extdata/metadata.csv')
+allfiles = setdiff(allfiles, basename(old_meta$RDataPath))
 msigdb_files = basename(grep('msigdb', allfiles, value = TRUE))
 imex_files = basename(grep('imex', allfiles, value = TRUE))
 meta = c()
@@ -25,7 +25,7 @@ buildDescription <- function(ver, org, type) {
 if (length(msigdb_files) > 0) {
   msigdb_meta = plyr::ldply(msigdb_files, function(x) {
     #create regex
-    fregex = 'msigdb.v([0-9]\\.[0-9])\\.([a-z]+)\\.(.*).rds$'
+    fregex = 'msigdb.v([0-9]+\\.[0-9]+\\.?[0-9]?)\\.([a-z]+)\\.(.*).rds$'
     
     #extract file info
     ver = gsub(fregex, '\\1', x)
@@ -58,13 +58,13 @@ if (length(msigdb_files) > 0) {
 #----IMEX metadata----
 ##build record
 meta = rbind(meta, c(
-  Title = 'imex_hsmm_0222',
-  Description = 'Protein-protein interaction (PPI) network for human and mouse obtained from the international molecular exchange (IMEX) in February 2022.',
+  Title = 'imex_hsmm_0722',
+  Description = 'Protein-protein interaction (PPI) network for human and mouse obtained from the international molecular exchange (IMEX) in July 2022.',
   BiocVersion = as.numeric(as.character(BiocManager::version())) + 0.01,
   Genome = NA,
   SourceType = 'TXT',
-  SourceUrl = 'ftp://ftp.ebi.ac.uk/pub/databases/intact/2021-07-06/psimitab/intact-micluster.txt',
-  SourceVersion = '2022-02-03',
+  SourceUrl = 'ftp://ftp.ebi.ac.uk/pub/databases/intact/2022-07-11/psimitab/intact-micluster.txt',
+  SourceVersion = '2022-07-11',
   Species = 'Homo sapiens',
   TaxonomyId = '9606',
   Coordinate_1_based = TRUE,
@@ -72,7 +72,7 @@ meta = rbind(meta, c(
   Maintainer = 'Dharmesh D. Bhuva <bhuva.d@wehi.edu.au>',
   RDataClass = 'data.frame',
   DispatchClass = 'Rds',
-  RDataPath = file.path('msigdb', 'IMEx', 'imex_hsmm_0222.rds')
+  RDataPath = file.path('msigdb', 'IMEx', 'imex_hsmm_0722.rds')
 ))
 
 #write and test metadata file
