@@ -26,6 +26,6 @@ cache. This package currently hosts versions for human and mouse with both
 symbol and Entrez identifiers.
 }
 \examples{
-imex = getIMEX('hs')
+imex = getIMEX("hs")
 
 }
