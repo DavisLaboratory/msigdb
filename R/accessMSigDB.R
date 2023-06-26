@@ -49,23 +49,41 @@ getMsigdb <- function(org = c('hs', 'mm'), id = c('SYM', 'EZID'), version = getM
 #' @export
 #'
 #' @examples
-#' imex = getIMEX('hs')
-#' 
-getIMEX <- function(org = c('hs', 'mm'), inferred = FALSE, version = getIMEXVersions()) {
+#' imex = getIMEX("hs")
+#'
+getIMEX <- function(org = c("hs", "mm"), inferred = FALSE, version = getIMEXVersions()) {
   org = match.arg(org)
   version = match.arg(version)
-  org = c('hs' = '9606', 'mm' = '10090')[org]
-  
-  #create object name
+  org = c("hs" = "9606", "mm" = "10090")[org]
+
+  # create object name
   version = as.Date(version)
-  obj_name = paste0('imex_hsmm_', format(version, '%m'), format(version, '%y'))
+  obj_name = paste0("imex_hsmm_", format(version, "%m"), format(version, "%y"))
   imex = getMSigdbObject(obj_name)
   imex = imex[imex$Taxid %in% org & (imex$Inferred | inferred), ]
   imex = as.data.frame(imex)
-  
+
   return(imex)
 }
 
+#' Retrieve MSigDB data hosted on the hub
+#'
+#' Download molecular signatures database (MSigDB) hosted on the ExperimentHub
+#' or retrieve pre-downloaded version from cache. This package currently hosts
+#' versions greater than 7.2 for human and mouse with both symbol and Entrez
+#' identifiers.
+#'
+#' @param org a character, representing the organism whose signature database
+#'   needs to be retrieved ("hs" for human and "mm" for mouse).
+#' @param version a character, stating the version of MSigDB to be retrieved
+#'   (should be >= 7.2). See `getMsigdbVersions()`.
+#'
+#' @return a list of named numeric vectors, containing inverse document frequency (IDF) weights. Names represent terms that the IDF is computed for. IDFs are computed using gene-set names ("Name") and short descriptions ("Short").
+#' @export
+#'
+#' @examples
+#' gsc = getMsigdbIDF("hs")
+#'
 getMsigdbIDF <- function(org = c('hs', 'mm'), version = getMsigdbVersions()) {
   org = match.arg(org)
   version = match.arg(version)

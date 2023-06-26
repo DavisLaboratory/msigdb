@@ -1,3 +1,8 @@
+# version 1.10.0
+
+* added MSigDB v7.5.1, v2022.1, and v2023.1
+* added functions to retrieve pre-computed IDFs
+
 # version 1.2.0
 
 * added MSigDB v7.4
