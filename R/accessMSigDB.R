@@ -69,7 +69,6 @@ getIMEX <- function(org = c('hs', 'mm'), inferred = FALSE, version = getIMEXVers
 getMsigdbIDF <- function(org = c('hs', 'mm'), version = getMsigdbVersions()) {
   org = match.arg(org)
   version = match.arg(version)
-  checkMsigdbVersion(version)
   
   #create object name
   obj_name = paste0('msigdb.v', version, '.', org, '.idf')
