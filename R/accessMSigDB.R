@@ -139,8 +139,12 @@ subsetCollection <- function(gsc, collection = c(), subcollection = c()) {
   
   #filter collection & sub-collection
   ctype = lapply(gsc, GSEABase::collectionType)
-  gsc = gsc[sapply(ctype, GSEABase::bcCategory) %in% collection |
-              sapply(ctype, GSEABase::bcSubCategory) %in% subcollection]
+  if (length(subcollection) == 0){
+    gsc = gsc[sapply(ctype, GSEABase::bcCategory) %in% collection]
+  } else {
+    gsc = gsc[sapply(ctype, GSEABase::bcCategory) %in% collection & 
+                sapply(ctype, GSEABase::bcSubCategory) %in% subcollection]
+  }
   
   return(gsc)
 }
